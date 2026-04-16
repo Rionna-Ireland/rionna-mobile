@@ -1,7 +1,8 @@
 import type { SvgProps } from 'react-native-svg';
 import * as React from 'react';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Circle, Path } from 'react-native-svg';
 
+// Lucide "users" icon
 export function Users({ color = '#000', ...props }: SvgProps) {
   return (
     <Svg width={24} height={24} viewBox="0 0 24 24" fill="none" {...props}>
@@ -12,8 +13,24 @@ export function Users({ color = '#000', ...props }: SvgProps) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+      <Circle
+        cx={9}
+        cy={7}
+        r={4}
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
       <Path
-        d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"
+        d="M16 3.128a4 4 0 0 1 0 7.744"
+        stroke={color}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <Path
+        d="M22 21v-2a4 4 0 0 0-3-3.87"
         stroke={color}
         strokeWidth={2}
         strokeLinecap="round"
