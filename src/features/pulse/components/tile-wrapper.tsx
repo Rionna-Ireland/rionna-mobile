@@ -10,9 +10,9 @@ type TileWrapperProps = {
 
 export function TileWrapper({ title, isLoading, children }: TileWrapperProps) {
   return (
-    <View className="rounded-2xl bg-card shadow-md">
+    <View className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm">
       <View className="px-4 pt-4 pb-2">
-        <Text className="text-xs font-bold tracking-wider text-neutral-500 uppercase">
+        <Text className="font-display text-2xl text-black">
           {title}
         </Text>
       </View>

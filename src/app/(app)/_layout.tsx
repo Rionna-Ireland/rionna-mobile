@@ -7,6 +7,7 @@ import {
   Pulse as PulseIcon,
   Users as UsersIcon,
 } from '@/components/ui/icons';
+import { CustomTabBar } from '@/components/ui/tab-bar';
 import { useAuthStore as useAuth } from '@/features/auth/use-auth-store';
 
 export default function TabLayout() {
@@ -16,15 +17,7 @@ export default function TabLayout() {
     return <Redirect href="/login" />;
   }
   return (
-    <Tabs>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Pulse',
-          tabBarIcon: ({ color }) => <PulseIcon color={color} />,
-          tabBarButtonTestID: 'pulse-tab',
-        }}
-      />
+    <Tabs tabBar={props => <CustomTabBar {...props} />}>
       <Tabs.Screen
         name="stables"
         options={{
@@ -39,6 +32,15 @@ export default function TabLayout() {
           title: 'Community',
           tabBarIcon: ({ color }) => <UsersIcon color={color} />,
           tabBarButtonTestID: 'community-tab',
+          headerShown: false,
+        }}
+      />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Pulse',
+          tabBarIcon: ({ color }) => <PulseIcon color={color} />,
+          tabBarButtonTestID: 'pulse-tab',
         }}
       />
       <Tabs.Screen

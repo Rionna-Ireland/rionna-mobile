@@ -39,23 +39,23 @@ function NextRunContent({ entry }: { entry: NextRunEntry }) {
     >
       <NextRunPhoto url={photoUrl} />
 
-      <View className="gap-1 p-4">
-        <Text className="text-lg font-bold text-foreground">
+      <View className="gap-1 bg-white p-4">
+        <Text className="font-sans text-xl font-semibold text-black">
           {entry.horse.name}
         </Text>
-        <Text className="text-sm text-neutral-500">
+        <Text className="font-sans text-base text-neutral-600">
           {entry.race.meeting.course.name}
         </Text>
         {entry.jockey
           ? (
-              <Text className="text-sm text-neutral-500">
+              <Text className="font-sans text-base text-neutral-600">
                 Jockey:
                 {' '}
                 {entry.jockey.name}
               </Text>
             )
           : null}
-        <View className="mt-1">
+        <View className="mt-2">
           <CountdownLabel postTime={entry.race.postTime} />
         </View>
       </View>

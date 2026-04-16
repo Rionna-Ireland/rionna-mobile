@@ -8,7 +8,7 @@ import { tv } from 'tailwind-variants';
 const button = tv({
   slots: {
     container: 'my-2 flex flex-row items-center justify-center rounded-md px-4',
-    label: 'font-sans text-base font-semibold',
+    label: 'font-mono text-base font-medium tracking-widest uppercase',
     indicator: 'h-6 text-white',
   },
 

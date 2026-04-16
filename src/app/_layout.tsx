@@ -16,7 +16,7 @@ import { useFonts as useLocalFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import * as React from 'react';
-import { StyleSheet } from 'react-native';
+import { LogBox, StyleSheet } from 'react-native';
 import FlashMessage from 'react-native-flash-message';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
@@ -27,6 +27,10 @@ import { APIProvider } from '@/lib/api';
 import { loadSelectedTheme } from '@/lib/hooks/use-selected-theme';
 // Import  global CSS file
 import '../global.css';
+
+// Third-party libs (and a few RN internals) still mount RN's deprecated
+// SafeAreaView. Our own code uses react-native-safe-area-context everywhere.
+LogBox.ignoreLogs([/SafeAreaView has been deprecated/]);
 
 export { ErrorBoundary } from 'expo-router';
 

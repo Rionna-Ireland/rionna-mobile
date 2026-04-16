@@ -5,9 +5,9 @@
 /* Define your theme in CSS (replaces tailwind.config.js) */
 @theme {
   /* Font families */
-  --font-family-sans: PlusJakartaSans;
-  --font-family-display: PPEiko;
-  --font-family-mono: IBMPlexMono;
+  --font-sans: 'PlusJakartaSans';
+  --font-display: 'PPEiko';
+  --font-mono: 'IBMPlexMono';
 
   /* Core typography -- ONLY these for text */
   --color-text-dark: #000000;

@@ -25,7 +25,11 @@ function PostRow({ post }: { post: TrainerPost }) {
 
   return (
     <Pressable
-      onPress={() => router.push('/(app)/community')}
+      onPress={() =>
+        router.navigate({
+          pathname: '/(app)/community',
+          params: post.url ? { url: post.url } : {},
+        })}
       className="gap-1 px-4 py-3"
     >
       <Text className="text-sm text-foreground">{excerpt}</Text>
