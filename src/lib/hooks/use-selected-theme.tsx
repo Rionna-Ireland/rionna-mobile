@@ -31,8 +31,7 @@ export function useSelectedTheme() {
 // to be used in the root file to load the selected theme from MMKV
 export function loadSelectedTheme() {
   const theme = storage.getString(SELECTED_THEME);
-  if (theme !== undefined) {
-    console.log('theme', theme);
-    Uniwind.setTheme(theme as ColorSchemeType);
-  }
+  // Default to 'light' — Pink Connections is a light-mode-first app.
+  // Users can opt into dark mode via the More tab settings.
+  Uniwind.setTheme((theme ?? 'light') as ColorSchemeType);
 }

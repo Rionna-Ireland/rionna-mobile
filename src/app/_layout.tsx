@@ -1,6 +1,18 @@
-import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
+import {
+  IBMPlexMono_400Regular,
+  useFonts as useIBMPlexMonoFonts,
+} from '@expo-google-fonts/ibm-plex-mono';
 
+import {
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_500Medium,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold,
+  useFonts as usePlusJakartaSansFonts,
+} from '@expo-google-fonts/plus-jakarta-sans';
+import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { ThemeProvider } from '@react-navigation/native';
+import { useFonts as useLocalFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import * as React from 'react';
@@ -34,6 +46,28 @@ SplashScreen.setOptions({
 });
 
 export default function RootLayout() {
+  // Load fonts under the exact family names referenced in global.css @theme.
+  // font-sans → PlusJakartaSans, font-display → PPEiko, font-mono → IBMPlexMono
+  const [jakartaLoaded] = usePlusJakartaSansFonts({
+    PlusJakartaSans: PlusJakartaSans_400Regular,
+    PlusJakartaSans_500Medium,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+  });
+  const [monoLoaded] = useIBMPlexMonoFonts({
+    IBMPlexMono: IBMPlexMono_400Regular,
+  });
+  const [eikoLoaded] = useLocalFonts({
+    'PPEiko': require('../../assets/fonts/PPEiko-Medium.otf'),
+    'PPEiko-Thin': require('../../assets/fonts/PPEiko-Thin.otf'),
+    'PPEiko-Heavy': require('../../assets/fonts/PPEiko-Heavy.otf'),
+  });
+
+  // Keep splash visible until fonts are ready
+  if (!jakartaLoaded || !monoLoaded || !eikoLoaded) {
+    return null;
+  }
+
   return (
     <Providers>
       <Stack>
