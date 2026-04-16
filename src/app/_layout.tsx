@@ -21,7 +21,7 @@ import FlashMessage from 'react-native-flash-message';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useThemeConfig } from '@/components/ui/use-theme-config';
-import { hydrateAuth } from '@/features/auth/use-auth-store';
+import { hydrateAuth, useAuthStore as useAuth } from '@/features/auth/use-auth-store';
 
 import { APIProvider } from '@/lib/api';
 import { loadSelectedTheme } from '@/lib/hooks/use-selected-theme';
@@ -46,6 +46,8 @@ SplashScreen.setOptions({
 });
 
 export default function RootLayout() {
+  const status = useAuth.use.status();
+
   // Load fonts under the exact family names referenced in global.css @theme.
   // font-sans → PlusJakartaSans, font-display → PPEiko, font-mono → IBMPlexMono
   const [jakartaLoaded] = usePlusJakartaSansFonts({
@@ -63,6 +65,16 @@ export default function RootLayout() {
     'PPEiko-Heavy': require('../../assets/fonts/PPEiko-Heavy.otf'),
   });
 
+  // Hide splash once fonts are loaded and auth state is resolved
+  React.useEffect(() => {
+    if (jakartaLoaded && monoLoaded && eikoLoaded && status !== 'idle') {
+      const timer = setTimeout(() => {
+        SplashScreen.hideAsync();
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [jakartaLoaded, monoLoaded, eikoLoaded, status]);
+
   // Keep splash visible until fonts are ready
   if (!jakartaLoaded || !monoLoaded || !eikoLoaded) {
     return null;
@@ -78,6 +90,13 @@ export default function RootLayout() {
             title: '',
             headerBackTitle: 'Stables',
             headerTransparent: true,
+          }}
+        />
+        <Stack.Screen
+          name="news/[news-post-id]"
+          options={{
+            title: '',
+            headerBackTitle: 'Pulse',
           }}
         />
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />

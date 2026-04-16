@@ -5,9 +5,9 @@
 /* Define your theme in CSS (replaces tailwind.config.js) */
 @theme {
   /* Font families */
-  --font-family-sans: 'PlusJakartaSans', ui-sans-serif, system-ui, sans-serif;
-  --font-family-display: 'PPEiko', serif;
-  --font-family-mono: 'IBMPlexMono', ui-monospace, monospace;
+  --font-family-sans: PlusJakartaSans;
+  --font-family-display: PPEiko;
+  --font-family-mono: IBMPlexMono;
 
   /* Core typography -- ONLY these for text */
   --color-text-dark: #000000;
@@ -96,22 +96,6 @@
   --color-destructive-foreground: #ffffff;
 }
 
-/* Dark mode colors */
-@media (prefers-color-scheme: dark) {
-  @theme {
-    --color-background: #0a0a0a;
-    --color-foreground: #fafafa;
-
-    --color-card: #171717;
-    --color-card-foreground: #fafafa;
-
-    --color-muted: #262626;
-    --color-muted-foreground: #a3a3a3;
-
-    --color-border: #404040;
-    --color-input: #404040;
-  }
-}
 
 @layer utilities {
   .text-balance {

@@ -1,0 +1,55 @@
+import * as React from 'react';
+import { Text, View } from '@/components/ui';
+
+type ArticleHeaderProps = {
+  title: string;
+  subtitle: string | null;
+  authorName: string | null;
+  publishedAt: string;
+};
+
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-IE', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
+export function ArticleHeader({
+  title,
+  subtitle,
+  authorName,
+  publishedAt,
+}: ArticleHeaderProps) {
+  return (
+    <View className="gap-2">
+      <Text className="font-display text-2xl font-bold text-charcoal-900">
+        {title}
+      </Text>
+      {subtitle
+        ? (
+            <Text className="text-base/relaxed text-charcoal-600">
+              {subtitle}
+            </Text>
+          )
+        : null}
+      <View className="flex-row items-center gap-2">
+        {authorName
+          ? (
+              <>
+                <Text className="text-sm font-medium text-charcoal-700">
+                  {authorName}
+                </Text>
+                <Text className="text-sm text-charcoal-400">&middot;</Text>
+              </>
+            )
+          : null}
+        <Text className="text-sm text-charcoal-500">
+          {formatDate(publishedAt)}
+        </Text>
+      </View>
+    </View>
+  );
+}
