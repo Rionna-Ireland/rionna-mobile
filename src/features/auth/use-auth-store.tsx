@@ -1,13 +1,21 @@
-import type { TokenType } from '@/lib/auth/utils';
+import type { AuthUser, TokenType } from '@/lib/auth/utils';
 
 import { create } from 'zustand';
-import { getToken, removeToken, setToken } from '@/lib/auth/utils';
+import {
+  getToken,
+  getUser,
+  removeToken,
+  removeUser,
+  setToken,
+  setUser,
+} from '@/lib/auth/utils';
 import { createSelectors } from '@/lib/utils';
 
 type AuthState = {
   token: TokenType | null;
+  user: AuthUser | null;
   status: 'idle' | 'signOut' | 'signIn';
-  signIn: (data: TokenType) => void;
+  signIn: (token: TokenType, user: AuthUser) => void;
   signOut: () => void;
   hydrate: () => void;
 };
@@ -15,29 +23,31 @@ type AuthState = {
 const _useAuthStore = create<AuthState>((set, get) => ({
   status: 'idle',
   token: null,
-  signIn: (token) => {
+  user: null,
+  signIn: (token, user) => {
     setToken(token);
-    set({ status: 'signIn', token });
+    setUser(user);
+    set({ status: 'signIn', token, user });
   },
   signOut: () => {
     removeToken();
-    set({ status: 'signOut', token: null });
+    removeUser();
+    set({ status: 'signOut', token: null, user: null });
   },
   hydrate: () => {
     try {
       const userToken = getToken();
+      const userData = getUser();
       if (userToken !== null) {
-        get().signIn(userToken);
+        set({ status: 'signIn', token: userToken, user: userData });
       }
       else {
         get().signOut();
       }
     }
     catch (e) {
-      // only to remove eslint error, handle the error properly
-      console.error(e);
-      // catch error here
-      // Maybe sign_out user!
+      console.error('Auth hydration error:', e);
+      get().signOut();
     }
   },
 }));
@@ -45,5 +55,7 @@ const _useAuthStore = create<AuthState>((set, get) => ({
 export const useAuthStore = createSelectors(_useAuthStore);
 
 export const signOut = () => _useAuthStore.getState().signOut();
-export const signIn = (token: TokenType) => _useAuthStore.getState().signIn(token);
+export function signIn(token: TokenType, user: AuthUser) {
+  return _useAuthStore.getState().signIn(token, user);
+}
 export const hydrateAuth = () => _useAuthStore.getState().hydrate();

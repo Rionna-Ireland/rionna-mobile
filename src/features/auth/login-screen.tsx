@@ -12,7 +12,7 @@ export function LoginScreen() {
 
   const onSubmit: LoginFormProps['onSubmit'] = (data) => {
     console.log(data);
-    signIn({ access: 'access-token', refresh: 'refresh-token' });
+    signIn('temp-token', { id: 'temp', email: data.email });
     router.push('/');
   };
 
