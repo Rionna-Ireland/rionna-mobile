@@ -4,12 +4,11 @@ import type { AppIconBadgeConfig } from 'app-icon-badge/types';
 
 import 'tsx/cjs';
 
-// adding lint exception as we need to import tsx/cjs before env.ts is imported
 // eslint-disable-next-line perfectionist/sort-imports
 import Env from './env';
 
-const EXPO_ACCOUNT_OWNER = 'obytes';
-const EAS_PROJECT_ID = 'c3e1075b-6fe7-4686-aa49-35b46a229044';
+const EXPO_ACCOUNT_OWNER = 'rionna';
+const EAS_PROJECT_ID = 'c3e1075b-6fe7-4686-aa49-35b46a229044'; // TODO: update with real EAS project ID
 
 const appIconBadgeConfig: AppIconBadgeConfig = {
   enabled: Env.EXPO_PUBLIC_APP_ENV !== 'production',
@@ -33,7 +32,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   description: `${Env.EXPO_PUBLIC_NAME} Mobile App`,
   owner: EXPO_ACCOUNT_OWNER,
   scheme: Env.EXPO_PUBLIC_SCHEME,
-  slug: 'obytesapp',
+  slug: 'pink-connections',
   version: Env.EXPO_PUBLIC_VERSION.toString(),
   orientation: 'portrait',
   icon: './assets/icon.png',
@@ -56,7 +55,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   android: {
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
-      backgroundColor: '#2E3C4B',
+      backgroundColor: '#374B6C',
     },
     package: Env.EXPO_PUBLIC_PACKAGE,
   },
@@ -68,7 +67,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       'expo-splash-screen',
       {
-        backgroundColor: '#2E3C4B',
+        backgroundColor: '#374B6C',
         image: './assets/splash-icon.png',
         imageWidth: 150,
       },
@@ -78,33 +77,41 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       {
         ios: {
           fonts: [
-            'node_modules/@expo-google-fonts/inter/400Regular/Inter_400Regular.ttf',
-            'node_modules/@expo-google-fonts/inter/500Medium/Inter_500Medium.ttf',
-            'node_modules/@expo-google-fonts/inter/600SemiBold/Inter_600SemiBold.ttf',
-            'node_modules/@expo-google-fonts/inter/700Bold/Inter_700Bold.ttf',
+            'assets/fonts/PPEiko-Thin.otf',
+            'assets/fonts/PPEiko-LightItalic.otf',
+            'assets/fonts/PPEiko-Medium.otf',
+            'assets/fonts/PPEiko-Heavy.otf',
+            'assets/fonts/PPEiko-BlackItalic.otf',
+            'node_modules/@expo-google-fonts/plus-jakarta-sans/400Regular/PlusJakartaSans_400Regular.ttf',
+            'node_modules/@expo-google-fonts/plus-jakarta-sans/500Medium/PlusJakartaSans_500Medium.ttf',
+            'node_modules/@expo-google-fonts/plus-jakarta-sans/600SemiBold/PlusJakartaSans_600SemiBold.ttf',
+            'node_modules/@expo-google-fonts/plus-jakarta-sans/700Bold/PlusJakartaSans_700Bold.ttf',
+            'node_modules/@expo-google-fonts/ibm-plex-mono/400Regular/IBMPlexMono_400Regular.ttf',
           ],
         },
         android: {
           fonts: [
             {
-              fontFamily: 'Inter',
+              fontFamily: 'PPEiko',
               fontDefinitions: [
-                {
-                  path: 'node_modules/@expo-google-fonts/inter/400Regular/Inter_400Regular.ttf',
-                  weight: 400,
-                },
-                {
-                  path: 'node_modules/@expo-google-fonts/inter/500Medium/Inter_500Medium.ttf',
-                  weight: 500,
-                },
-                {
-                  path: 'node_modules/@expo-google-fonts/inter/600SemiBold/Inter_600SemiBold.ttf',
-                  weight: 600,
-                },
-                {
-                  path: 'node_modules/@expo-google-fonts/inter/700Bold/Inter_700Bold.ttf',
-                  weight: 700,
-                },
+                { path: 'assets/fonts/PPEiko-Thin.otf', weight: 100 },
+                { path: 'assets/fonts/PPEiko-Medium.otf', weight: 500 },
+                { path: 'assets/fonts/PPEiko-Heavy.otf', weight: 800 },
+              ],
+            },
+            {
+              fontFamily: 'PlusJakartaSans',
+              fontDefinitions: [
+                { path: 'node_modules/@expo-google-fonts/plus-jakarta-sans/400Regular/PlusJakartaSans_400Regular.ttf', weight: 400 },
+                { path: 'node_modules/@expo-google-fonts/plus-jakarta-sans/500Medium/PlusJakartaSans_500Medium.ttf', weight: 500 },
+                { path: 'node_modules/@expo-google-fonts/plus-jakarta-sans/600SemiBold/PlusJakartaSans_600SemiBold.ttf', weight: 600 },
+                { path: 'node_modules/@expo-google-fonts/plus-jakarta-sans/700Bold/PlusJakartaSans_700Bold.ttf', weight: 700 },
+              ],
+            },
+            {
+              fontFamily: 'IBMPlexMono',
+              fontDefinitions: [
+                { path: 'node_modules/@expo-google-fonts/ibm-plex-mono/400Regular/IBMPlexMono_400Regular.ttf', weight: 400 },
               ],
             },
           ],
