@@ -36,7 +36,7 @@ export function NextEntryCard({ entry }: NextEntryCardProps) {
 
       {race.name
         ? (
-            <Text className="font-display mb-2 text-lg font-bold text-charcoal-900">
+            <Text className="mb-2 font-display text-lg font-bold text-charcoal-900">
               {race.name}
             </Text>
           )

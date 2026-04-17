@@ -202,7 +202,7 @@ export function Select(props: SelectProps) {
         {error && (
           <Text
             testID={`${testID}-error`}
-            className="text-sm text-danger-300 dark:text-danger-600"
+            className="dark:text-danger-600 text-sm text-danger-300"
           >
             {error}
           </Text>
