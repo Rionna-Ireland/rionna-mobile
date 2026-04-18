@@ -1,0 +1,164 @@
+import Env from 'env';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import * as React from 'react';
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from '@/components/ui';
+import { useHorse } from '@/features/stables/api/use-horse';
+import { NextEntryCard } from '@/features/stables/components/next-entry-card';
+import { ResultRow } from '@/features/stables/components/result-row';
+
+type Horse = NonNullable<ReturnType<typeof useHorse>['data']>;
+
+function HorseHero({ horse }: { horse: Horse }) {
+  return (
+    <View className="px-6 pt-8 pb-6">
+      <View className="relative mb-6">
+        <View className="aspect-4/5 overflow-hidden rounded-2xl bg-muted">
+          {horse.photos[0]
+            ? (
+                <Image
+                  source={{ uri: `${horse.photos[0].url}?width=800&quality=80` }}
+                  className="size-full"
+                  contentFit="cover"
+                />
+              )
+            : (
+                <View className="flex-1 bg-muted" />
+              )}
+        </View>
+        <View className="absolute -right-2 -bottom-6 hidden rounded-xl bg-primary p-6 md:flex">
+          <Text className="font-display text-2xl text-on-primary italic">The Jewel of</Text>
+          <Text className="font-display text-3xl text-on-primary">Rionna</Text>
+        </View>
+      </View>
+      <View className="mt-8">
+        <Text className="mb-2 font-mono text-[10px] font-bold tracking-widest text-primary uppercase">
+          Equestrian Profile
+        </Text>
+        <Text className="mb-4 font-display text-6xl text-primary">
+          {horse.name}
+        </Text>
+        <View className="mb-6 flex-row flex-wrap gap-2">
+          <View className="rounded-full bg-muted px-3 py-1.5">
+            <Text className="font-mono text-[10px] font-bold tracking-widest text-primary uppercase">
+              {horse.status}
+            </Text>
+          </View>
+        </View>
+        {horse.bio
+          ? (
+              <Text className="font-display text-xl/relaxed text-muted-foreground">
+                {horse.bio}
+              </Text>
+            )
+          : null}
+      </View>
+    </View>
+  );
+}
+
+export default function HorseProfileScreen() {
+  const params = useLocalSearchParams<{ 'horse-id': string }>();
+  const horseId = params['horse-id'];
+  const { data: horse, isLoading, isError } = useHorse(horseId);
+  const router = useRouter();
+
+  if (isLoading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-background">
+        <ActivityIndicator />
+      </View>
+    );
+  }
+
+  if (isError || !horse) {
+    return (
+      <View className="flex-1 items-center justify-center bg-background p-4">
+        <Text className="text-center font-sans text-muted-foreground">
+          Horse not found.
+        </Text>
+      </View>
+    );
+  }
+
+  const nextEntry = horse.entries?.find(
+    e => e.status === 'DECLARED' || e.status === 'ENTERED',
+  );
+  const results = horse.entries?.filter(e => e.status === 'RAN') ?? [];
+  const wins = results.filter(e => e.finishingPosition === 1).length;
+
+  const handleDiscussion = () => {
+    const communityDomain = Env.EXPO_PUBLIC_COMMUNITY_DOMAIN;
+    if (communityDomain && horse.circleSpaceId) {
+      router.push({
+        pathname: '/(app)/community',
+        params: {
+          url: `https://${communityDomain}/spaces/${horse.circleSpaceId}`,
+        },
+      });
+    }
+  };
+
+  return (
+    <ScrollView className="flex-1 bg-background">
+      <HorseHero horse={horse} />
+
+      {/* Stats Grid -- tonal layering, no borders or shadows */}
+      <View className="mb-10 flex-row flex-wrap gap-4 px-6">
+        <View className="w-[47%] rounded-2xl bg-card p-6">
+          <Text className="mb-2 font-mono text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Total Wins</Text>
+          <Text className="font-display text-4xl text-primary">{wins}</Text>
+        </View>
+        <View className="w-[47%] rounded-2xl bg-card p-6">
+          <Text className="mb-2 font-mono text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Starts</Text>
+          <Text className="font-display text-4xl text-primary">{results.length}</Text>
+        </View>
+      </View>
+
+      {/* Detail Modules */}
+      <View className="mb-12 gap-6 px-6">
+        {nextEntry && (
+          <View className="rounded-2xl bg-card p-6">
+            <Text className="mb-4 font-mono text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Next Up</Text>
+            <NextEntryCard entry={nextEntry} />
+          </View>
+        )}
+
+        {results.length > 0 && (
+          <View className="rounded-2xl bg-card p-6">
+            <Text className="mb-4 font-mono text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Recent Results</Text>
+            <View className="overflow-hidden">
+              {results.map(entry => (
+                <ResultRow key={entry.id} entry={entry} />
+              ))}
+            </View>
+          </View>
+        )}
+
+        {horse.trainer && (
+          <View className="rounded-2xl bg-primary p-6">
+            <Text className="mb-2 font-mono text-[10px] font-bold tracking-widest uppercase" style={{ color: '#c39cc0' }}>Trainer</Text>
+            <Text className="font-display text-2xl text-on-primary">{horse.trainer.name}</Text>
+          </View>
+        )}
+
+        {horse.circleSpaceId && (
+          <Pressable
+            onPress={handleDiscussion}
+            className="mt-4 items-center rounded-full bg-primary py-4 duration-200 active:scale-95"
+          >
+            <Text className="font-mono text-sm font-bold tracking-widest text-on-primary uppercase">
+              Join the Discussion
+            </Text>
+          </Pressable>
+        )}
+      </View>
+    </ScrollView>
+  );
+}

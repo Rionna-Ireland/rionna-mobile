@@ -5,13 +5,61 @@
 /* Define your theme in CSS (replaces tailwind.config.js) */
 @theme {
   /* Font families */
-  --font-family-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'PlusJakartaSans';
+  --font-display: 'PPEiko';
+  --font-mono: 'IBMPlexMono';
 
-  /* Base colors */
-  --color-white: #ffffff;
-  --color-black: #000000;
+  /* --- Rionna "Digital Estate" design system --- */
+  /* Soft ink -- NEVER pure #000 (see design-system §6) */
+  --color-ink: #1c1c18;
+  --color-ink-variant: #5a544f;
+  --color-paper: #fcf9f2; /* cream surface */
 
-  /* Charcoal palette */
+  /* Royal purple primary + gradient partner */
+  --color-primary: #391d3a;
+  --color-primary-container: #513351;
+  --color-on-primary: #fcf9f2;
+  --color-on-primary-container: #c39cc0;
+  --color-primary-fixed: #ffd6fb;
+  --color-secondary-container: #e4d5e2;
+  --color-secondary-fixed: #f0ddef;
+
+  /* Surface ladder (cream-paper stationery layering) */
+  --color-surface: #fcf9f2;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f7f3eb;
+  --color-surface-container: #f1eee7;
+  --color-surface-container-high: #ece8df;
+  --color-surface-container-highest: #e6e1d6;
+
+  /* Outlines (sparingly -- see "No-Line" rule) */
+  --color-outline: #a7998f;
+  --color-outline-variant: #d0c3cb;
+
+  /* --- Legacy palettes kept for existing screens that still reference them --- */
+  /* Text aliases */
+  --color-text-dark: #1c1c18;
+  --color-text-light: #fcf9f2;
+
+  /* Atmosphere / Blues */
+  --color-blue-100: #DAEDF3;
+  --color-blue-300: #B9D8E1;
+  --color-blue-700: #374B6C;
+  --color-blue-950: #172741;
+
+  /* Earth / Greens & Beige */
+  --color-beige: #EEEADF;
+  --color-green-100: #D4DCCE;
+  --color-green-300: #A6B999;
+  --color-green-950: #043F29;
+
+  /* Dawn / Pinks -- remapped toward the royal purple family */
+  --color-pink-100: #f0ddef;
+  --color-pink-300: #c39cc0;
+  --color-pink-700: #513351;
+  --color-pink-950: #391d3a;
+
+  /* Charcoal palette (keep for UI chrome) */
   --color-charcoal-50: #F2F2F2;
   --color-charcoal-100: #E5E5E5;
   --color-charcoal-200: #C9C9C9;
@@ -37,90 +85,43 @@
   --color-neutral-800: #262626;
   --color-neutral-900: #171717;
 
-  /* Primary palette */
-  --color-primary-50: #FFE2CC;
-  --color-primary-100: #FFC499;
-  --color-primary-200: #FFA766;
-  --color-primary-300: #FF984C;
-  --color-primary-400: #FF8933;
-  --color-primary-500: #FF7B1A;
-  --color-primary-600: #FF6C00;
-  --color-primary-700: #E56100;
-  --color-primary-800: #CC5600;
-  --color-primary-900: #B24C00;
-
   /* Success palette */
   --color-success-50: #F0FDF4;
-  --color-success-100: #DCFCE7;
-  --color-success-200: #BBF7D0;
   --color-success-300: #86EFAC;
-  --color-success-400: #4ADE80;
   --color-success-500: #22C55E;
-  --color-success-600: #16A34A;
   --color-success-700: #15803D;
-  --color-success-800: #166534;
-  --color-success-900: #14532D;
 
   /* Warning palette */
   --color-warning-50: #FFFBEB;
-  --color-warning-100: #FEF3C7;
-  --color-warning-200: #FDE68A;
   --color-warning-300: #FCD34D;
-  --color-warning-400: #FBBF24;
   --color-warning-500: #F59E0B;
-  --color-warning-600: #D97706;
   --color-warning-700: #B45309;
-  --color-warning-800: #92400E;
-  --color-warning-900: #78350F;
 
   /* Danger palette */
   --color-danger-50: #FEF2F2;
-  --color-danger-100: #FEE2E2;
-  --color-danger-200: #FECACA;
   --color-danger-300: #FCA5A5;
-  --color-danger-400: #F87171;
   --color-danger-500: #EF4444;
-  --color-danger-600: #DC2626;
   --color-danger-700: #B91C1C;
-  --color-danger-800: #991B1B;
-  --color-danger-900: #7F1D1D;
 
-  /* Semantic colors - using primary for main brand color */
-  --color-background: #ffffff;
-  --color-foreground: #0a0a0a;
+  /* Semantic colors (map onto the Digital Estate palette) */
+  --color-background: #fcf9f2;
+  --color-foreground: #1c1c18;
 
   --color-card: #ffffff;
-  --color-card-foreground: #0a0a0a;
+  --color-card-foreground: #1c1c18;
 
-  --color-muted: #f5f5f5;
-  --color-muted-foreground: #737373;
+  --color-muted: #f1eee7;
+  --color-muted-foreground: #5a544f;
 
-  --color-border: #e5e5e5;
-  --color-input: #e5e5e5;
-  --color-ring: #FF6C00;
+  --color-border: #d0c3cb;
+  --color-input: #d0c3cb;
+  --color-ring: #391d3a;
 
   --color-destructive: #ef4444;
-  --color-destructive-foreground: #ffffff;
+  --color-destructive-foreground: #fcf9f2;
 }
 
-/* Dark mode colors */
-@media (prefers-color-scheme: dark) {
-  @theme {
-    --color-background: #0a0a0a;
-    --color-foreground: #fafafa;
 
-    --color-card: #171717;
-    --color-card-foreground: #fafafa;
-
-    --color-muted: #262626;
-    --color-muted-foreground: #a3a3a3;
-
-    --color-border: #404040;
-    --color-input: #404040;
-  }
-}
-
-/* Custom utilities (if needed) */
 @layer utilities {
   .text-balance {
     text-wrap: balance;

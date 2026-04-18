@@ -1,7 +1,8 @@
-import type { LoginFormProps } from './components/login-form';
+import type { AuthUser } from '@/lib/auth/utils';
 import { useRouter } from 'expo-router';
 
 import * as React from 'react';
+
 import { FocusAwareStatusBar } from '@/components/ui';
 import { LoginForm } from './components/login-form';
 import { useAuthStore } from './use-auth-store';
@@ -10,16 +11,15 @@ export function LoginScreen() {
   const router = useRouter();
   const signIn = useAuthStore.use.signIn();
 
-  const onSubmit: LoginFormProps['onSubmit'] = (data) => {
-    console.log(data);
-    signIn({ access: 'access-token', refresh: 'refresh-token' });
+  const onSuccess = (data: { token: string; user: AuthUser }) => {
+    signIn(data.token, data.user);
     router.push('/');
   };
 
   return (
     <>
       <FocusAwareStatusBar />
-      <LoginForm onSubmit={onSubmit} />
+      <LoginForm onSuccess={onSuccess} />
     </>
   );
 }

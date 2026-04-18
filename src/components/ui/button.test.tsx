@@ -82,7 +82,7 @@ describe('button component ', () => {
     const button = screen.getByTestId('button');
     // TODO: should be fixed to use haveStyle instead of comparing the class name
     const expectedStyle
-      = 'font-inter font-semibold text-white dark:text-black text-xl';
+      = 'font-mono font-medium tracking-widest uppercase text-on-primary text-xl';
     const receivedStyle
       = button.props.children[0].props.children.props.className;
     expect(receivedStyle).toContain(expectedStyle);
@@ -92,7 +92,7 @@ describe('button component ', () => {
     const button = screen.getByTestId('button');
 
     const expectedStyle
-      = 'font-inter font-semibold text-secondary-600 text-base';
+      = 'font-mono font-medium tracking-widest uppercase text-primary text-base';
     const receivedStyle
       = button.props.children[0].props.children.props.className;
     expect(receivedStyle).toContain(expectedStyle);
@@ -102,7 +102,7 @@ describe('button component ', () => {
     const button = screen.getByTestId('button');
 
     const expectedStyle
-      = 'font-inter font-semibold text-base text-neutral-600 dark:text-neutral-600';
+      = 'font-mono font-medium tracking-widest uppercase text-base text-ink-variant';
     const receivedStyle
       = button.props.children[0].props.children.props.className;
     expect(receivedStyle).toContain(expectedStyle);

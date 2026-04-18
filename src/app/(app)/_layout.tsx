@@ -1,77 +1,56 @@
-import { Link, Redirect, SplashScreen, Tabs } from 'expo-router';
+import { Redirect, Tabs } from 'expo-router';
 import * as React from 'react';
-import { useCallback, useEffect } from 'react';
 
-import { Pressable, Text } from '@/components/ui';
 import {
-  Feed as FeedIcon,
-  Settings as SettingsIcon,
-  Style as StyleIcon,
+  Horse as HorseIcon,
+  Menu as MenuIcon,
+  Pulse as PulseIcon,
+  Users as UsersIcon,
 } from '@/components/ui/icons';
+import { CustomTabBar } from '@/components/ui/tab-bar';
 import { useAuthStore as useAuth } from '@/features/auth/use-auth-store';
-import { useIsFirstTime } from '@/lib/hooks/use-is-first-time';
 
 export default function TabLayout() {
   const status = useAuth.use.status();
-  const [isFirstTime] = useIsFirstTime();
-  const hideSplash = useCallback(async () => {
-    await SplashScreen.hideAsync();
-  }, []);
-  useEffect(() => {
-    if (status !== 'idle') {
-      const timer = setTimeout(() => {
-        hideSplash();
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [hideSplash, status]);
 
-  if (isFirstTime) {
-    return <Redirect href="/onboarding" />;
-  }
   if (status === 'signOut') {
     return <Redirect href="/login" />;
   }
   return (
-    <Tabs>
+    <Tabs tabBar={props => <CustomTabBar {...props} />}>
+      <Tabs.Screen
+        name="stables"
+        options={{
+          title: 'Stables',
+          tabBarIcon: ({ color }) => <HorseIcon color={color} />,
+          tabBarButtonTestID: 'stables-tab',
+        }}
+      />
+      <Tabs.Screen
+        name="community"
+        options={{
+          title: 'Community',
+          tabBarIcon: ({ color }) => <UsersIcon color={color} />,
+          tabBarButtonTestID: 'community-tab',
+          headerShown: false,
+        }}
+      />
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Feed',
-          tabBarIcon: ({ color }) => <FeedIcon color={color} />,
-          headerRight: () => <CreateNewPostLink />,
-          tabBarButtonTestID: 'feed-tab',
-        }}
-      />
-
-      <Tabs.Screen
-        name="style"
-        options={{
-          title: 'Style',
-          headerShown: false,
-          tabBarIcon: ({ color }) => <StyleIcon color={color} />,
-          tabBarButtonTestID: 'style-tab',
+          title: 'Pulse',
+          tabBarIcon: ({ color }) => <PulseIcon color={color} />,
+          tabBarButtonTestID: 'pulse-tab',
         }}
       />
       <Tabs.Screen
-        name="settings"
+        name="more"
         options={{
-          title: 'Settings',
-          headerShown: false,
-          tabBarIcon: ({ color }) => <SettingsIcon color={color} />,
-          tabBarButtonTestID: 'settings-tab',
+          title: 'More',
+          tabBarIcon: ({ color }) => <MenuIcon color={color} />,
+          tabBarButtonTestID: 'more-tab',
         }}
       />
     </Tabs>
-  );
-}
-
-function CreateNewPostLink() {
-  return (
-    <Link href="/feed/add-post" asChild>
-      <Pressable>
-        <Text className="px-3 text-primary-300">Create</Text>
-      </Pressable>
-    </Link>
   );
 }
