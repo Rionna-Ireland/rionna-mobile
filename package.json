@@ -10,6 +10,7 @@
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
+    "start:circle-mock": "cross-env EXPO_PUBLIC_CIRCLE_MODE=mock_server EXPO_PUBLIC_CIRCLE_MOCK_BASE_URL=http://localhost:5100 pnpm run start",
     "prebuild": "pnpm expo prebuild",
     "android": "expo run:android",
     "ios": "expo run:ios",

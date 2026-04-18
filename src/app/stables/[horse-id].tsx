@@ -1,4 +1,3 @@
-import Env from 'env';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
 import {
@@ -9,6 +8,7 @@ import {
   Text,
   View,
 } from '@/components/ui';
+import { buildCommunityTargetUrl } from '@/features/community/lib/circle-target';
 import { useHorse } from '@/features/stables/api/use-horse';
 import { NextEntryCard } from '@/features/stables/components/next-entry-card';
 import { ResultRow } from '@/features/stables/components/result-row';
@@ -94,12 +94,18 @@ export default function HorseProfileScreen() {
   const wins = results.filter(e => e.finishingPosition === 1).length;
 
   const handleDiscussion = () => {
-    const communityDomain = Env.EXPO_PUBLIC_COMMUNITY_DOMAIN;
-    if (communityDomain && horse.circleSpaceId) {
+    const discussionUrl = horse.circleSpaceId
+      ? buildCommunityTargetUrl({
+          realPath: `/spaces/${horse.circleSpaceId}`,
+          mockPath: `/__mock/ui/member/spaces/${horse.circleSpaceId}`,
+        })
+      : null;
+
+    if (discussionUrl) {
       router.push({
         pathname: '/(app)/community',
         params: {
-          url: `https://${communityDomain}/spaces/${horse.circleSpaceId}`,
+          url: discussionUrl,
         },
       });
     }

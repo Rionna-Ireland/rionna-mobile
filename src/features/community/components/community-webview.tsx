@@ -221,7 +221,10 @@ export function CommunityWebView({ initialUrl }: Props) {
   // Only auto-refresh on session-expired URLs when we actually have an authed
   // session to refresh -- otherwise the user can never reach the Circle login
   // form (we'd loop them out of it).
-  const hasAuthedSession = communityUrl?.includes('/session/cookies?access_token=') ?? false;
+  const hasAuthedSession
+    = communityUrl?.includes('/session/cookies?access_token=')
+      || communityUrl?.includes('/__mock/ui/mobile-entry?access_token=')
+      || false;
 
   const handleNavStateChange = useCallback(
     (navState: WebViewNavigation) => {
@@ -229,6 +232,7 @@ export function CommunityWebView({ initialUrl }: Props) {
         return;
       if (
         navState.url.includes('/session/expired')
+        || navState.url.includes('state=expired')
         || navState.url.includes('/login')
         || navState.url.includes('/sign_in')
       ) {

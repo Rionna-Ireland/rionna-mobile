@@ -12,6 +12,8 @@ const envSchema = z.object({
   EXPO_PUBLIC_API_URL: z.string(),
   EXPO_PUBLIC_CLUB_ID: z.string(),
   EXPO_PUBLIC_CLUB_NAME: z.string(),
+  EXPO_PUBLIC_CIRCLE_MODE: z.enum(['mock_service', 'mock_server', 'real']).optional(),
+  EXPO_PUBLIC_CIRCLE_MOCK_BASE_URL: z.string().optional(),
   EXPO_PUBLIC_COMMUNITY_DOMAIN: z.string().optional(),
 });
 
@@ -50,6 +52,8 @@ const _env: z.infer<typeof envSchema> = {
   EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000',
   EXPO_PUBLIC_CLUB_ID: process.env.EXPO_PUBLIC_CLUB_ID ?? 'org_pink_connections',
   EXPO_PUBLIC_CLUB_NAME: process.env.EXPO_PUBLIC_CLUB_NAME ?? 'Pink Connections',
+  EXPO_PUBLIC_CIRCLE_MODE: process.env.EXPO_PUBLIC_CIRCLE_MODE as z.infer<typeof envSchema>['EXPO_PUBLIC_CIRCLE_MODE'],
+  EXPO_PUBLIC_CIRCLE_MOCK_BASE_URL: process.env.EXPO_PUBLIC_CIRCLE_MOCK_BASE_URL,
   EXPO_PUBLIC_COMMUNITY_DOMAIN: process.env.EXPO_PUBLIC_COMMUNITY_DOMAIN,
 };
 
