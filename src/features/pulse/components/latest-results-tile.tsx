@@ -24,10 +24,10 @@ function positionColor(pos: number | null): string {
 function PositionBadge({ position }: { position: number | null }) {
   return (
     <View
-      className="size-8 items-center justify-center rounded-full"
+      className="size-10 items-center justify-center rounded-full shadow-sm"
       style={{ backgroundColor: positionColor(position) }}
     >
-      <Text className="text-xs font-bold text-white">
+      <Text className="font-sans text-sm font-bold text-white">
         {position
           ? ordinal(position)
           : '—'}
@@ -42,14 +42,14 @@ function ResultRow({ result }: { result: LatestResult }) {
   return (
     <Pressable
       onPress={() => router.push(`/stables/${result.horse.id}`)}
-      className="flex-row items-center gap-3 px-4 py-3"
+      className="flex-row items-center gap-4 px-6 py-4"
     >
       <PositionBadge position={result.finishingPosition} />
       <View className="flex-1">
-        <Text className="text-sm font-semibold text-foreground">
+        <Text className="font-sans text-base font-semibold text-ink">
           {result.horse.name}
         </Text>
-        <Text className="text-xs text-neutral-500">
+        <Text className="font-mono text-xs tracking-wider text-ink-variant uppercase">
           {result.race.meeting.course.name}
         </Text>
       </View>
@@ -76,8 +76,8 @@ export function LatestResultsTile({ data, isLoading }: LatestResultsTileProps) {
             </View>
           )
         : (
-            <View className="px-4 pb-4">
-              <Text className="text-sm text-neutral-400">No results yet</Text>
+            <View className="px-6 pb-6">
+              <Text className="font-sans text-base text-ink-variant">No results yet</Text>
             </View>
           )}
     </TileWrapper>

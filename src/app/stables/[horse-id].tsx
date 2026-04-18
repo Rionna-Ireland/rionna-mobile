@@ -19,7 +19,7 @@ function HorseHero({ horse }: { horse: Horse }) {
   return (
     <View className="px-6 pt-8 pb-6">
       <View className="relative mb-6">
-        <View className="aspect-4/5 overflow-hidden rounded-2xl border border-neutral-200 shadow-xl">
+        <View className="aspect-4/5 overflow-hidden rounded-2xl bg-muted">
           {horse.photos[0]
             ? (
                 <Image
@@ -29,31 +29,31 @@ function HorseHero({ horse }: { horse: Horse }) {
                 />
               )
             : (
-                <View className="flex-1 bg-neutral-200" />
+                <View className="flex-1 bg-muted" />
               )}
         </View>
-        <View className="absolute -right-2 -bottom-6 hidden rounded-xl bg-primary p-6 shadow-xl md:flex">
-          <Text className="font-display text-2xl text-white italic">The Jewel of</Text>
-          <Text className="font-display text-3xl text-white">Rionna</Text>
+        <View className="absolute -right-2 -bottom-6 hidden rounded-xl bg-primary p-6 md:flex">
+          <Text className="font-display text-2xl text-on-primary italic">The Jewel of</Text>
+          <Text className="font-display text-3xl text-on-primary">Rionna</Text>
         </View>
       </View>
       <View className="mt-8">
-        <Text className="mb-2 font-mono text-[10px] tracking-widest text-primary uppercase">
+        <Text className="mb-2 font-mono text-[10px] font-bold tracking-widest text-primary uppercase">
           Equestrian Profile
         </Text>
         <Text className="mb-4 font-display text-6xl text-primary">
           {horse.name}
         </Text>
         <View className="mb-6 flex-row flex-wrap gap-2">
-          <View className="rounded-full bg-neutral-200/50 px-3 py-1.5">
-            <Text className="font-mono text-[10px] tracking-widest text-primary uppercase">
+          <View className="rounded-full bg-muted px-3 py-1.5">
+            <Text className="font-mono text-[10px] font-bold tracking-widest text-primary uppercase">
               {horse.status}
             </Text>
           </View>
         </View>
         {horse.bio
           ? (
-              <Text className="font-display text-xl/relaxed text-[#4d444b]">
+              <Text className="font-display text-xl/relaxed text-muted-foreground">
                 {horse.bio}
               </Text>
             )
@@ -71,7 +71,7 @@ export default function HorseProfileScreen() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-[#fcf9f2]">
+      <View className="flex-1 items-center justify-center bg-background">
         <ActivityIndicator />
       </View>
     );
@@ -79,8 +79,8 @@ export default function HorseProfileScreen() {
 
   if (isError || !horse) {
     return (
-      <View className="flex-1 items-center justify-center bg-[#fcf9f2] p-4">
-        <Text className="text-center font-sans text-neutral-500">
+      <View className="flex-1 items-center justify-center bg-background p-4">
+        <Text className="text-center font-sans text-muted-foreground">
           Horse not found.
         </Text>
       </View>
@@ -106,17 +106,17 @@ export default function HorseProfileScreen() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-[#fcf9f2]">
+    <ScrollView className="flex-1 bg-background">
       <HorseHero horse={horse} />
 
-      {/* Stats Grid */}
+      {/* Stats Grid -- tonal layering, no borders or shadows */}
       <View className="mb-10 flex-row flex-wrap gap-4 px-6">
-        <View className="w-[47%] rounded-2xl border border-neutral-100 bg-white p-6 shadow-sm">
-          <Text className="mb-2 font-mono text-[10px] tracking-widest text-[#7e747c] uppercase">Total Wins</Text>
+        <View className="w-[47%] rounded-2xl bg-card p-6">
+          <Text className="mb-2 font-mono text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Total Wins</Text>
           <Text className="font-display text-4xl text-primary">{wins}</Text>
         </View>
-        <View className="w-[47%] rounded-2xl border border-neutral-100 bg-white p-6 shadow-sm">
-          <Text className="mb-2 font-mono text-[10px] tracking-widest text-[#7e747c] uppercase">Starts</Text>
+        <View className="w-[47%] rounded-2xl bg-card p-6">
+          <Text className="mb-2 font-mono text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Starts</Text>
           <Text className="font-display text-4xl text-primary">{results.length}</Text>
         </View>
       </View>
@@ -124,15 +124,15 @@ export default function HorseProfileScreen() {
       {/* Detail Modules */}
       <View className="mb-12 gap-6 px-6">
         {nextEntry && (
-          <View className="rounded-2xl border border-neutral-100 bg-white p-6 shadow-sm">
-            <Text className="mb-4 font-mono text-[10px] tracking-widest text-[#7e747c] uppercase">Next Up</Text>
+          <View className="rounded-2xl bg-card p-6">
+            <Text className="mb-4 font-mono text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Next Up</Text>
             <NextEntryCard entry={nextEntry} />
           </View>
         )}
 
         {results.length > 0 && (
-          <View className="rounded-2xl border border-neutral-100 bg-white p-6 shadow-sm">
-            <Text className="mb-4 font-mono text-[10px] tracking-widest text-[#7e747c] uppercase">Recent Results</Text>
+          <View className="rounded-2xl bg-card p-6">
+            <Text className="mb-4 font-mono text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Recent Results</Text>
             <View className="overflow-hidden">
               {results.map(entry => (
                 <ResultRow key={entry.id} entry={entry} />
@@ -142,18 +142,18 @@ export default function HorseProfileScreen() {
         )}
 
         {horse.trainer && (
-          <View className="rounded-2xl bg-[#374b6c] p-6 shadow-md">
-            <Text className="mb-2 font-mono text-[10px] tracking-widest text-blue-100 uppercase">Trainer</Text>
-            <Text className="font-display text-2xl text-white">{horse.trainer.name}</Text>
+          <View className="rounded-2xl bg-primary p-6">
+            <Text className="mb-2 font-mono text-[10px] font-bold tracking-widest uppercase" style={{ color: '#c39cc0' }}>Trainer</Text>
+            <Text className="font-display text-2xl text-on-primary">{horse.trainer.name}</Text>
           </View>
         )}
 
         {horse.circleSpaceId && (
           <Pressable
             onPress={handleDiscussion}
-            className="mt-4 items-center rounded-full bg-black py-4 duration-200 active:scale-95"
+            className="mt-4 items-center rounded-full bg-primary py-4 duration-200 active:scale-95"
           >
-            <Text className="font-mono text-sm tracking-widest text-white uppercase">
+            <Text className="font-mono text-sm font-bold tracking-widest text-on-primary uppercase">
               Join the Discussion
             </Text>
           </Pressable>

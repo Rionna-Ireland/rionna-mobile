@@ -30,10 +30,10 @@ function PostRow({ post }: { post: TrainerPost }) {
           pathname: '/(app)/community',
           params: post.url ? { url: post.url } : {},
         })}
-      className="gap-1 px-4 py-3"
+      className="gap-2 px-6 py-4"
     >
-      <Text className="text-sm text-foreground">{excerpt}</Text>
-      <Text className="text-xs text-neutral-400">
+      <Text className="font-sans text-base text-ink">{excerpt}</Text>
+      <Text className="font-mono text-xs tracking-wider text-ink-variant uppercase">
         {relativeTime(post.created_at)}
       </Text>
     </Pressable>
@@ -57,8 +57,8 @@ export function TrainerUpdatesTile({
             </View>
           )
         : (
-            <View className="px-4 pb-4">
-              <Text className="text-sm text-neutral-400">
+            <View className="px-6 pb-6">
+              <Text className="font-sans text-base text-ink-variant">
                 No trainer updates yet
               </Text>
             </View>

@@ -9,30 +9,55 @@
   --font-display: 'PPEiko';
   --font-mono: 'IBMPlexMono';
 
-  /* Core typography -- ONLY these for text */
-  --color-text-dark: #000000;
-  --color-text-light: #FFFFFF;
+  /* --- Rionna "Digital Estate" design system --- */
+  /* Soft ink -- NEVER pure #000 (see design-system §6) */
+  --color-ink: #1c1c18;
+  --color-ink-variant: #5a544f;
+  --color-paper: #fcf9f2; /* cream surface */
 
-  /* Palette 1: Atmosphere / Blues */
+  /* Royal purple primary + gradient partner */
+  --color-primary: #391d3a;
+  --color-primary-container: #513351;
+  --color-on-primary: #fcf9f2;
+  --color-on-primary-container: #c39cc0;
+  --color-primary-fixed: #ffd6fb;
+  --color-secondary-container: #e4d5e2;
+  --color-secondary-fixed: #f0ddef;
+
+  /* Surface ladder (cream-paper stationery layering) */
+  --color-surface: #fcf9f2;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f7f3eb;
+  --color-surface-container: #f1eee7;
+  --color-surface-container-high: #ece8df;
+  --color-surface-container-highest: #e6e1d6;
+
+  /* Outlines (sparingly -- see "No-Line" rule) */
+  --color-outline: #a7998f;
+  --color-outline-variant: #d0c3cb;
+
+  /* --- Legacy palettes kept for existing screens that still reference them --- */
+  /* Text aliases */
+  --color-text-dark: #1c1c18;
+  --color-text-light: #fcf9f2;
+
+  /* Atmosphere / Blues */
   --color-blue-100: #DAEDF3;
   --color-blue-300: #B9D8E1;
   --color-blue-700: #374B6C;
   --color-blue-950: #172741;
 
-  /* Palette 2: Earth / Greens & Beige */
+  /* Earth / Greens & Beige */
   --color-beige: #EEEADF;
   --color-green-100: #D4DCCE;
   --color-green-300: #A6B999;
   --color-green-950: #043F29;
 
-  /* Palette 3: Dawn / Pinks */
-  --color-pink-100: #F2D6F4;
-  --color-pink-300: #CCA1D0;
-  --color-pink-700: #57385A;
-  --color-pink-950: #3A243C;
-
-  /* Map primary to blue-700 for buttons, links, active states */
-  --color-primary: #374B6C;
+  /* Dawn / Pinks -- remapped toward the royal purple family */
+  --color-pink-100: #f0ddef;
+  --color-pink-300: #c39cc0;
+  --color-pink-700: #513351;
+  --color-pink-950: #391d3a;
 
   /* Charcoal palette (keep for UI chrome) */
   --color-charcoal-50: #F2F2F2;
@@ -78,22 +103,22 @@
   --color-danger-500: #EF4444;
   --color-danger-700: #B91C1C;
 
-  /* Semantic colors */
-  --color-background: #ffffff;
-  --color-foreground: #0a0a0a;
+  /* Semantic colors (map onto the Digital Estate palette) */
+  --color-background: #fcf9f2;
+  --color-foreground: #1c1c18;
 
   --color-card: #ffffff;
-  --color-card-foreground: #0a0a0a;
+  --color-card-foreground: #1c1c18;
 
-  --color-muted: #f5f5f5;
-  --color-muted-foreground: #737373;
+  --color-muted: #f1eee7;
+  --color-muted-foreground: #5a544f;
 
-  --color-border: #e5e5e5;
-  --color-input: #e5e5e5;
-  --color-ring: #374B6C;
+  --color-border: #d0c3cb;
+  --color-input: #d0c3cb;
+  --color-ring: #391d3a;
 
   --color-destructive: #ef4444;
-  --color-destructive-foreground: #ffffff;
+  --color-destructive-foreground: #fcf9f2;
 }
 
 

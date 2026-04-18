@@ -1,4 +1,3 @@
-/* eslint-disable better-tailwindcss/no-unknown-classes */
 import type { PressableProps, View } from 'react-native';
 import type { VariantProps } from 'tailwind-variants';
 import * as React from 'react';
@@ -7,27 +6,27 @@ import { tv } from 'tailwind-variants';
 
 const button = tv({
   slots: {
-    container: 'my-2 flex flex-row items-center justify-center rounded-md px-4',
+    container: 'my-2 flex flex-row items-center justify-center rounded-full px-4',
     label: 'font-mono text-base font-medium tracking-widest uppercase',
-    indicator: 'h-6 text-white',
+    indicator: 'h-6 text-on-primary',
   },
 
   variants: {
     variant: {
       default: {
-        container: 'bg-black dark:bg-white',
-        label: 'text-white dark:text-black',
-        indicator: 'text-white dark:text-black',
+        container: 'bg-primary shadow-sm',
+        label: 'text-on-primary',
+        indicator: 'text-on-primary',
       },
       secondary: {
-        container: 'bg-primary-600',
-        label: 'text-secondary-600',
-        indicator: 'text-white',
+        container: 'bg-surface-container-high',
+        label: 'text-primary',
+        indicator: 'text-primary',
       },
       outline: {
-        container: 'border border-neutral-400',
-        label: 'text-black dark:text-neutral-100',
-        indicator: 'text-black dark:text-neutral-100',
+        container: 'border border-outline-variant bg-transparent',
+        label: 'text-ink',
+        indicator: 'text-ink',
       },
       destructive: {
         container: 'bg-red-600',
@@ -36,13 +35,13 @@ const button = tv({
       },
       ghost: {
         container: 'bg-transparent',
-        label: 'text-black underline dark:text-white',
-        indicator: 'text-black dark:text-white',
+        label: 'text-ink underline',
+        indicator: 'text-ink',
       },
       link: {
         container: 'bg-transparent',
-        label: 'text-black',
-        indicator: 'text-black',
+        label: 'text-ink',
+        indicator: 'text-ink',
       },
     },
     size: {
@@ -63,9 +62,9 @@ const button = tv({
     },
     disabled: {
       true: {
-        container: 'bg-neutral-300 dark:bg-neutral-300',
-        label: 'text-neutral-600 dark:text-neutral-600',
-        indicator: 'text-neutral-400 dark:text-neutral-400',
+        container: 'bg-surface-container',
+        label: 'text-ink-variant',
+        indicator: 'text-ink-variant',
       },
     },
     fullWidth: {

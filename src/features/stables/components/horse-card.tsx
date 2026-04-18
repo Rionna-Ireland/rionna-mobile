@@ -13,7 +13,7 @@ export function HorseCard({ horse, onPress }: HorseCardProps) {
   return (
     <Pressable
       onPress={onPress}
-      className="overflow-hidden rounded-2xl bg-card shadow-md"
+      className="overflow-hidden rounded-2xl bg-card"
     >
       {photoUrl
         ? (
@@ -24,14 +24,14 @@ export function HorseCard({ horse, onPress }: HorseCardProps) {
             />
           )
         : (
-            <View className="aspect-3/2 w-full items-center justify-center bg-neutral-100">
-              <Text className="text-sm text-neutral-400">No photo</Text>
+            <View className="aspect-3/2 w-full items-center justify-center bg-muted">
+              <Text className="text-sm text-muted-foreground">No photo</Text>
             </View>
           )}
 
       <View className="gap-2 p-4">
         <View className="flex-row items-center justify-between">
-          <Text className="text-lg font-bold text-foreground">
+          <Text className="font-display text-2xl text-foreground">
             {horse.name}
           </Text>
           <StatusBadge status={horse.status} />
@@ -39,7 +39,7 @@ export function HorseCard({ horse, onPress }: HorseCardProps) {
 
         {horse.trainer
           ? (
-              <Text className="text-sm text-neutral-500">
+              <Text className="text-sm text-muted-foreground">
                 Trainer:
                 {' '}
                 {horse.trainer.name}
@@ -49,8 +49,8 @@ export function HorseCard({ horse, onPress }: HorseCardProps) {
 
         {horse.nextEntryId
           ? (
-              <View className="bg-primary-50 mt-1 rounded-lg px-3 py-2">
-                <Text className="text-primary-700 text-xs font-medium">
+              <View className="mt-1 rounded-lg bg-muted px-3 py-2">
+                <Text className="font-mono text-[10px] font-bold tracking-widest text-primary uppercase">
                   Entry upcoming
                 </Text>
               </View>

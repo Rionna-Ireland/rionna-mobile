@@ -23,8 +23,8 @@ function NextRunPhoto({ url }: { url: string | undefined }) {
   }
 
   return (
-    <View className="aspect-3/2 w-full items-center justify-center bg-neutral-100">
-      <Text className="text-sm text-neutral-400">No photo</Text>
+    <View className="aspect-3/2 w-full items-center justify-center bg-surface-container">
+      <Text className="font-mono text-xs tracking-wider text-ink-variant uppercase">No photo</Text>
     </View>
   );
 }
@@ -39,23 +39,23 @@ function NextRunContent({ entry }: { entry: NextRunEntry }) {
     >
       <NextRunPhoto url={photoUrl} />
 
-      <View className="gap-1 bg-white p-4">
-        <Text className="font-sans text-xl font-semibold text-black">
+      <View className="gap-2 p-6">
+        <Text className="font-sans text-2xl font-semibold text-ink">
           {entry.horse.name}
         </Text>
-        <Text className="font-sans text-base text-neutral-600">
+        <Text className="font-mono text-xs tracking-wider text-ink-variant uppercase">
           {entry.race.meeting.course.name}
         </Text>
         {entry.jockey
           ? (
-              <Text className="font-sans text-base text-neutral-600">
+              <Text className="font-mono text-xs tracking-wider text-ink-variant uppercase">
                 Jockey:
                 {' '}
                 {entry.jockey.name}
               </Text>
             )
           : null}
-        <View className="mt-2">
+        <View className="mt-4">
           <CountdownLabel postTime={entry.race.postTime} />
         </View>
       </View>
@@ -71,8 +71,8 @@ export function NextRunTile({ data, isLoading }: NextRunTileProps) {
             <NextRunContent entry={data} />
           )
         : (
-            <View className="px-4 pb-4">
-              <Text className="text-sm text-neutral-400">
+            <View className="px-6 pb-6">
+              <Text className="font-sans text-base text-ink-variant">
                 No upcoming runs — check back soon!
               </Text>
             </View>

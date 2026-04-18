@@ -19,17 +19,17 @@ function NewsCards({ items }: { items: ReturnType<typeof useLatestNews>['data'] 
       contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 20, paddingBottom: 32, gap: 16 }}
     >
       {items?.map(news => (
-        <Pressable key={news.id} className="w-64 rounded-xl border border-neutral-100 bg-white p-3 shadow-sm">
-          <View className="aspect-square w-full overflow-hidden rounded-lg bg-neutral-100">
+        <Pressable key={news.id} className="w-64 rounded-xl bg-card p-3">
+          <View className="aspect-square w-full overflow-hidden rounded-lg bg-muted">
             {news.featuredImageUrl && (
               <Image source={{ uri: `${news.featuredImageUrl}?width=400&quality=80` }} className="size-full" contentFit="cover" />
             )}
           </View>
           <View className="px-1 py-4">
-            <Text className="font-display text-2xl text-black" numberOfLines={2}>
+            <Text className="font-display text-2xl text-ink" numberOfLines={2}>
               {news.title}
             </Text>
-            <Text className="mt-4 font-mono text-[10px] tracking-widest text-pink-300 uppercase">
+            <Text className="mt-4 font-mono text-[10px] tracking-widest text-primary uppercase">
               {news.publishedAt ? '7 min read' : '12 min read'}
             </Text>
           </View>
@@ -60,68 +60,68 @@ export default function PulseScreen() {
 
   return (
     <ScrollView
-      className="flex-1 bg-[#fcf9f2]"
+      className="flex-1 bg-background"
       contentContainerStyle={{ paddingBottom: 120 }}
       refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetchAll} />}
     >
       {/* Top Header */}
       <View className="flex-row items-center justify-between px-6 pt-16 pb-4">
-        <Pressable className="size-10 items-center justify-center rounded-full border border-neutral-100 bg-white shadow-sm">
-          <Menu color="#000" />
+        <Pressable className="size-10 items-center justify-center rounded-full bg-card">
+          <Menu color="#1c1c18" />
         </Pressable>
-        <Text className="font-display text-2xl tracking-tight text-black">
+        <Text className="font-display text-2xl tracking-tight text-ink">
           Rionna
         </Text>
-        <Pressable className="size-10 items-center justify-center rounded-full border border-neutral-100 bg-white shadow-sm">
-          <Menu color="#000" />
+        <Pressable className="size-10 items-center justify-center rounded-full bg-card">
+          <Menu color="#1c1c18" />
         </Pressable>
       </View>
 
-      {/* Hero Text */}
+      {/* Hero Text -- "Inline Emphasis" pattern: primary + on_primary_container */}
       <View className="p-6">
-        <Text className="font-display text-7xl text-black" style={{ lineHeight: 74 }}>
+        <Text className="font-display text-7xl text-ink" style={{ lineHeight: 74 }}>
           A
           {' '}
-          <Text className="text-pink-700">new</Text>
+          <Text className="text-primary">new</Text>
           {' '}
           way
           {'\n'}
           into
           {' '}
-          <Text className="text-pink-700">racing.</Text>
+          <Text style={{ color: '#c39cc0' }}>racing.</Text>
         </Text>
-        <Text className="mt-8 font-sans text-xl/relaxed font-medium text-[#4d444b]">
+        <Text className="mt-8 font-sans text-xl/relaxed font-medium text-ink-variant">
           Follow the journey,
           {'\n'}
           from training to race day
         </Text>
       </View>
 
-      {/* Section: From the stable */}
+      {/* Section: From the stable -- tonal layering, no 1px borders */}
       <View className="mt-8 px-6">
-        <View className="flex-row items-end justify-between border-b border-neutral-200/50 pb-4">
-          <Text className="font-display text-4xl text-black">
+        <View className="flex-row items-end justify-between pb-4">
+          <Text className="font-display text-4xl text-ink">
             From the stable
           </Text>
-          <Text className="mb-1 font-sans text-sm font-semibold text-neutral-500">
+          <Text className="mb-1 font-sans text-sm font-semibold text-ink-variant">
             See All
           </Text>
         </View>
 
         {/* Tab Pills */}
         <View className="mt-4 flex-row gap-3">
-          <View className="rounded-sm bg-pink-300 px-4 py-2">
-            <Text className="font-mono text-[10px] font-bold tracking-widest text-pink-950 uppercase">
+          <View className="rounded-lg bg-primary px-4 py-2">
+            <Text className="font-mono text-[10px] font-bold tracking-widest uppercase" style={{ color: '#fcf9f2' }}>
               Latest Stories
             </Text>
           </View>
-          <View className="rounded-sm bg-[#e5e2db] px-4 py-2">
-            <Text className="font-mono text-[10px] font-bold tracking-widest text-[#4d444b] uppercase">
+          <View className="rounded-lg bg-muted px-4 py-2">
+            <Text className="font-mono text-[10px] font-bold tracking-widest text-ink-variant uppercase">
               Events
             </Text>
           </View>
-          <View className="rounded-sm bg-[#e5e2db] px-4 py-2">
-            <Text className="font-mono text-[10px] font-bold tracking-widest text-[#4d444b] uppercase">
+          <View className="rounded-lg bg-muted px-4 py-2">
+            <Text className="font-mono text-[10px] font-bold tracking-widest text-ink-variant uppercase">
               Locations
             </Text>
           </View>

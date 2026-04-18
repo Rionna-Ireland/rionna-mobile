@@ -25,7 +25,7 @@ type CountdownLabelProps = {
 
 export function CountdownLabel({ postTime }: CountdownLabelProps) {
   return (
-    <Text className="text-sm font-semibold text-charcoal-700">
+    <Text className="font-display text-4xl text-primary">
       {formatCountdown(postTime)}
     </Text>
   );

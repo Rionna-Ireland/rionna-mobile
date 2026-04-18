@@ -29,8 +29,8 @@ export function NextEntryCard({ entry }: NextEntryCardProps) {
   const postTime = formatPostTime(race.postTime);
 
   return (
-    <View className="border-l-primary-500 bg-primary-50 overflow-hidden rounded-2xl border-l-4 p-4">
-      <Text className="text-primary-500 mb-1 text-xs font-semibold tracking-wide uppercase">
+    <View className="overflow-hidden rounded-2xl bg-muted p-4">
+      <Text className="mb-1 font-mono text-[10px] font-bold tracking-widest text-primary uppercase">
         Next Entry
       </Text>
 

@@ -1,3 +1,4 @@
+import type * as WebBrowserType from 'expo-web-browser';
 import Env from 'env';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
@@ -16,7 +17,7 @@ import { SettingsItem } from '@/features/settings/components/settings-item';
 
 // Lazy-require so a missing native module (dev client not yet rebuilt) doesn't
 // crash the whole route. Falls back to Linking.openURL (system browser).
-let WebBrowser: typeof import('expo-web-browser') | null = null;
+let WebBrowser: typeof WebBrowserType | null = null;
 try {
   WebBrowser = require('expo-web-browser');
 }

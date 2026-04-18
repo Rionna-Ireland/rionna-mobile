@@ -299,7 +299,7 @@ export function CommunityWebView({ initialUrl }: Props) {
       />
       {pageLoading && (
         <View
-          className="absolute inset-0 items-center justify-center bg-white/80"
+          className="absolute inset-0 items-center justify-center bg-background/80"
           pointerEvents="none"
         >
           <ActivityIndicator size="large" color="#391d3a" />

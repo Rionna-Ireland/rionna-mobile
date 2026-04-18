@@ -12,7 +12,7 @@ import {
 
 export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   return (
-    <View className="absolute inset-x-6 bottom-6 flex-row items-center justify-between rounded-full border border-neutral-200 bg-white px-6 py-4 shadow-lg shadow-neutral-300">
+    <View className="absolute inset-x-6 bottom-6 flex-row items-center justify-between rounded-full bg-white/80 px-6 py-4 shadow-lg shadow-black/5">
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const isFocused = state.index === index;
@@ -44,7 +44,7 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
             testID={options.tabBarButtonTestID}
             className={`items-center justify-center rounded-full p-3 ${isFocused ? 'bg-[#391d3a] shadow-md' : ''}`}
           >
-            <Icon color={isFocused ? '#fcf9f2' : '#A3A3A3'} />
+            <Icon color={isFocused ? '#ffffff' : '#1c1c18'} />
           </Pressable>
         );
       })}

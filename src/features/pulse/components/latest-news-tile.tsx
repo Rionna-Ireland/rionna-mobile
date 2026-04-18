@@ -11,7 +11,7 @@ function FeaturedNewsRow({ item }: { item: NewsItem }) {
   return (
     <Pressable
       onPress={() => router.push(`/news/${item.slug}`)}
-      className="gap-2 px-4 py-3"
+      className="gap-2 px-6 py-4"
     >
       {item.featuredImageUrl
         ? (
@@ -22,12 +22,12 @@ function FeaturedNewsRow({ item }: { item: NewsItem }) {
             />
           )
         : null}
-      <Text className="text-sm font-semibold text-foreground">
+      <Text className="font-sans text-base font-semibold text-ink">
         {item.title}
       </Text>
       {item.author
         ? (
-            <Text className="text-xs text-neutral-400">{item.author.name}</Text>
+            <Text className="font-mono text-xs tracking-wider text-ink-variant uppercase">{item.author.name}</Text>
           )
         : null}
     </Pressable>
@@ -40,9 +40,9 @@ function CompactNewsRow({ item }: { item: NewsItem }) {
   return (
     <Pressable
       onPress={() => router.push(`/news/${item.slug}`)}
-      className="px-4 py-3"
+      className="px-6 py-4"
     >
-      <Text className="text-sm font-semibold text-foreground">
+      <Text className="font-sans text-base font-semibold text-ink">
         {item.title}
       </Text>
     </Pressable>
@@ -74,8 +74,8 @@ export function LatestNewsTile({ data, isLoading }: LatestNewsTileProps) {
             </View>
           )
         : (
-            <View className="px-4 pb-4">
-              <Text className="text-sm text-neutral-400">No news yet</Text>
+            <View className="px-6 pb-6">
+              <Text className="font-sans text-base text-ink-variant">No news yet</Text>
             </View>
           )}
     </TileWrapper>
