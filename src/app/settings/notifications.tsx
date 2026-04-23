@@ -44,6 +44,34 @@ const PUSH_ROWS: Row[] = [
   },
 ];
 
+const COMMUNITY_ROWS: Row[] = [
+  {
+    labelKey: 'settings.notifications.circleMention',
+    get: p => p.pushPreferences.circleMention !== false,
+    set: v => ({ pushPreferences: { circleMention: v } }),
+  },
+  {
+    labelKey: 'settings.notifications.circleReply',
+    get: p => p.pushPreferences.circleReply !== false,
+    set: v => ({ pushPreferences: { circleReply: v } }),
+  },
+  {
+    labelKey: 'settings.notifications.circleReaction',
+    get: p => p.pushPreferences.circleReaction !== false,
+    set: v => ({ pushPreferences: { circleReaction: v } }),
+  },
+  {
+    labelKey: 'settings.notifications.circleDm',
+    get: p => p.pushPreferences.circleDm !== false,
+    set: v => ({ pushPreferences: { circleDm: v } }),
+  },
+  {
+    labelKey: 'settings.notifications.circleHorseDiscussion',
+    get: p => p.pushPreferences.circleHorseDiscussion !== false,
+    set: v => ({ pushPreferences: { circleHorseDiscussion: v } }),
+  },
+];
+
 const EMAIL_ROWS: Row[] = [
   {
     labelKey: 'settings.notifications.emailNewsPost',
@@ -90,6 +118,17 @@ export default function NotificationsScreen() {
 
           <SectionLabel text="settings.notifications.whenSection" />
           {PUSH_ROWS.map(row => (
+            <ToggleRow
+              key={row.labelKey}
+              labelKey={row.labelKey}
+              value={pushMasterOn && row.get(data)}
+              disabled={!pushMasterOn}
+              onChange={v => update.mutate(row.set(v))}
+            />
+          ))}
+
+          <SectionLabel text="settings.notifications.communitySection" />
+          {COMMUNITY_ROWS.map(row => (
             <ToggleRow
               key={row.labelKey}
               labelKey={row.labelKey}

@@ -7,6 +7,11 @@ export type PushPreferences = {
   raceResult?: boolean;
   trainerPost?: boolean;
   newsPost?: boolean;
+  circleMention?: boolean;
+  circleReply?: boolean;
+  circleReaction?: boolean;
+  circleDm?: boolean;
+  circleHorseDiscussion?: boolean;
 };
 
 export type EmailPreferences = {
