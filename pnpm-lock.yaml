@@ -39,7 +39,7 @@ importers:
         specifier: ^0.1.2
         version: 0.1.2
       axios:
-        specifier: ^1.13.2
+        specifier: 1.13.2
         version: 1.13.2
       expo:
         specifier: ~54.0.32

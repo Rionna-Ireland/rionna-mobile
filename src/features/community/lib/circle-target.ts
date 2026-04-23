@@ -87,6 +87,11 @@ export function getDefaultCommunityLandingUrl(
   });
 }
 
+/**
+ * @deprecated S0-03 rollback path only — kept for the legacy token_url session method.
+ * Remove when EXPO_PUBLIC_CIRCLE_SESSION_METHOD=token_url is retired.
+ * @see Architecture/specs/S0-03-circle-cookie-auth.md §Rollback
+ */
 export function buildCommunitySessionUrl(input: {
   accessToken: string;
   redirectUrl?: string;

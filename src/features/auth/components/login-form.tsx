@@ -21,7 +21,7 @@ const schema = z.object({
 });
 
 export type LoginFormProps = {
-  onSuccess: (data: { token: string; user: AuthUser }) => void;
+  onSuccess: (data: { token: string; user: AuthUser }) => Promise<void> | void;
 };
 
 function FormHeader() {
@@ -70,11 +70,12 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
           password: value.password,
         });
         const { token, user } = response.data;
-        onSuccess({ token, user });
+        await onSuccess({ token, user });
       }
       catch (e: any) {
         const message
-          = e.response?.data?.message
+          = e?.message
+            ?? e.response?.data?.message
             ?? e.response?.data?.error
             ?? 'Sign in failed. Please check your credentials.';
         setError(message);
