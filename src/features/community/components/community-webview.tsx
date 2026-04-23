@@ -1,5 +1,6 @@
 import type { WebViewNavigation, WebView as WebViewType } from 'react-native-webview';
 
+import { useLocalSearchParams } from 'expo-router';
 import * as React from 'react';
 import { useCallback, useRef, useState } from 'react';
 
@@ -217,6 +218,10 @@ type Props = {
   initialUrl?: string;
 };
 
+type CommunityRouteParams = {
+  notificationTap?: string | string[];
+};
+
 type WebViewLoadEvent = {
   nativeEvent: {
     url: string;
@@ -239,6 +244,10 @@ type WebViewMessageEvent = {
     data: string;
   };
 };
+
+function getSearchParamValue(value?: string | string[]): string | undefined {
+  return Array.isArray(value) ? value[0] : value;
+}
 
 function isTerminalCircleAuthUrl(url: string): boolean {
   return (
@@ -472,11 +481,13 @@ function buildBootstrapScript(accessToken: string, postBootstrapPath: string): s
 }
 
 export function CommunityWebView({ initialUrl }: Props) {
+  const { notificationTap } = useLocalSearchParams<CommunityRouteParams>();
   const { accessToken, bootstrapUrl, postBootstrapPath, loading, error, errorMessage, refresh }
     = useCommunitySession(initialUrl);
   const [bootstrapped, setBootstrapped] = useState(false);
   const webviewRef = useRef<WebViewType>(null);
   const insets = useSafeAreaInsets();
+  const notificationTapToken = getSearchParamValue(notificationTap);
 
   const handleNavStateChange = useCallback(
     (navState: WebViewNavigation) => {
@@ -499,6 +510,10 @@ export function CommunityWebView({ initialUrl }: Props) {
   const bootstrapScript = React.useMemo(
     () => (accessToken ? buildBootstrapScript(accessToken, postBootstrapPath) : undefined),
     [accessToken, postBootstrapPath],
+  );
+  const webViewInstanceKey = React.useMemo(
+    () => [bootstrapUrl, postBootstrapPath, notificationTapToken ?? 'initial'].join('::'),
+    [bootstrapUrl, notificationTapToken, postBootstrapPath],
   );
 
   const handleMessage = useCallback(
@@ -533,6 +548,7 @@ export function CommunityWebView({ initialUrl }: Props) {
 
   return (
     <LoadedCommunityWebView
+      key={webViewInstanceKey}
       WebViewComponent={WebView}
       bootstrapScript={bootstrapScript}
       bootstrapUrl={bootstrapUrl}

@@ -42,7 +42,10 @@ export function handleNotificationResponse(
     case 'community':
       router.navigate({
         pathname: '/(app)/community',
-        params: { url: data.url },
+        params: {
+          url: data.url,
+          notificationTap: String(Date.now()),
+        },
       });
   }
 }
