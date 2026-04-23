@@ -39,6 +39,12 @@
     "logout": "Sign out",
     "more": "More",
     "notifications": {
+      "circleDm": "Direct messages",
+      "circleHorseDiscussion": "Horse discussion activity",
+      "circleMention": "Mentions",
+      "circleReaction": "Reactions",
+      "circleReply": "Replies",
+      "communitySection": "Community",
       "emailNewsPost": "News posts by email",
       "emailSection": "Email notifications",
       "enablePush": "Enable push notifications",
