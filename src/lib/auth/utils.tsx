@@ -9,6 +9,7 @@ export type AuthUser = {
   id: string;
   email: string;
   name?: string;
+  lastActiveOrganizationId?: string | null;
 };
 
 export function getToken(): TokenType | null {

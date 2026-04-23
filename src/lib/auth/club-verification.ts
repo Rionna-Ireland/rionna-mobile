@@ -4,7 +4,7 @@ import { client } from '@/lib/api/client';
 export async function verifyClubMembership(): Promise<boolean> {
   const clubId = Env.EXPO_PUBLIC_CLUB_ID;
   try {
-    const response = await client.get('/api/members/verify', {
+    const response = await client.get('/api/organizations/verify-membership', {
       params: { organizationId: clubId },
     });
     return response.data.isMember === true;

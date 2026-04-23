@@ -5,6 +5,7 @@ import type { AuthUser, TokenType } from '@/lib/auth/utils';
 import Constants from 'expo-constants';
 import { create } from 'zustand';
 import { client } from '@/lib/api/client';
+import { bootstrapMobileOrganization } from '@/lib/auth/mobile-org-bootstrap';
 import {
   getToken,
   getUser,
@@ -79,6 +80,9 @@ const _useAuthStore = create<AuthState>((set, get) => ({
       const userData = getUser();
       if (userToken !== null) {
         set({ status: 'signIn', token: userToken, user: userData });
+        bootstrapMobileOrganization().catch((e) => {
+          console.warn('Mobile organization bootstrap failed during hydration:', e);
+        });
       }
       else {
         get().signOut();
@@ -94,7 +98,7 @@ const _useAuthStore = create<AuthState>((set, get) => ({
 export const useAuthStore = createSelectors(_useAuthStore);
 
 export function signOut() {
-  _useAuthStore.getState().signOut();
+  return _useAuthStore.getState().signOut();
 }
 export function signIn(token: TokenType, user: AuthUser) {
   return _useAuthStore.getState().signIn(token, user);

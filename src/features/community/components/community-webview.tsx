@@ -34,6 +34,11 @@ catch {
 const CIRCLE_CSS_OVERRIDES = `
   (function() {
     try {
+      // Bail if the document is mid-teardown (Circle SPA navigation can
+      // transiently null out document.head). Safe to no-op — the theme
+      // re-injection on the next load-end will retry.
+      if (!document.head) { return; }
+
       // --- 1. Load Rionna fonts (Fraunces as PP Eiko stand-in + Plus Jakarta Sans + IBM Plex Mono) ---
       var pre1 = document.createElement('link');
       pre1.rel = 'preconnect';
@@ -212,46 +217,312 @@ type Props = {
   initialUrl?: string;
 };
 
+type WebViewLoadEvent = {
+  nativeEvent: {
+    url: string;
+  };
+};
+
+type WebViewErrorEvent = {
+  nativeEvent: unknown;
+};
+
+type WebViewHttpErrorEvent = {
+  nativeEvent: {
+    statusCode: number;
+    url: string;
+  };
+};
+
+type WebViewMessageEvent = {
+  nativeEvent: {
+    data: string;
+  };
+};
+
+function isTerminalCircleAuthUrl(url: string): boolean {
+  return (
+    url.startsWith('https://login.circle.so/')
+    || url.includes('/otp_confirmations')
+    || url.includes('/users/sign_in')
+    || url.includes('/users/sign_out')
+  );
+}
+
+function isExpiredSessionUrl(url: string): boolean {
+  return url.includes('/session/expired') || url.includes('state=expired');
+}
+
+function isTerminalBootstrapMessage(payload: unknown): boolean {
+  if (typeof payload !== 'object' || payload === null) {
+    return false;
+  }
+
+  const message = payload as { ok?: boolean; type?: string };
+  const { type } = message;
+
+  return (
+    type === 'rionna-cookies-bootstrap-noop'
+    || type === 'rionna-cookies-bootstrap-skipped'
+    || type === 'rionna-cookies-bootstrap-error'
+    || (type === 'rionna-cookies-bootstrap' && typeof message.ok === 'boolean')
+  );
+}
+
+function renderLoadingState(insetsTop: number) {
+  return (
+    <View style={{ flex: 1, paddingTop: insetsTop, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fcf9f2' }}>
+      <ActivityIndicator size="large" color="#391d3a" />
+    </View>
+  );
+}
+
+function renderUnavailableState(errorMessage: string | null) {
+  return <CommunityPlaceholder message={errorMessage ?? 'Community unavailable'} />;
+}
+
+type LoadedCommunityWebViewProps = {
+  WebViewComponent: typeof WebViewType;
+  bootstrapScript?: string;
+  bootstrapUrl: string;
+  bootstrapped: boolean;
+  insetsTop: number;
+  onMessage: (e: WebViewMessageEvent) => void;
+  onNavigationStateChange: (navState: WebViewNavigation) => void;
+  webviewRef: React.RefObject<WebViewType | null>;
+};
+
+function LoadedCommunityWebView({
+  WebViewComponent,
+  bootstrapScript,
+  bootstrapUrl,
+  bootstrapped,
+  insetsTop,
+  onMessage,
+  onNavigationStateChange,
+  webviewRef,
+}: LoadedCommunityWebViewProps) {
+  const [pageLoading, setLocalPageLoading] = useState(true);
+
+  return (
+    <View style={{ flex: 1, paddingTop: insetsTop, backgroundColor: '#fcf9f2' }}>
+      <WebViewComponent
+        ref={webviewRef}
+        source={{ uri: bootstrapUrl }}
+        style={{ flex: 1 }}
+        onNavigationStateChange={onNavigationStateChange}
+        onLoadStart={(e: WebViewLoadEvent) => {
+          console.log('[CommunityWebView] loadStart', e.nativeEvent.url);
+          setLocalPageLoading(true);
+        }}
+        onLoadEnd={(e: WebViewLoadEvent) => {
+          console.log('[CommunityWebView] loadEnd', e.nativeEvent.url);
+          setLocalPageLoading(false);
+          webviewRef.current?.injectJavaScript(CIRCLE_CSS_OVERRIDES);
+        }}
+        onMessage={onMessage}
+        onError={(e: WebViewErrorEvent) => {
+          console.warn('[CommunityWebView] error', e.nativeEvent);
+          setLocalPageLoading(false);
+        }}
+        onHttpError={(e: WebViewHttpErrorEvent) => {
+          console.warn(
+            '[CommunityWebView] httpError',
+            e.nativeEvent.statusCode,
+            e.nativeEvent.url,
+          );
+        }}
+        injectedJavaScript={CIRCLE_CSS_OVERRIDES}
+        injectedJavaScriptBeforeContentLoaded={bootstrapScript}
+        injectedJavaScriptBeforeContentLoadedForMainFrameOnly
+        javaScriptEnabled
+        domStorageEnabled
+        sharedCookiesEnabled
+        thirdPartyCookiesEnabled
+        allowsBackForwardNavigationGestures
+        applicationNameForUserAgent="PinkConnections/1.0"
+        userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1 PinkConnections/1.0"
+      />
+      {(pageLoading || !bootstrapped) && (
+        <View
+          className="absolute inset-0 items-center justify-center bg-background/80"
+          pointerEvents="none"
+        >
+          <ActivityIndicator size="large" color="#391d3a" />
+        </View>
+      )}
+    </View>
+  );
+}
+
+// S0-03 approach C: bootstrap cookies by running the fetch from inside the
+// WebView's own JS context. This works around the native-module New-Arch
+// incompatibility of @react-native-cookies/cookies. Same-origin fetch means
+// Circle's Set-Cookie headers install first-party into WKHTTPCookieStore
+// without any native bridge.
+//
+// The bootstrap page is `/404` on the community origin — a small static Rails
+// 404 HTML page that does NOT redirect (unlike `/`, `/users/sign_in`, etc.),
+// so `onLoadEnd` fires on the community origin and we get a JS context to
+// inject into. The user never sees it: `postBootstrapPath` is navigated to
+// via `window.location.replace` as soon as the fetch resolves.
+//
+// This script is delivered via `injectedJavaScriptBeforeContentLoaded` so it
+// runs BEFORE the 404 HTML renders. The script also injects an `html { visibility:
+// hidden }` rule so that if the 404 page does finish rendering before the
+// fetch resolves, it never becomes visible. The loading overlay covers
+// everything anyway, but the visibility hack eliminates any flash of the
+// Rails error-page background.
+function buildBootstrapScript(accessToken: string, postBootstrapPath: string): string {
+  // JWTs are base64url-ish but escape defensively.
+  const safeToken = accessToken.replace(/\\/g, '\\\\').replace(/'/g, '\\\'');
+  const safePath = postBootstrapPath.replace(/\\/g, '\\\\').replace(/'/g, '\\\'');
+  return `
+    (function () {
+      try {
+        var postMsg = function (payload) {
+          if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+            window.ReactNativeWebView.postMessage(JSON.stringify(payload));
+          }
+        };
+
+        // Determine where we are. The bootstrap page (/mobile-login) is the
+        // only place we ever want to take action — on any other Circle page
+        // we're either mid-navigation or already landed, nothing to do.
+        // Do NOT include the post-bootstrap path here: landing on it is
+        // exactly where we want the script to no-op.
+        var path = window.location && window.location.pathname
+          ? window.location.pathname
+          : '';
+        var onBootstrapPage = path === '/mobile-login'
+          || path === '/mobile-login/';
+
+        var hasCookies = document.cookie
+          && document.cookie.indexOf('skip_confirmed_password') !== -1;
+
+        if (!onBootstrapPage) {
+          // We're on a downstream page (e.g. /feed). Let Circle render it.
+          postMsg({ type: 'rionna-cookies-bootstrap-noop', path: path });
+          return;
+        }
+
+        // Hide the bootstrap page while we work so it never paints.
+        var ensureHidden = function () {
+          try {
+            if (document.documentElement) {
+              document.documentElement.style.visibility = 'hidden';
+              document.documentElement.style.backgroundColor = '#fcf9f2';
+            }
+          } catch (_) {}
+        };
+        ensureHidden();
+        if (document.addEventListener) {
+          document.addEventListener('DOMContentLoaded', ensureHidden, { once: true });
+        }
+
+        // If cookies are already installed (prior session), skip the fetch
+        // but still redirect away from the bootstrap page.
+        if (hasCookies) {
+          postMsg({ type: 'rionna-cookies-bootstrap-skipped', reason: 'already-authenticated' });
+          window.location.replace('${safePath}');
+          return;
+        }
+
+        // Session-level guard for concurrent navigations within the same
+        // WKWebView instance. sessionStorage persists across same-WebView
+        // navigations, so this prevents two bootstraps racing.
+        try {
+          if (sessionStorage.getItem('__rionna_bootstrap_in_flight')) {
+            return;
+          }
+          sessionStorage.setItem('__rionna_bootstrap_in_flight', '1');
+        } catch (_) {}
+
+        postMsg({ type: 'rionna-cookies-bootstrap-start' });
+
+        fetch('/api/headless/v1/cookies', {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + '${safeToken}' },
+          credentials: 'include',
+        }).then(function (res) {
+          try { sessionStorage.removeItem('__rionna_bootstrap_in_flight'); } catch (_) {}
+          postMsg({ type: 'rionna-cookies-bootstrap', status: res.status, ok: res.ok });
+          if (res.ok) {
+            // Replace not assign so the bootstrap URL doesn't linger in history.
+            window.location.replace('${safePath}');
+          } else {
+            if (document.documentElement) document.documentElement.style.visibility = '';
+          }
+        }).catch(function (err) {
+          try { sessionStorage.removeItem('__rionna_bootstrap_in_flight'); } catch (_) {}
+          postMsg({ type: 'rionna-cookies-bootstrap-error', message: String(err && err.message ? err.message : err) });
+          if (document.documentElement) document.documentElement.style.visibility = '';
+        });
+      } catch (err) {
+        if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
+          window.ReactNativeWebView.postMessage(JSON.stringify({
+            type: 'rionna-cookies-bootstrap-error',
+            message: String(err && err.message ? err.message : err),
+          }));
+        }
+      }
+    })();
+    true;
+  `;
+}
+
 export function CommunityWebView({ initialUrl }: Props) {
-  const { communityUrl, loading, error, refresh } = useCommunitySession(initialUrl);
-  const [pageLoading, setPageLoading] = useState(true);
+  const { accessToken, bootstrapUrl, postBootstrapPath, loading, error, errorMessage, refresh }
+    = useCommunitySession(initialUrl);
+  const [bootstrapped, setBootstrapped] = useState(false);
   const webviewRef = useRef<WebViewType>(null);
   const insets = useSafeAreaInsets();
 
-  // Only auto-refresh on session-expired URLs when we actually have an authed
-  // session to refresh -- otherwise the user can never reach the Circle login
-  // form (we'd loop them out of it).
-  const hasAuthedSession
-    = communityUrl?.includes('/session/cookies?access_token=')
-      || communityUrl?.includes('/__mock/ui/mobile-entry?access_token=')
-      || false;
-
   const handleNavStateChange = useCallback(
     (navState: WebViewNavigation) => {
-      if (!hasAuthedSession)
+      const url = navState.url;
+      if (isTerminalCircleAuthUrl(url)) {
         return;
-      if (
-        navState.url.includes('/session/expired')
-        || navState.url.includes('state=expired')
-        || navState.url.includes('/login')
-        || navState.url.includes('/sign_in')
-      ) {
+      }
+
+      if (isExpiredSessionUrl(url)) {
         refresh();
       }
     },
-    [refresh, hasAuthedSession],
+    [refresh],
+  );
+
+  // Precompute the bootstrap script once per (accessToken, postBootstrapPath)
+  // pair so injectedJavaScriptBeforeContentLoaded gets a stable value —
+  // some WebView implementations only honor this prop at mount, and changing
+  // it after mount is a no-op on iOS.
+  const bootstrapScript = React.useMemo(
+    () => (accessToken ? buildBootstrapScript(accessToken, postBootstrapPath) : undefined),
+    [accessToken, postBootstrapPath],
+  );
+
+  const handleMessage = useCallback(
+    (e: { nativeEvent: { data: string } }) => {
+      console.log('[CommunityWebView] message', e.nativeEvent.data);
+      try {
+        const payload = JSON.parse(e.nativeEvent.data);
+        if (isTerminalBootstrapMessage(payload)) {
+          setBootstrapped(true);
+        }
+      }
+      catch {
+        // Non-JSON message (unlikely) — ignore.
+      }
+    },
+    [],
   );
 
   if (loading) {
-    return (
-      <View style={{ flex: 1, paddingTop: insets.top, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fcf9f2' }}>
-        <ActivityIndicator size="large" color="#391d3a" />
-      </View>
-    );
+    return renderLoadingState(insets.top);
   }
 
-  if (error || !communityUrl) {
-    return <CommunityPlaceholder message="Community unavailable" />;
+  if (error || !bootstrapUrl) {
+    return renderUnavailableState(errorMessage);
   }
 
   if (!WebView) {
@@ -261,54 +532,15 @@ export function CommunityWebView({ initialUrl }: Props) {
   }
 
   return (
-    <View style={{ flex: 1, paddingTop: insets.top, backgroundColor: '#fcf9f2' }}>
-      <WebView
-        ref={webviewRef}
-        source={{ uri: communityUrl }}
-        style={{ flex: 1 }}
-        onNavigationStateChange={handleNavStateChange}
-        onLoadStart={(e) => {
-          console.log('[CommunityWebView] loadStart', e.nativeEvent.url);
-          setPageLoading(true);
-        }}
-        onLoadEnd={(e) => {
-          console.log('[CommunityWebView] loadEnd', e.nativeEvent.url);
-          setPageLoading(false);
-          // Re-inject the theme on every full load so SPA navigations that
-          // replace <head> or bypass `injectedJavaScript` still get branded.
-          webviewRef.current?.injectJavaScript(CIRCLE_CSS_OVERRIDES);
-        }}
-        onMessage={(e) => {
-          console.log('[CommunityWebView] message', e.nativeEvent.data);
-        }}
-        onError={(e) => {
-          console.warn('[CommunityWebView] error', e.nativeEvent);
-          setPageLoading(false);
-        }}
-        onHttpError={(e) => {
-          console.warn(
-            '[CommunityWebView] httpError',
-            e.nativeEvent.statusCode,
-            e.nativeEvent.url,
-          );
-        }}
-        injectedJavaScript={CIRCLE_CSS_OVERRIDES}
-        javaScriptEnabled
-        domStorageEnabled
-        sharedCookiesEnabled
-        thirdPartyCookiesEnabled
-        allowsBackForwardNavigationGestures
-        applicationNameForUserAgent="PinkConnections/1.0"
-        userAgent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1 PinkConnections/1.0"
-      />
-      {pageLoading && (
-        <View
-          className="absolute inset-0 items-center justify-center bg-background/80"
-          pointerEvents="none"
-        >
-          <ActivityIndicator size="large" color="#391d3a" />
-        </View>
-      )}
-    </View>
+    <LoadedCommunityWebView
+      WebViewComponent={WebView}
+      bootstrapScript={bootstrapScript}
+      bootstrapUrl={bootstrapUrl}
+      bootstrapped={bootstrapped}
+      insetsTop={insets.top}
+      onMessage={handleMessage}
+      onNavigationStateChange={handleNavStateChange}
+      webviewRef={webviewRef}
+    />
   );
 }
