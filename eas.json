@@ -18,7 +18,7 @@
       "env": {
         "EXPO_PUBLIC_APP_ENV": "production",
         "EXPO_PUBLIC_CLUB_ID": "org_pink_connections",
-        "EXPO_PUBLIC_API_URL": "https://pinkconnections.com/api"
+        "EXPO_PUBLIC_API_URL": "https://pinkconnections.com"
       }
     },
     "preview": {
@@ -36,7 +36,23 @@
       "env": {
         "EXPO_PUBLIC_APP_ENV": "preview",
         "EXPO_PUBLIC_CLUB_ID": "org_pink_connections",
-        "EXPO_PUBLIC_API_URL": "https://preview-rionna.vercel.app/api"
+        "EXPO_PUBLIC_API_URL": "https://preview-rionna.vercel.app"
+      }
+    },
+    "device_preview": {
+      "channel": "preview",
+      "autoIncrement": true,
+      "distribution": "internal",
+      "environment": "preview",
+      "ios": {
+        "image": "latest"
+      },
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "preview",
+        "EXPO_PUBLIC_CLUB_ID": "cmnx7v8jr0000425jebdv3kh9",
+        "EXPO_PUBLIC_API_URL": "https://app.rionna-e53dba.club",
+        "EXPO_PUBLIC_CIRCLE_MODE": "real",
+        "EXPO_PUBLIC_COMMUNITY_DOMAIN": "community.rionna-e53dba.club"
       }
     },
     "development": {
