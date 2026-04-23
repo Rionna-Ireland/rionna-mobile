@@ -7,8 +7,8 @@ import 'tsx/cjs';
 // eslint-disable-next-line perfectionist/sort-imports
 import Env from './env';
 
-const EXPO_ACCOUNT_OWNER = 'rionna';
-const EAS_PROJECT_ID = 'c3e1075b-6fe7-4686-aa49-35b46a229044'; // TODO: update with real EAS project ID
+const EXPO_ACCOUNT_OWNER = 'tothepoweroftom1';
+const EAS_PROJECT_ID = 'c1b50631-77df-41d3-8cf2-cc27e48ac688';
 
 const appIconBadgeConfig: AppIconBadgeConfig = {
   enabled: Env.EXPO_PUBLIC_APP_ENV !== 'production',
@@ -32,7 +32,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   description: `${Env.EXPO_PUBLIC_NAME} Mobile App`,
   owner: EXPO_ACCOUNT_OWNER,
   scheme: Env.EXPO_PUBLIC_SCHEME,
-  slug: 'pink-connections',
+  slug: 'rionna-test',
   version: Env.EXPO_PUBLIC_VERSION.toString(),
   orientation: 'portrait',
   icon: './assets/icon.png',
