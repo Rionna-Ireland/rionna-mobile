@@ -103,7 +103,7 @@ export default function HorseProfileScreen() {
 
     if (discussionUrl) {
       router.push({
-        pathname: '/(app)/community',
+        pathname: '/community-view',
         params: {
           url: discussionUrl,
         },

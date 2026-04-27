@@ -18,12 +18,16 @@ import { useFonts as useLocalFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import * as React from 'react';
-import { LogBox, StyleSheet } from 'react-native';
+import { AppState, LogBox, StyleSheet } from 'react-native';
 import FlashMessage from 'react-native-flash-message';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useThemeConfig } from '@/components/ui/use-theme-config';
 import { hydrateAuth, useAuthStore as useAuth } from '@/features/auth/use-auth-store';
+import {
+  clearNotificationBadgeCount,
+  syncNotificationBadgeCount,
+} from '@/features/notifications/badge';
 import { handleNotificationResponse } from '@/features/notifications/deep-link';
 import { registerForPushNotifications } from '@/features/notifications/setup';
 import { APIProvider } from '@/lib/api';
@@ -54,6 +58,68 @@ SplashScreen.setOptions({
   fade: true,
 });
 
+function useHideSplashWhenReady(
+  fontsLoaded: boolean,
+  status: ReturnType<typeof useAuth.use.status>,
+) {
+  React.useEffect(() => {
+    if (!fontsLoaded || status === 'idle')
+      return;
+
+    const timer = setTimeout(() => {
+      SplashScreen.hideAsync();
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [fontsLoaded, status]);
+}
+
+function useNotificationRegistration(status: ReturnType<typeof useAuth.use.status>) {
+  React.useEffect(() => {
+    if (status === 'signIn') {
+      registerForPushNotifications()
+        .then(() => syncNotificationBadgeCount())
+        .catch(() => {});
+    }
+    if (status === 'signOut') {
+      clearNotificationBadgeCount().catch(() => {});
+    }
+  }, [status]);
+}
+
+function useNotificationBadgeSync(status: ReturnType<typeof useAuth.use.status>) {
+  React.useEffect(() => {
+    if (status !== 'signIn')
+      return;
+
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        syncNotificationBadgeCount().catch(() => {});
+      }
+    });
+
+    syncNotificationBadgeCount().catch(() => {});
+    return () => subscription.remove();
+  }, [status]);
+}
+
+function useNotificationResponseListener() {
+  React.useEffect(() => {
+    let NotificationsMod: typeof NotificationsType | null = null;
+    try {
+      NotificationsMod = require('expo-notifications');
+    }
+    catch {
+      return;
+    }
+    if (!NotificationsMod)
+      return;
+    const subscription = NotificationsMod.addNotificationResponseReceivedListener(
+      handleNotificationResponse,
+    );
+    return () => subscription.remove();
+  }, []);
+}
+
 export default function RootLayout() {
   const status = useAuth.use.status();
 
@@ -73,43 +139,15 @@ export default function RootLayout() {
     'PPEiko-Thin': require('../../assets/fonts/PPEiko-Thin.otf'),
     'PPEiko-Heavy': require('../../assets/fonts/PPEiko-Heavy.otf'),
   });
+  const fontsLoaded = jakartaLoaded && monoLoaded && eikoLoaded;
 
-  // Hide splash once fonts are loaded and auth state is resolved
-  React.useEffect(() => {
-    if (jakartaLoaded && monoLoaded && eikoLoaded && status !== 'idle') {
-      const timer = setTimeout(() => {
-        SplashScreen.hideAsync();
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [jakartaLoaded, monoLoaded, eikoLoaded, status]);
-
-  // Register push token after sign-in; listen for tap-on-notification events
-  // regardless of auth state (cold-start taps arrive before sign-in hydrates).
-  React.useEffect(() => {
-    if (status === 'signIn') {
-      registerForPushNotifications().catch(() => {});
-    }
-  }, [status]);
-
-  React.useEffect(() => {
-    let NotificationsMod: typeof NotificationsType | null = null;
-    try {
-      NotificationsMod = require('expo-notifications');
-    }
-    catch {
-      return;
-    }
-    if (!NotificationsMod)
-      return;
-    const subscription = NotificationsMod.addNotificationResponseReceivedListener(
-      handleNotificationResponse,
-    );
-    return () => subscription.remove();
-  }, []);
+  useHideSplashWhenReady(fontsLoaded, status);
+  useNotificationRegistration(status);
+  useNotificationBadgeSync(status);
+  useNotificationResponseListener();
 
   // Keep splash visible until fonts are ready
-  if (!jakartaLoaded || !monoLoaded || !eikoLoaded) {
+  if (!fontsLoaded) {
     return null;
   }
 
@@ -117,6 +155,10 @@ export default function RootLayout() {
     <Providers>
       <Stack>
         <Stack.Screen name="(app)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="community-view"
+          options={{ title: 'Community' }}
+        />
         <Stack.Screen
           name="stables/[horse-id]"
           options={{

@@ -3,8 +3,6 @@ import type { WebViewNavigation, WebView as WebViewType } from 'react-native-web
 import * as React from 'react';
 import { useCallback, useRef, useState } from 'react';
 
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
 import { ActivityIndicator, View } from '@/components/ui';
 import { CommunityPlaceholder } from '@/features/community/components/community-placeholder';
 import { useCommunitySession } from '@/features/community/hooks/use-community-session';
@@ -139,6 +137,8 @@ const CIRCLE_CSS_OVERRIDES = `
         // Hide Circle chrome
         '.top-bar, .mobile-top-bar, [data-testid="top-bar"] { display: none !important; }',
         '.app-banner, .download-app-banner, [class*="DownloadAppPrompt"], [class*="MobileAppBanner"] { display: none !important; }',
+        // Sidebar sortable list: Play / App Store + "Add link" (noise inside PinkConnections)
+        'ul:has(a[title="Download the Android app"]), ul:has(a[href*="play.google.com/store/apps/details?id=so.circle.circle"]) { display: none !important; }',
 
         // Body font default — Plus Jakarta Sans
         'html, body, button, input, textarea, select, .post__body, [class*="RichText"] {',
@@ -269,9 +269,9 @@ function isTerminalBootstrapMessage(payload: unknown): boolean {
   );
 }
 
-function renderLoadingState(insetsTop: number) {
+function renderLoadingState() {
   return (
-    <View style={{ flex: 1, paddingTop: insetsTop, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fcf9f2' }}>
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fcf9f2' }}>
       <ActivityIndicator size="large" color="#391d3a" />
     </View>
   );
@@ -286,7 +286,6 @@ type LoadedCommunityWebViewProps = {
   bootstrapScript?: string;
   bootstrapUrl: string;
   bootstrapped: boolean;
-  insetsTop: number;
   onMessage: (e: WebViewMessageEvent) => void;
   onNavigationStateChange: (navState: WebViewNavigation) => void;
   webviewRef: React.RefObject<WebViewType | null>;
@@ -297,7 +296,6 @@ function LoadedCommunityWebView({
   bootstrapScript,
   bootstrapUrl,
   bootstrapped,
-  insetsTop,
   onMessage,
   onNavigationStateChange,
   webviewRef,
@@ -305,7 +303,7 @@ function LoadedCommunityWebView({
   const [pageLoading, setLocalPageLoading] = useState(true);
 
   return (
-    <View style={{ flex: 1, paddingTop: insetsTop, backgroundColor: '#fcf9f2' }}>
+    <View style={{ flex: 1, backgroundColor: '#fcf9f2' }}>
       <WebViewComponent
         ref={webviewRef}
         source={{ uri: bootstrapUrl }}
@@ -476,7 +474,6 @@ export function CommunityWebView({ initialUrl }: Props) {
     = useCommunitySession(initialUrl);
   const [bootstrapped, setBootstrapped] = useState(false);
   const webviewRef = useRef<WebViewType>(null);
-  const insets = useSafeAreaInsets();
 
   const handleNavStateChange = useCallback(
     (navState: WebViewNavigation) => {
@@ -518,7 +515,7 @@ export function CommunityWebView({ initialUrl }: Props) {
   );
 
   if (loading) {
-    return renderLoadingState(insets.top);
+    return renderLoadingState();
   }
 
   if (error || !bootstrapUrl) {
@@ -537,7 +534,6 @@ export function CommunityWebView({ initialUrl }: Props) {
       bootstrapScript={bootstrapScript}
       bootstrapUrl={bootstrapUrl}
       bootstrapped={bootstrapped}
-      insetsTop={insets.top}
       onMessage={handleMessage}
       onNavigationStateChange={handleNavStateChange}
       webviewRef={webviewRef}

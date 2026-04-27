@@ -33,7 +33,13 @@ export async function registerForPushNotifications(): Promise<
   const existing = await Notifications.getPermissionsAsync();
   let status = existing.status;
   if (status !== 'granted') {
-    const requested = await Notifications.requestPermissionsAsync();
+    const requested = await Notifications.requestPermissionsAsync({
+      ios: {
+        allowAlert: true,
+        allowBadge: true,
+        allowSound: true,
+      },
+    });
     status = requested.status;
   }
   if (status !== 'granted')

@@ -1,5 +1,6 @@
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
+import { router } from 'expo-router';
 import * as React from 'react';
 import { Pressable, View } from 'react-native';
 
@@ -10,6 +11,8 @@ import {
   Users as UsersIcon,
 } from '@/components/ui/icons';
 
+// Floating bar metrics live in tab-bar-layout.ts for import from full-bleed screens.
+
 export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   return (
     <View className="absolute inset-x-6 bottom-6 flex-row items-center justify-between rounded-full bg-white/80 px-6 py-4 shadow-lg shadow-black/5">
@@ -18,6 +21,11 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
         const isFocused = state.index === index;
 
         const onPress = () => {
+          if (route.name === 'community') {
+            router.push('/community-view');
+            return;
+          }
+
           const event = navigation.emit({
             type: 'tabPress',
             target: route.key,

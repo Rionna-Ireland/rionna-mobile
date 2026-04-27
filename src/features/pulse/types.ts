@@ -49,3 +49,17 @@ export type TrainerPost = {
   created_at: string;
   url: string;
 };
+
+export type CircleFeedItem = {
+  id: string;
+  kind: 'news' | 'post';
+  title: string;
+  excerpt: string | null;
+  createdAt: string | null;
+  spaceName: string | null;
+  authorName: string | null;
+  commentCount: number;
+  likeCount: number;
+  imageUrl: string | null;
+  url: string | null;
+};

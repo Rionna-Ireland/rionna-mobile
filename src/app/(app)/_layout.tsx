@@ -17,7 +17,10 @@ export default function TabLayout() {
     return <Redirect href="/login" />;
   }
   return (
-    <Tabs tabBar={props => <CustomTabBar {...props} />}>
+    <Tabs
+      screenOptions={{ headerShown: false }}
+      tabBar={props => <CustomTabBar {...props} />}
+    >
       <Tabs.Screen
         name="stables"
         options={{
@@ -32,7 +35,6 @@ export default function TabLayout() {
           title: 'Community',
           tabBarIcon: ({ color }) => <UsersIcon color={color} />,
           tabBarButtonTestID: 'community-tab',
-          headerShown: false,
         }}
       />
       <Tabs.Screen
