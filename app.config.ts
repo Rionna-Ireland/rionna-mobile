@@ -32,7 +32,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   description: `${Env.EXPO_PUBLIC_NAME} Mobile App`,
   owner: EXPO_ACCOUNT_OWNER,
   scheme: Env.EXPO_PUBLIC_SCHEME,
-  slug: 'rionna-test',
+  slug: 'rionna',
   version: Env.EXPO_PUBLIC_VERSION.toString(),
   orientation: 'portrait',
   icon: './assets/icon.png',
@@ -55,7 +55,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   android: {
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
-      backgroundColor: '#374B6C',
+      backgroundColor: '#391d3a',
     },
     package: Env.EXPO_PUBLIC_PACKAGE,
   },
@@ -67,7 +67,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       'expo-splash-screen',
       {
-        backgroundColor: '#374B6C',
+        backgroundColor: '#391d3a',
         image: './assets/splash-icon.png',
         imageWidth: 150,
       },

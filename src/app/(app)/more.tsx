@@ -25,8 +25,8 @@ catch {
   WebBrowser = null;
 }
 
-const PRIVACY_URL = 'https://pinkconnections.com/legal/privacy-policy';
-const TERMS_URL = 'https://pinkconnections.com/legal/terms';
+const PRIVACY_URL = 'https://rionna.com/legal/privacy-policy';
+const TERMS_URL = 'https://rionna.com/legal/terms';
 
 export default function MoreScreen() {
   const router = useRouter();

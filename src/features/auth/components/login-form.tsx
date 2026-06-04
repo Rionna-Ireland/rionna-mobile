@@ -31,7 +31,7 @@ function FormHeader() {
         testID="form-title"
         className="pb-2 text-center text-4xl font-bold text-black dark:text-white"
       >
-        Pink Connections
+        Rionna
       </Text>
       <Text className="mb-6 text-center text-charcoal-500">
         Sign in to your account
@@ -47,7 +47,7 @@ function FormFooter() {
         New members visit
         {' '}
         <Text className="font-bold text-black dark:text-white">
-          pinkconnections.com
+          rionna.com
         </Text>
         {' '}
         to join.
