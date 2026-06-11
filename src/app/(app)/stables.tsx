@@ -5,12 +5,14 @@ import * as React from 'react';
 import { RefreshControl } from 'react-native';
 import { ActivityIndicator, Text, View } from '@/components/ui';
 import { List } from '@/components/ui/list';
+import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { useHorses } from '@/features/stables/api/use-horses';
 import { HorseCard } from '@/features/stables/components/horse-card';
 
 export default function StablesScreen() {
   const { data, isLoading, isError, refetch, isRefetching } = useHorses();
   const router = useRouter();
+  const contentPaddingBottom = useTabBarContentPadding(16);
 
   const handlePress = React.useCallback(
     (horseId: string) => {
@@ -63,7 +65,7 @@ export default function StablesScreen() {
         data={data}
         renderItem={renderItem}
         keyExtractor={(item: Horse) => item.id}
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: contentPaddingBottom }}
         ItemSeparatorComponent={() => <View className="h-4" />}
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} />

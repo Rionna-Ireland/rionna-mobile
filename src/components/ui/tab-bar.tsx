@@ -10,12 +10,18 @@ import {
   Pulse as PulseIcon,
   Users as UsersIcon,
 } from '@/components/ui/icons';
+import { useTabBarBottomOffset } from '@/components/ui/tab-bar-layout';
 
 // Floating bar metrics live in tab-bar-layout.ts for import from full-bleed screens.
 
 export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const bottomOffset = useTabBarBottomOffset();
+
   return (
-    <View className="absolute inset-x-6 bottom-6 flex-row items-center justify-between rounded-full bg-white/80 px-6 py-4 shadow-lg shadow-black/5">
+    <View
+      className="absolute inset-x-6 flex-row items-center justify-between rounded-full bg-white/80 px-6 py-4 shadow-lg shadow-black/5"
+      style={{ bottom: bottomOffset }}
+    >
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const isFocused = state.index === index;

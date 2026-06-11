@@ -57,7 +57,7 @@ export function CommunityPanel() {
       style={[styles.overlay, { opacity: visible ? 1 : 0 }]}
       pointerEvents={visible ? 'auto' : 'none'}
     >
-      <SafeAreaView edges={['top']} style={styles.fill}>
+      <SafeAreaView edges={['top', 'bottom']} style={styles.fill}>
         <PanelHeader />
         <CommunityWebView />
       </SafeAreaView>

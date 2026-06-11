@@ -11,6 +11,7 @@ import {
   View,
 } from '@/components/ui';
 import { Button } from '@/components/ui/button';
+import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { signOut, useAuthStore } from '@/features/auth/use-auth-store';
 import { SettingsContainer } from '@/features/settings/components/settings-container';
 import { SettingsItem } from '@/features/settings/components/settings-item';
@@ -31,6 +32,7 @@ const TERMS_URL = 'https://rionna.com/legal/terms';
 export default function MoreScreen() {
   const router = useRouter();
   const user = useAuthStore.use.user();
+  const contentPaddingBottom = useTabBarContentPadding();
 
   const openLink = (url: string) => {
     if (WebBrowser) {
@@ -44,8 +46,11 @@ export default function MoreScreen() {
   return (
     <>
       <FocusAwareStatusBar />
-      <ScrollView className="flex-1 bg-background">
-        <View className="flex-1 px-4 pt-6 pb-10">
+      <ScrollView
+        className="flex-1 bg-background"
+        contentContainerStyle={{ paddingBottom: contentPaddingBottom }}
+      >
+        <View className="flex-1 px-4 pt-6">
           <Text className="font-display text-3xl text-black dark:text-white">
             More
           </Text>

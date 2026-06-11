@@ -5,6 +5,7 @@ import * as React from 'react';
 import { Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 
 import { Image } from '@/components/ui';
+import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { useCircleFeed } from '@/features/pulse/api/use-circle-feed';
 import { useLatestResults } from '@/features/pulse/api/use-latest-results';
 import { useNextRun } from '@/features/pulse/api/use-next-run';
@@ -97,10 +98,12 @@ export default function PulseScreen() {
     circleFeed.refetch();
   }, [nextRun, latestResults, trainerPosts, circleFeed]);
 
+  const contentPaddingBottom = useTabBarContentPadding();
+
   return (
     <ScrollView
       className="flex-1 bg-background"
-      contentContainerStyle={{ paddingBottom: 128 }}
+      contentContainerStyle={{ paddingBottom: contentPaddingBottom }}
       refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetchAll} />}
     >
       <View className="px-6 pt-16 pb-6">
