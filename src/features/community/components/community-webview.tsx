@@ -1,11 +1,17 @@
 import type { WebViewNavigation, WebView as WebViewType } from 'react-native-webview';
 
 import * as React from 'react';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { ActivityIndicator, View } from '@/components/ui';
 import { CommunityPlaceholder } from '@/features/community/components/community-placeholder';
 import { useCommunitySession } from '@/features/community/hooks/use-community-session';
+import {
+  buildBootstrapScript,
+  isTerminalBootstrapMessage,
+} from '@/features/community/lib/circle-bootstrap-script';
+import { COMMUNITY_BACKGROUND_COLOR } from '@/features/community/lib/community-theme';
+import { useCommunityPanelStore } from '@/features/community/lib/use-community-panel-store';
 
 // Lazy-require so a missing native module doesn't crash the whole route
 // (e.g. before the dev client has been rebuilt with react-native-webview).
@@ -213,10 +219,6 @@ const CIRCLE_CSS_OVERRIDES = `
   true;
 `;
 
-type Props = {
-  initialUrl?: string;
-};
-
 type WebViewLoadEvent = {
   nativeEvent: {
     url: string;
@@ -253,25 +255,9 @@ function isExpiredSessionUrl(url: string): boolean {
   return url.includes('/session/expired') || url.includes('state=expired');
 }
 
-function isTerminalBootstrapMessage(payload: unknown): boolean {
-  if (typeof payload !== 'object' || payload === null) {
-    return false;
-  }
-
-  const message = payload as { ok?: boolean; type?: string };
-  const { type } = message;
-
-  return (
-    type === 'rionna-cookies-bootstrap-noop'
-    || type === 'rionna-cookies-bootstrap-skipped'
-    || type === 'rionna-cookies-bootstrap-error'
-    || (type === 'rionna-cookies-bootstrap' && typeof message.ok === 'boolean')
-  );
-}
-
 function renderLoadingState() {
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fcf9f2' }}>
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: COMMUNITY_BACKGROUND_COLOR }}>
       <ActivityIndicator size="large" color="#391d3a" />
     </View>
   );
@@ -288,6 +274,7 @@ type LoadedCommunityWebViewProps = {
   bootstrapped: boolean;
   onMessage: (e: WebViewMessageEvent) => void;
   onNavigationStateChange: (navState: WebViewNavigation) => void;
+  onProcessTerminate: () => void;
   webviewRef: React.RefObject<WebViewType | null>;
 };
 
@@ -298,16 +285,18 @@ function LoadedCommunityWebView({
   bootstrapped,
   onMessage,
   onNavigationStateChange,
+  onProcessTerminate,
   webviewRef,
 }: LoadedCommunityWebViewProps) {
   const [pageLoading, setLocalPageLoading] = useState(true);
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#fcf9f2' }}>
+    <View style={{ flex: 1, backgroundColor: COMMUNITY_BACKGROUND_COLOR }}>
       <WebViewComponent
         ref={webviewRef}
         source={{ uri: bootstrapUrl }}
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: COMMUNITY_BACKGROUND_COLOR }}
+        containerStyle={{ flex: 1, backgroundColor: COMMUNITY_BACKGROUND_COLOR }}
         onNavigationStateChange={onNavigationStateChange}
         onLoadStart={(e: WebViewLoadEvent) => {
           console.log('[CommunityWebView] loadStart', e.nativeEvent.url);
@@ -329,6 +318,20 @@ function LoadedCommunityWebView({
             e.nativeEvent.statusCode,
             e.nativeEvent.url,
           );
+        }}
+        // S6-05 hardening: a long-lived WKWebView can have its content process
+        // killed under memory pressure. Treat it as a cold open — drop the
+        // bootstrap flag and reload (the before-content bootstrap script re-runs
+        // on reload). onRenderProcessGone is the Android equivalent.
+        onContentProcessDidTerminate={() => {
+          console.warn('[CommunityWebView] content process terminated — reloading');
+          onProcessTerminate();
+          webviewRef.current?.reload();
+        }}
+        onRenderProcessGone={() => {
+          console.warn('[CommunityWebView] render process gone — reloading');
+          onProcessTerminate();
+          webviewRef.current?.reload();
         }}
         injectedJavaScript={CIRCLE_CSS_OVERRIDES}
         injectedJavaScriptBeforeContentLoaded={bootstrapScript}
@@ -353,127 +356,75 @@ function LoadedCommunityWebView({
   );
 }
 
-// S0-03 approach C: bootstrap cookies by running the fetch from inside the
-// WebView's own JS context. This works around the native-module New-Arch
-// incompatibility of @react-native-cookies/cookies. Same-origin fetch means
-// Circle's Set-Cookie headers install first-party into WKHTTPCookieStore
-// without any native bridge.
+// The bootstrap-script builder and isTerminalBootstrapMessage helper now live
+// in @/features/community/lib/circle-bootstrap-script so the offscreen
+// pre-warm WebView (S6-03 B4) shares one source of truth with this component.
+
+type WarmDeepLinkOpts = {
+  bootstrapped: boolean;
+  communityBaseUrl: string | null;
+  pendingTarget: string | null;
+  postBootstrapPath: string;
+  clearPendingTarget: () => void;
+};
+
+// Warm-state deep-link fix (next-steps.md P1.1). When the singleton is ALREADY
+// bootstrapped and a NEW push/Pulse target arrives via the store's
+// `pendingTarget`, the initial load has long finished and won't re-navigate on
+// its own — so we explicitly drive it to the new target, then clear it.
 //
-// The bootstrap page is `/404` on the community origin — a small static Rails
-// 404 HTML page that does NOT redirect (unlike `/`, `/users/sign_in`, etc.),
-// so `onLoadEnd` fires on the community origin and we get a JS context to
-// inject into. The user never sees it: `postBootstrapPath` is navigated to
-// via `window.location.replace` as soon as the fetch resolves.
-//
-// This script is delivered via `injectedJavaScriptBeforeContentLoaded` so it
-// runs BEFORE the 404 HTML renders. The script also injects an `html { visibility:
-// hidden }` rule so that if the 404 page does finish rendering before the
-// fetch resolves, it never becomes visible. The loading overlay covers
-// everything anyway, but the visibility hack eliminates any flash of the
-// Rails error-page background.
-function buildBootstrapScript(accessToken: string, postBootstrapPath: string): string {
-  // JWTs are base64url-ish but escape defensively.
-  const safeToken = accessToken.replace(/\\/g, '\\\\').replace(/'/g, '\\\'');
-  const safePath = postBootstrapPath.replace(/\\/g, '\\\\').replace(/'/g, '\\\'');
-  return `
-    (function () {
-      try {
-        var postMsg = function (payload) {
-          if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
-            window.ReactNativeWebView.postMessage(JSON.stringify(payload));
-          }
-        };
+// The target present at first mount is handled by the initial load's
+// `postBootstrapPath`, so the ref is seeded with it: the effect only fires for
+// NEW targets that arrive while warm, never a redundant re-navigation when
+// bootstrap completes on a cold open.
+function useWarmDeepLinkNavigation(
+  webviewRef: React.RefObject<WebViewType | null>,
+  { bootstrapped, communityBaseUrl, pendingTarget, postBootstrapPath, clearPendingTarget }: WarmDeepLinkOpts,
+) {
+  const handledTargetRef = useRef<string | null>(pendingTarget);
+  const isForcedDeepLinkTarget
+    = !!pendingTarget && (pendingTarget.startsWith('/') || pendingTarget.startsWith('http'));
 
-        // Determine where we are. The bootstrap page (/mobile-login) is the
-        // only place we ever want to take action — on any other Circle page
-        // we're either mid-navigation or already landed, nothing to do.
-        // Do NOT include the post-bootstrap path here: landing on it is
-        // exactly where we want the script to no-op.
-        var path = window.location && window.location.pathname
-          ? window.location.pathname
-          : '';
-        var onBootstrapPage = path === '/mobile-login'
-          || path === '/mobile-login/';
+  useEffect(() => {
+    if (
+      !bootstrapped
+      || !isForcedDeepLinkTarget
+      || !communityBaseUrl
+      || !pendingTarget
+      || handledTargetRef.current === pendingTarget
+    ) {
+      return;
+    }
 
-        var hasCookies = document.cookie
-          && document.cookie.indexOf('skip_confirmed_password') !== -1;
-
-        if (!onBootstrapPage) {
-          // We're on a downstream page (e.g. /feed). Let Circle render it.
-          postMsg({ type: 'rionna-cookies-bootstrap-noop', path: path });
-          return;
-        }
-
-        // Hide the bootstrap page while we work so it never paints.
-        var ensureHidden = function () {
-          try {
-            if (document.documentElement) {
-              document.documentElement.style.visibility = 'hidden';
-              document.documentElement.style.backgroundColor = '#fcf9f2';
-            }
-          } catch (_) {}
-        };
-        ensureHidden();
-        if (document.addEventListener) {
-          document.addEventListener('DOMContentLoaded', ensureHidden, { once: true });
-        }
-
-        // If cookies are already installed (prior session), skip the fetch
-        // but still redirect away from the bootstrap page.
-        if (hasCookies) {
-          postMsg({ type: 'rionna-cookies-bootstrap-skipped', reason: 'already-authenticated' });
-          window.location.replace('${safePath}');
-          return;
-        }
-
-        // Session-level guard for concurrent navigations within the same
-        // WKWebView instance. sessionStorage persists across same-WebView
-        // navigations, so this prevents two bootstraps racing.
-        try {
-          if (sessionStorage.getItem('__rionna_bootstrap_in_flight')) {
-            return;
-          }
-          sessionStorage.setItem('__rionna_bootstrap_in_flight', '1');
-        } catch (_) {}
-
-        postMsg({ type: 'rionna-cookies-bootstrap-start' });
-
-        fetch('/api/headless/v1/cookies', {
-          method: 'POST',
-          headers: { 'Authorization': 'Bearer ' + '${safeToken}' },
-          credentials: 'include',
-        }).then(function (res) {
-          try { sessionStorage.removeItem('__rionna_bootstrap_in_flight'); } catch (_) {}
-          postMsg({ type: 'rionna-cookies-bootstrap', status: res.status, ok: res.ok });
-          if (res.ok) {
-            // Replace not assign so the bootstrap URL doesn't linger in history.
-            window.location.replace('${safePath}');
-          } else {
-            if (document.documentElement) document.documentElement.style.visibility = '';
-          }
-        }).catch(function (err) {
-          try { sessionStorage.removeItem('__rionna_bootstrap_in_flight'); } catch (_) {}
-          postMsg({ type: 'rionna-cookies-bootstrap-error', message: String(err && err.message ? err.message : err) });
-          if (document.documentElement) document.documentElement.style.visibility = '';
-        });
-      } catch (err) {
-        if (window.ReactNativeWebView && window.ReactNativeWebView.postMessage) {
-          window.ReactNativeWebView.postMessage(JSON.stringify({
-            type: 'rionna-cookies-bootstrap-error',
-            message: String(err && err.message ? err.message : err),
-          }));
-        }
-      }
-    })();
-    true;
-  `;
+    handledTargetRef.current = pendingTarget;
+    const target = `${communityBaseUrl}${postBootstrapPath}`;
+    webviewRef.current?.injectJavaScript(
+      `window.location.replace(${JSON.stringify(target)}); true;`,
+    );
+    clearPendingTarget();
+  }, [bootstrapped, isForcedDeepLinkTarget, communityBaseUrl, pendingTarget, postBootstrapPath, clearPendingTarget, webviewRef]);
 }
 
-export function CommunityWebView({ initialUrl }: Props) {
-  const { accessToken, bootstrapUrl, postBootstrapPath, loading, error, errorMessage, refresh }
-    = useCommunitySession(initialUrl);
-  const [bootstrapped, setBootstrapped] = useState(false);
+export function CommunityWebView() {
+  // S6-05: the WebView is a root-mounted singleton driven by the panel store,
+  // NOT by a route prop. The deep-link target and the session-scoped
+  // `bootstrapped` flag both live in the store.
+  const pendingTarget = useCommunityPanelStore.use.pendingTarget();
+  const bootstrapped = useCommunityPanelStore.use.bootstrapped();
+  const setBootstrapped = useCommunityPanelStore.use.setBootstrapped();
+  const clearPendingTarget = useCommunityPanelStore.use.clearPendingTarget();
+
+  const { accessToken, communityBaseUrl, bootstrapUrl, postBootstrapPath, error, errorMessage, refresh }
+    = useCommunitySession(pendingTarget ?? undefined);
   const webviewRef = useRef<WebViewType>(null);
+
+  useWarmDeepLinkNavigation(webviewRef, {
+    bootstrapped,
+    communityBaseUrl,
+    pendingTarget,
+    postBootstrapPath,
+    clearPendingTarget,
+  });
 
   const handleNavStateChange = useCallback(
     (navState: WebViewNavigation) => {
@@ -511,21 +462,22 @@ export function CommunityWebView({ initialUrl }: Props) {
         // Non-JSON message (unlikely) — ignore.
       }
     },
-    [],
+    [setBootstrapped],
   );
-
-  if (loading) {
-    return renderLoadingState();
-  }
-
-  if (error || !bootstrapUrl) {
-    return renderUnavailableState(errorMessage);
-  }
 
   if (!WebView) {
     return (
       <CommunityPlaceholder message="WebView native module not loaded — rebuild the dev client (pnpm ios)." />
     );
+  }
+
+  // Once we have a bootstrapUrl the WebView stays mounted for the rest of the
+  // session (S6-05 never-unmount): tearing it down on a transient `loading` /
+  // `refresh` would suspend the content process and defeat warm reuse. Before
+  // the first session resolves, show loading; a hard error with no base URL is
+  // unavailable.
+  if (!bootstrapUrl) {
+    return error ? renderUnavailableState(errorMessage) : renderLoadingState();
   }
 
   return (
@@ -536,6 +488,7 @@ export function CommunityWebView({ initialUrl }: Props) {
       bootstrapped={bootstrapped}
       onMessage={handleMessage}
       onNavigationStateChange={handleNavStateChange}
+      onProcessTerminate={() => setBootstrapped(false)}
       webviewRef={webviewRef}
     />
   );

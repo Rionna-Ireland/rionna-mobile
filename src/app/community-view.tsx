@@ -1,35 +1,32 @@
-import { router, Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useFocusEffect, useLocalSearchParams } from 'expo-router';
 import * as React from 'react';
+import { View } from 'react-native';
 
-import { Pressable, Text } from '@/components/ui';
-import { CommunityPlaceholder } from '@/features/community/components/community-placeholder';
-import { CommunityWebView } from '@/features/community/components/community-webview';
-import { getCircleCommunityBaseUrl } from '@/features/community/lib/circle-target';
+import { COMMUNITY_BACKGROUND_COLOR } from '@/features/community/lib/community-theme';
+import { useCommunityPanelStore } from '@/features/community/lib/use-community-panel-store';
 
+// S6-05: the Community WebView is a persistent singleton mounted at the app root
+// (CommunityPanel in _layout). This route is now just a thin, transparent shell:
+// on focus it shows the panel (carrying any deep-link target); on blur it hides
+// it. The panel draws its own header, so the native Stack header is hidden here.
 export default function CommunityViewScreen() {
   const params = useLocalSearchParams<{ url?: string }>();
   const initialUrl = Array.isArray(params.url) ? params.url[0] : params.url;
 
-  if (!getCircleCommunityBaseUrl()) {
-    return <CommunityPlaceholder />;
-  }
+  const show = useCommunityPanelStore.use.show();
+  const hide = useCommunityPanelStore.use.hide();
+
+  useFocusEffect(
+    React.useCallback(() => {
+      show(initialUrl ?? null);
+      return () => hide();
+    }, [show, hide, initialUrl]),
+  );
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          title: 'Community',
-          headerBackVisible: false,
-          headerLeft: () => (
-            <Pressable onPress={() => router.replace('/')} className="px-1 py-2">
-              <Text className="font-sans text-base font-semibold text-primary">
-                Back
-              </Text>
-            </Pressable>
-          ),
-        }}
-      />
-      <CommunityWebView key={initialUrl ?? 'community-home'} initialUrl={initialUrl} />
+      <Stack.Screen options={{ headerShown: false }} />
+      <View style={{ flex: 1, backgroundColor: COMMUNITY_BACKGROUND_COLOR }} />
     </>
   );
 }
