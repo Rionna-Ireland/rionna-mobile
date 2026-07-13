@@ -1,4 +1,4 @@
-import type { HydratedNode } from './hydrate';
+import type { HydratedNode } from '@/features/member-content/tiptap/hydrate';
 
 export type CircleNativeNodeSupport = 'native' | 'webview' | 'placeholder';
 

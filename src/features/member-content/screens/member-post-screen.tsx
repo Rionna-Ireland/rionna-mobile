@@ -3,12 +3,13 @@ import type { MemberContentState, MemberPostDetail } from '@/features/member-con
 import Env from 'env';
 import { useLocalSearchParams } from 'expo-router';
 import * as React from 'react';
-import { ActivityIndicator, Linking, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { Image } from '@/components/ui';
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { useMemberPost } from '@/features/member-content/api/use-member-post';
 import { CircleTiptapRenderer } from '@/features/member-content/components/circle-tiptap-renderer';
+import { formatCount, formatMemberContentDate } from '@/features/member-content/lib/content-format';
 import { hydrateCircleDoc } from '@/features/member-content/tiptap/hydrate';
 import { circleDocHasContent } from '@/features/member-content/tiptap/native-support';
 
@@ -17,23 +18,56 @@ type MemberPostViewProps = {
   contentState: MemberContentState;
   isLoading?: boolean;
   onOpenUrl?: (url: string) => void;
+  onRetry?: () => void;
 };
 
-function countLabel(value: number, singular: string, plural: string): string {
-  return `${value} ${value === 1 ? singular : plural}`;
+function PostUnavailable({ onRetry }: { onRetry?: () => void }) {
+  return (
+    <View testID="member-post-unavailable" className="flex-1 items-center justify-center bg-neutral-100 px-8">
+      <Text className="font-sans text-xl font-semibold text-neutral-950">Post unavailable</Text>
+      <Text className="mt-2 text-center font-sans text-sm/5 text-neutral-600">
+        Check your connection and try again.
+      </Text>
+      {onRetry
+        ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Retry post"
+              className="mt-5 h-11 items-center justify-center rounded-xl border border-violet-700 bg-white px-6"
+              onPress={onRetry}
+            >
+              <Text className="font-sans text-sm font-semibold text-violet-800">Try again</Text>
+            </Pressable>
+          )
+        : null}
+    </View>
+  );
 }
 
-function formatDate(value: string | null): string | null {
-  if (!value)
-    return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime()))
-    return null;
-  return date.toLocaleDateString(undefined, {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
+function PostAuthor({ post }: { post: MemberPostDetail }) {
+  const authorName = post.authorName?.trim() || 'Rionna member';
+  return (
+    <View className="mt-5 flex-row items-center gap-3">
+      {post.authorAvatarUrl
+        ? (
+            <Image
+              source={{ uri: post.authorAvatarUrl }}
+              className="size-10 rounded-full bg-neutral-200"
+              contentFit="cover"
+              cachePolicy="memory-disk"
+              accessibilityLabel={`${authorName} avatar`}
+            />
+          )
+        : (
+            <View className="size-10 items-center justify-center rounded-full border border-neutral-300 bg-neutral-100">
+              <Text className="font-sans text-sm font-semibold text-neutral-800">
+                {authorName.slice(0, 1).toUpperCase()}
+              </Text>
+            </View>
+          )}
+      <Text className="font-sans text-sm font-medium text-neutral-800">{authorName}</Text>
+    </View>
+  );
 }
 
 export function MemberPostView({
@@ -41,6 +75,7 @@ export function MemberPostView({
   contentState,
   isLoading = false,
   onOpenUrl,
+  onRetry,
 }: MemberPostViewProps) {
   if (isLoading && !post) {
     return (
@@ -52,14 +87,7 @@ export function MemberPostView({
   }
 
   if (!post) {
-    return (
-      <View testID="member-post-unavailable" className="flex-1 items-center justify-center bg-neutral-100 px-8">
-        <Text className="font-sans text-xl font-semibold text-neutral-950">Post unavailable</Text>
-        <Text className="mt-2 text-center font-sans text-sm/5 text-neutral-600">
-          Check your connection and try again.
-        </Text>
-      </View>
-    );
+    return <PostUnavailable onRetry={onRetry} />;
   }
 
   const hydratedDoc = hydrateCircleDoc({
@@ -67,7 +95,7 @@ export function MemberPostView({
     sgids_to_object_map: post.embeds,
     inline_attachments: post.inlineAttachments,
   });
-  const meta = [post.spaceName, post.authorName, formatDate(post.createdAt)]
+  const meta = [post.spaceName, formatMemberContentDate(post.createdAt)]
     .filter(Boolean)
     .join(' · ');
 
@@ -109,12 +137,13 @@ export function MemberPostView({
           <Text className="mt-3 font-sans text-3xl/9 font-semibold text-neutral-950">
             {post.title}
           </Text>
+          <PostAuthor post={post} />
           <View className="mt-4 flex-row gap-4 border-b border-neutral-200 pb-5">
             <Text className="font-sans text-xs text-neutral-500">
-              {countLabel(post.likeCount, 'like', 'likes')}
+              {formatCount(post.likeCount, 'like', 'likes')}
             </Text>
             <Text className="font-sans text-xs text-neutral-500">
-              {countLabel(post.commentCount, 'comment', 'comments')}
+              {formatCount(post.commentCount, 'comment', 'comments')}
             </Text>
           </View>
           <View className="mt-5">
@@ -153,6 +182,7 @@ function SignedInMemberPost({
       contentState={post.contentState}
       isLoading={post.isLoading}
       onOpenUrl={url => void Linking.openURL(url)}
+      onRetry={() => void post.refetch()}
     />
   );
 }

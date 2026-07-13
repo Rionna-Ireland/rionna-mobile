@@ -4,7 +4,7 @@ import {
   isAuthorable,
   isCircleNode,
   resolveViaFor,
-} from './blocks';
+} from '@/features/member-content/tiptap/blocks';
 
 describe('circle block registry', () => {
   it('describes Circle nodes independently from editor-only nodes', () => {

@@ -1,9 +1,9 @@
 import type { MemberPostDetail } from '@/features/member-content/types';
 
-import { render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import * as React from 'react';
 
-import { MemberPostView } from './member-post-screen';
+import { MemberPostView } from '@/features/member-content/screens/member-post-screen';
 
 jest.mock('@/components/ui', () => ({
   Image: 'Image',
@@ -30,7 +30,7 @@ const POST: MemberPostDetail = {
   embeds: {},
   inlineAttachments: [],
   authorName: 'Rionna Racing',
-  authorAvatarUrl: null,
+  authorAvatarUrl: 'https://images.example/author.jpg',
   spaceName: 'Laska',
   createdAt: '2026-07-13T08:00:00.000Z',
   commentCount: 2,
@@ -46,6 +46,7 @@ describe('memberPostView', () => {
     expect(screen.queryByText('Plain text fallback')).not.toBeOnTheScreen();
     expect(screen.getByText('5 likes')).toBeOnTheScreen();
     expect(screen.getByText('2 comments')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Rionna Racing avatar')).toBeOnTheScreen();
   });
 
   it('falls back to body text when the TipTap document is unusable', () => {
@@ -60,14 +61,27 @@ describe('memberPostView', () => {
     expect(screen.getByText('Readable saved update')).toBeOnTheScreen();
   });
 
-  it.each(['loading', 'unavailable'] as const)('renders the %s state', (state) => {
+  it('renders a retry action when the post is unavailable', () => {
+    const onRetry = jest.fn();
     render(
       <MemberPostView
         post={undefined}
-        contentState={state === 'loading' ? 'unavailable' : state}
-        isLoading={state === 'loading'}
+        contentState="unavailable"
+        onRetry={onRetry}
       />,
     );
-    expect(screen.getByTestId(`member-post-${state}`)).toBeOnTheScreen();
+    fireEvent.press(screen.getByRole('button', { name: 'Retry post' }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the loading state', () => {
+    render(
+      <MemberPostView
+        post={undefined}
+        contentState="unavailable"
+        isLoading={true}
+      />,
+    );
+    expect(screen.getByTestId('member-post-loading')).toBeOnTheScreen();
   });
 });

@@ -2,16 +2,16 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import * as React from 'react';
 
+import { CircleTiptapRenderer } from '@/features/member-content/components/circle-tiptap-renderer';
 import {
   EMBED_TIPTAP_BODY,
   IMAGE_TIPTAP_BODY,
   RICH_TEXT_TIPTAP_BODY,
   UNSUPPORTED_TIPTAP_BODY,
-} from '../tiptap/__fixtures__/corpus';
-import { circleNodeTypes } from '../tiptap/blocks';
-import { hydrateCircleDoc } from '../tiptap/hydrate';
-import { CIRCLE_NATIVE_NODE_SUPPORT } from '../tiptap/native-support';
-import { CircleTiptapRenderer } from './circle-tiptap-renderer';
+} from '@/features/member-content/tiptap/__fixtures__/corpus';
+import { circleNodeTypes } from '@/features/member-content/tiptap/blocks';
+import { hydrateCircleDoc } from '@/features/member-content/tiptap/hydrate';
+import { CIRCLE_NATIVE_NODE_SUPPORT } from '@/features/member-content/tiptap/native-support';
 
 jest.mock('react-native-webview', () => {
   const ReactModule = require('react');

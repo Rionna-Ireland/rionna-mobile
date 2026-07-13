@@ -18,12 +18,11 @@ import { client } from '@/lib/api/client';
 export function resolveMemberPostContentState(
   data: MemberPostDetail | undefined,
   isError: boolean,
-  isFetchedAfterMount: boolean,
 ): MemberContentState {
   if (!data) {
     return 'unavailable';
   }
-  return isError || !isFetchedAfterMount ? 'saved' : 'fresh';
+  return isError ? 'saved' : 'fresh';
 }
 
 export async function fetchMemberPost(
@@ -96,12 +95,13 @@ export function useMemberPost(
   const contentState = resolveMemberPostContentState(
     query.data,
     query.isError,
-    query.isFetchedAfterMount,
   );
 
   return {
     ...query,
     contentState,
-    savedAt: contentState === 'saved' ? (cached?.fetchedAt ?? null) : null,
+    savedAt: contentState === 'saved'
+      ? (cached?.fetchedAt ?? query.dataUpdatedAt ?? null)
+      : null,
   };
 }

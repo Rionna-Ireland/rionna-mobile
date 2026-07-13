@@ -1,4 +1,4 @@
-import { resolveViaFor } from './blocks';
+import { resolveViaFor } from '@/features/member-content/tiptap/blocks';
 
 export type CircleMark = {
   type?: string;

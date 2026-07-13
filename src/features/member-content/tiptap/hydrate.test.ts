@@ -1,4 +1,4 @@
-import { hydrateCircleDoc } from './hydrate';
+import { hydrateCircleDoc } from '@/features/member-content/tiptap/hydrate';
 
 describe('hydrateCircleDoc', () => {
   it('resolves nested sgid content into a self-contained document', () => {

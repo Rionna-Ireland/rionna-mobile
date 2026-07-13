@@ -1,19 +1,15 @@
 import type { DimensionValue } from 'react-native';
-import type { HydratedNode } from '../tiptap/hydrate';
+import type { HydratedNode } from '@/features/member-content/tiptap/hydrate';
 
 import { Image } from 'expo-image';
 import * as React from 'react';
 import { StyleSheet, View } from 'react-native';
 
+import { nonEmptyString } from '@/features/member-content/lib/content-format';
+
 type CircleImageBlockProps = {
   node: HydratedNode;
 };
-
-function nonEmptyString(value: unknown): string | null {
-  return typeof value === 'string' && value.trim().length > 0
-    ? value.trim()
-    : null;
-}
 
 function imageWidth(value: unknown): DimensionValue {
   if (value === '50%' || value === '100%')

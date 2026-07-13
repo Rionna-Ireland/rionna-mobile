@@ -21,18 +21,14 @@ const FEED_LIMIT = 15;
 type MemberFeedStateInput = {
   data: MemberFeedItem[] | undefined;
   isError: boolean;
-  isFetchedAfterMount: boolean;
-  hasSavedData: boolean;
 };
 
 export function resolveMemberFeedContentState({
   data,
   isError,
-  isFetchedAfterMount,
-  hasSavedData,
 }: MemberFeedStateInput): MemberContentState {
   if (isError) {
-    return data && hasSavedData ? 'saved' : 'unavailable';
+    return data ? 'saved' : 'unavailable';
   }
   if (!data) {
     return 'unavailable';
@@ -40,7 +36,7 @@ export function resolveMemberFeedContentState({
   if (data.length === 0) {
     return 'empty';
   }
-  return hasSavedData && !isFetchedAfterMount ? 'saved' : 'fresh';
+  return 'fresh';
 }
 
 export async function fetchMemberFeed(
@@ -96,13 +92,13 @@ export function useMemberFeed(scope: MemberContentScope) {
   const contentState = resolveMemberFeedContentState({
     data: query.data,
     isError: query.isError,
-    isFetchedAfterMount: query.isFetchedAfterMount,
-    hasSavedData: cached !== null,
   });
 
   return {
     ...query,
     contentState,
-    savedAt: contentState === 'saved' ? (cached?.fetchedAt ?? null) : null,
+    savedAt: contentState === 'saved'
+      ? (cached?.fetchedAt ?? query.dataUpdatedAt ?? null)
+      : null,
   };
 }

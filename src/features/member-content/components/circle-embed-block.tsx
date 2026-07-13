@@ -1,8 +1,10 @@
-import type { HydratedNode } from '../tiptap/hydrate';
+import type { HydratedNode } from '@/features/member-content/tiptap/hydrate';
 
 import * as React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { WebView } from 'react-native-webview';
+
+import { nonEmptyString, safeExternalUrl } from '@/features/member-content/lib/content-format';
 
 type CircleEmbedBlockProps = {
   node: HydratedNode;
@@ -22,25 +24,6 @@ type ShouldStartRequest = {
 type OpenWindowEvent = {
   nativeEvent: { targetUrl: string };
 };
-
-function nonEmptyString(value: unknown): string | null {
-  return typeof value === 'string' && value.trim().length > 0
-    ? value.trim()
-    : null;
-}
-
-function safeExternalUrl(value: unknown): string | null {
-  const text = nonEmptyString(value);
-  if (!text)
-    return null;
-  try {
-    const url = new URL(text);
-    return url.protocol === 'https:' || url.protocol === 'http:' ? text : null;
-  }
-  catch {
-    return null;
-  }
-}
 
 function resolvedEmbed(node: HydratedNode): ResolvedEmbed | null {
   const value = node.attrs?._resolved;

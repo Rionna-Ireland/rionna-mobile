@@ -1,8 +1,8 @@
 import * as React from 'react';
 
-import { cleanup, screen, setup } from '@/lib/test-utils';
+import { MinimalAccountSheet } from '@/features/member-content/components/minimal-account-sheet';
 
-import { MinimalAccountSheet } from './minimal-account-sheet';
+import { cleanup, screen, setup } from '@/lib/test-utils';
 
 afterEach(cleanup);
 

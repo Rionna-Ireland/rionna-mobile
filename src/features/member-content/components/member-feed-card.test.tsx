@@ -1,9 +1,9 @@
 import type { MemberFeedItem } from '@/features/member-content/types';
 
 import * as React from 'react';
-import { cleanup, render, screen, setup } from '@/lib/test-utils';
+import { MemberFeedCard } from '@/features/member-content/components/member-feed-card';
 
-import { MemberFeedCard } from './member-feed-card';
+import { cleanup, render, screen, setup } from '@/lib/test-utils';
 
 afterEach(cleanup);
 

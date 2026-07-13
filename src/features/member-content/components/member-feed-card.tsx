@@ -4,31 +4,15 @@ import * as React from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { Image } from '@/components/ui';
+import { formatCount, formatMemberContentDate } from '@/features/member-content/lib/content-format';
 
 type MemberFeedCardProps = {
   item: MemberFeedItem;
   onOpen: (spaceId: string, postId: string) => void;
 };
 
-function formatCount(value: number, singular: string, plural: string): string {
-  return `${value} ${value === 1 ? singular : plural}`;
-}
-
-function formatDate(value: string | null): string | null {
-  if (!value)
-    return null;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime()))
-    return null;
-  return date.toLocaleDateString(undefined, {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  });
-}
-
 function CardBody({ item }: { item: MemberFeedItem }) {
-  const date = formatDate(item.createdAt);
+  const date = formatMemberContentDate(item.createdAt);
   const meta = [item.spaceName, date].filter(Boolean).join(' · ');
 
   return (

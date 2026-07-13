@@ -1,9 +1,9 @@
+import { clearMemberContentCache } from '@/features/member-content/cache/member-content-cache';
+
+import { clearMemberContentForMember } from '@/features/member-content/lib/member-content-logout';
 import { queryClient } from '@/lib/api/query-client';
 
-import { clearMemberContentCache } from '../cache/member-content-cache';
-import { clearMemberContentForMember } from './member-content-logout';
-
-jest.mock('../cache/member-content-cache', () => ({
+jest.mock('@/features/member-content/cache/member-content-cache', () => ({
   clearMemberContentCache: jest.fn(),
 }));
 

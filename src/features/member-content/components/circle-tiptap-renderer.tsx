@@ -1,13 +1,14 @@
 import type { TextStyle } from 'react-native';
-import type { HydratedNode } from '../tiptap/hydrate';
+import type { HydratedNode } from '@/features/member-content/tiptap/hydrate';
 
 import * as React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { circleDocHasContent } from '../tiptap/native-support';
-import { CircleEmbedBlock } from './circle-embed-block';
-import { CircleImageBlock } from './circle-image-block';
-import { CircleUnsupportedBlock } from './circle-unsupported-block';
+import { CircleEmbedBlock } from '@/features/member-content/components/circle-embed-block';
+import { CircleImageBlock } from '@/features/member-content/components/circle-image-block';
+import { CircleUnsupportedBlock } from '@/features/member-content/components/circle-unsupported-block';
+import { nonEmptyString, safeExternalUrl } from '@/features/member-content/lib/content-format';
+import { circleDocHasContent } from '@/features/member-content/tiptap/native-support';
 
 export type CircleTiptapRendererProps = {
   doc: HydratedNode | null;
@@ -19,28 +20,12 @@ type RenderContext = {
   onOpenUrl?: CircleTiptapRendererProps['onOpenUrl'];
 };
 
-function nonEmptyString(value: unknown): string | null {
-  return typeof value === 'string' && value.trim().length > 0
-    ? value.trim()
-    : null;
-}
-
 function nodeKey(parentKey: string, node: HydratedNode, index: number): string {
   const rawIdentity = node.attrs?.id ?? node.attrs?.sgid;
   const identity = typeof rawIdentity === 'number'
     ? String(rawIdentity)
     : nonEmptyString(rawIdentity);
   return `${parentKey}-${node.type ?? 'node'}-${identity ?? index}`;
-}
-
-function isSafeExternalUrl(value: string): boolean {
-  try {
-    const url = new URL(value);
-    return url.protocol === 'https:' || url.protocol === 'http:';
-  }
-  catch {
-    return false;
-  }
 }
 
 export function CircleTiptapRenderer({
@@ -91,7 +76,7 @@ function renderInline(
       href = nonEmptyString(mark.attrs?.href);
   }
 
-  const safeHref = href && isSafeExternalUrl(href) ? href : null;
+  const safeHref = safeExternalUrl(href);
   if (safeHref)
     textStyles.push(styles.link);
 

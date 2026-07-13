@@ -1,13 +1,13 @@
-import { client } from '@/lib/api/client';
-
 import {
   fetchMemberFeed,
   resolveMemberFeedContentState,
-} from './use-member-feed';
+} from '@/features/member-content/api/use-member-feed';
+
 import {
   fetchMemberPost,
   resolveMemberPostContentState,
-} from './use-member-post';
+} from '@/features/member-content/api/use-member-post';
+import { client } from '@/lib/api/client';
 
 jest.mock('@/lib/api/client', () => ({
   client: { get: jest.fn() },
@@ -101,16 +101,15 @@ describe('member content API', () => {
   });
 
   it('exposes fresh, saved, empty, and unavailable feed states', () => {
-    expect(resolveMemberFeedContentState({ data: [], isError: false, isFetchedAfterMount: true, hasSavedData: false })).toBe('empty');
-    expect(resolveMemberFeedContentState({ data: [feedItem(1)], isError: false, isFetchedAfterMount: true, hasSavedData: false })).toBe('fresh');
-    expect(resolveMemberFeedContentState({ data: [feedItem(1)], isError: true, isFetchedAfterMount: true, hasSavedData: true })).toBe('saved');
-    expect(resolveMemberFeedContentState({ data: undefined, isError: true, isFetchedAfterMount: true, hasSavedData: false })).toBe('unavailable');
+    expect(resolveMemberFeedContentState({ data: [], isError: false })).toBe('empty');
+    expect(resolveMemberFeedContentState({ data: [feedItem(1)], isError: false })).toBe('fresh');
+    expect(resolveMemberFeedContentState({ data: [feedItem(1)], isError: true })).toBe('saved');
+    expect(resolveMemberFeedContentState({ data: undefined, isError: true })).toBe('unavailable');
   });
 
   it('exposes saved post content when refresh fails', () => {
-    expect(resolveMemberPostContentState(POST_DETAIL, true, true)).toBe('saved');
-    expect(resolveMemberPostContentState(POST_DETAIL, false, false)).toBe('saved');
-    expect(resolveMemberPostContentState(POST_DETAIL, false, true)).toBe('fresh');
-    expect(resolveMemberPostContentState(undefined, true, true)).toBe('unavailable');
+    expect(resolveMemberPostContentState(POST_DETAIL, true)).toBe('saved');
+    expect(resolveMemberPostContentState(POST_DETAIL, false)).toBe('fresh');
+    expect(resolveMemberPostContentState(undefined, true)).toBe('unavailable');
   });
 });

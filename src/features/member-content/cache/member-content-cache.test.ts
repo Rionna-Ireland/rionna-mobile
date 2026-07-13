@@ -4,7 +4,7 @@ import {
   getCachedMemberPost,
   setCachedMemberFeed,
   setCachedMemberPost,
-} from './member-content-cache';
+} from '@/features/member-content/cache/member-content-cache';
 
 const mockStore = new Map<string, unknown>();
 

@@ -3,7 +3,7 @@ import type { AuthUser } from '@/lib/auth/utils';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import * as React from 'react';
 
-import { MemberHomeView } from './member-home-screen';
+import { MemberHomeView } from '@/features/member-content/screens/member-home-screen';
 
 jest.mock('@/components/ui', () => ({
   Image: 'Image',
