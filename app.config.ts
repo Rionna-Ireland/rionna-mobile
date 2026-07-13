@@ -7,8 +7,8 @@ import 'tsx/cjs';
 // eslint-disable-next-line perfectionist/sort-imports
 import Env from './env';
 
-const EXPO_ACCOUNT_OWNER = 'tothepoweroftom1';
-const EAS_PROJECT_ID = 'c1b50631-77df-41d3-8cf2-cc27e48ac688';
+const EXPO_ACCOUNT_OWNER = 'rionna_ireland';
+const EAS_PROJECT_ID = '4b0041b1-d0cb-4d08-96f1-ef2ef7dda3b3';
 
 const appIconBadgeConfig: AppIconBadgeConfig = {
   enabled: Env.EXPO_PUBLIC_APP_ENV !== 'production',
@@ -119,6 +119,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       },
     ],
     'expo-localization',
+    'expo-notifications',
     'expo-router',
     ['app-icon-badge', appIconBadgeConfig],
     ['react-native-edge-to-edge'],

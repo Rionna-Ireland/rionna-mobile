@@ -47,11 +47,28 @@ function formatShortDate(dateStr: string): string {
   });
 }
 
+/** Furlongs -> "Xm Yf" shorthand, e.g. 22 -> "2m6f", 7 -> "7f". */
+function formatDistance(furlongs: number): string {
+  const miles = Math.floor(furlongs / 8);
+  const remainder = furlongs % 8;
+  if (miles === 0)
+    return `${remainder}f`;
+  if (remainder === 0)
+    return `${miles}m`;
+  return `${miles}m${remainder}f`;
+}
+
 export function ResultRow({ entry }: ResultRowProps) {
   const { race } = entry;
   const position = entry.finishingPosition;
   const courseName = race.meeting.course.name;
   const date = formatShortDate(race.meeting.date);
+
+  const detailParts = [
+    entry.jockey?.name,
+    race.distanceFurlongs != null ? formatDistance(race.distanceFurlongs) : null,
+    race.goingDescription,
+  ].filter((part): part is string => Boolean(part));
 
   return (
     <View className="flex-row items-center gap-3 px-4 py-3">
@@ -78,6 +95,28 @@ export function ResultRow({ entry }: ResultRowProps) {
           </Text>
           <Text className="text-xs text-neutral-500">{date}</Text>
         </View>
+
+        {race.name
+          ? (
+              <Text
+                className="mt-0.5 text-xs text-neutral-600"
+                numberOfLines={1}
+              >
+                {race.name}
+              </Text>
+            )
+          : null}
+
+        {detailParts.length > 0
+          ? (
+              <Text
+                className="mt-0.5 text-xs text-neutral-500"
+                numberOfLines={1}
+              >
+                {detailParts.join(' · ')}
+              </Text>
+            )
+          : null}
 
         {entry.timeformComment
           ? (
