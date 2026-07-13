@@ -2,6 +2,7 @@ import type * as DeviceType from 'expo-device';
 import type * as NotificationsType from 'expo-notifications';
 import type { AuthUser, TokenType } from '@/lib/auth/utils';
 
+import Env from 'env';
 import Constants from 'expo-constants';
 import { create } from 'zustand';
 import { clearCircleWebViewCookies } from '@/features/community/lib/circle-cookie-clear';
@@ -11,6 +12,7 @@ import {
   getCachedCircleSession,
 } from '@/features/community/lib/circle-session-store';
 import { resetCommunityPanel } from '@/features/community/lib/use-community-panel-store';
+import { clearMemberContentForMember } from '@/features/member-content/lib/member-content-logout';
 import { client } from '@/lib/api/client';
 import { bootstrapMobileOrganization } from '@/lib/auth/mobile-org-bootstrap';
 import {
@@ -106,6 +108,7 @@ const _useAuthStore = create<AuthState>((set, get) => ({
     void prewarmCircleSession();
   },
   signOut: async () => {
+    const signedInMember = get().user;
     // Lazy-require native modules so sign-out still works on a dev client that
     // hasn't been rebuilt with expo-device / expo-notifications yet.
     let Device: typeof DeviceType | null = null;
@@ -156,6 +159,18 @@ const _useAuthStore = create<AuthState>((set, get) => ({
     }
     catch (e) {
       console.warn('[auth] Failed to reset Community panel (continuing logout):', e);
+    }
+
+    if (signedInMember) {
+      try {
+        clearMemberContentForMember({
+          organizationId: Env.EXPO_PUBLIC_CLUB_ID,
+          memberId: signedInMember.id,
+        });
+      }
+      catch (e) {
+        console.warn('[auth] Failed to clear member content (continuing logout):', e);
+      }
     }
 
     removeToken();

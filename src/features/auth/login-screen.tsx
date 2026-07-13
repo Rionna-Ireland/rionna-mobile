@@ -16,7 +16,7 @@ export function LoginScreen() {
     signIn(data.token, data.user);
     try {
       await bootstrapMobileOrganization({ verifyMembership: true });
-      router.push('/');
+      router.replace('/');
     }
     catch (error) {
       await signOut();

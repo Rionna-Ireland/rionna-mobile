@@ -1,58 +1,26 @@
-import { Redirect, Tabs } from 'expo-router';
+import { Redirect, Stack } from 'expo-router';
 import * as React from 'react';
 
-import {
-  Horse as HorseIcon,
-  Menu as MenuIcon,
-  Pulse as PulseIcon,
-  Users as UsersIcon,
-} from '@/components/ui/icons';
-import { CustomTabBar } from '@/components/ui/tab-bar';
 import { useAuthStore as useAuth } from '@/features/auth/use-auth-store';
 
-export default function TabLayout() {
+export default function MemberLayout() {
   const status = useAuth.use.status();
 
   if (status === 'signOut') {
     return <Redirect href="/login" />;
   }
   return (
-    <Tabs
-      screenOptions={{ headerShown: false }}
-      tabBar={props => <CustomTabBar {...props} />}
-    >
-      <Tabs.Screen
-        name="stables"
+    <Stack>
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="post/[space-id]/[post-id]"
         options={{
-          title: 'Stables',
-          tabBarIcon: ({ color }) => <HorseIcon color={color} />,
-          tabBarButtonTestID: 'stables-tab',
+          title: '',
+          headerBackTitle: 'Home',
+          headerShadowVisible: false,
+          headerStyle: { backgroundColor: '#F5F5F5' },
         }}
       />
-      <Tabs.Screen
-        name="community"
-        options={{
-          title: 'Community',
-          tabBarIcon: ({ color }) => <UsersIcon color={color} />,
-          tabBarButtonTestID: 'community-tab',
-        }}
-      />
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Pulse',
-          tabBarIcon: ({ color }) => <PulseIcon color={color} />,
-          tabBarButtonTestID: 'pulse-tab',
-        }}
-      />
-      <Tabs.Screen
-        name="more"
-        options={{
-          title: 'More',
-          tabBarIcon: ({ color }) => <MenuIcon color={color} />,
-          tabBarButtonTestID: 'more-tab',
-        }}
-      />
-    </Tabs>
+    </Stack>
   );
 }
