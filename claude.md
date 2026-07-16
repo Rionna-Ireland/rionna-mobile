@@ -1,70 +1,86 @@
-> This project was generated from the [Obytes React Native Template](https://github.com/obytes/react-native-template-obytes), a production-ready React Native starter with modern tooling and best practices.
+# Rionna Mobile — Coding Agent Guidelines
 
-## What: Technology Stack
+The **Rionna member app**: iOS/Android client for a single horse-racing club
+(Rionna Ireland). Members see a native feed of club/horse content (sourced from a
+Circle.so community the backend fronts), horse profiles ("stables"), race
+notifications, events, and news. The backend is the sibling `../rionna-ireland`
+monorepo's oRPC API; planning docs/specs live in `../Architecture` (see its
+`specs/` + `progress.md`).
 
-- **Expo SDK 54** with React Native 0.81.5 - Managed React Native development
-- **TypeScript** - Strict type safety throughout
-- **Expo Router 6** - File-based routing (like Next.js)
-- **TailwindCSS** via Uniwind/Nativewind - Utility-first styling for React Native
-- **Zustand** - Lightweight global state management
-- **React Query** - Server state and data fetching
-- **TanStack Form + Zod** - Type-safe form handling and validation
-- **MMKV** - Encrypted local storage
-- **Jest + React Testing Library** - Unit testing
+> Template lineage: generated from the Obytes RN template. The package identity is
+> still `obytesapp` (+ obytes repo URL in package.json) — this must be renamed
+> before store builds, but don't rename it casually mid-feature.
 
-## What: Project Structure
+## Stack
 
-```
-src/
-├── app/              # Expo Router file-based routes (add new routes here)
-├── features/         # Feature modules - auth, feed, settings are EXAMPLES
-├── components/ui/    # Pre-built UI components (button, input, modal, etc.)
-├── lib/              # Pre-configured utilities (api, auth, i18n, storage)
-├── translations/     # i18n files (en.json, ar.json - add more languages)
-└── global.css        # TailwindCSS configuration
+- **Expo SDK 54**, React Native 0.81.5, **New Architecture enabled**
+- **Expo Router 6** (file-based routes in `src/app/`)
+- TailwindCSS via **Uniwind/NativeWind**; Zustand; React Query; TanStack Form + Zod
+  (NOT react-hook-form); **MMKV** storage; Jest + RTL
+- pnpm (`packageManager: pnpm@10.12.3`)
 
-Root Files:
-├── env.ts           # Environment config (CUSTOMIZE bundle IDs, API URLs)
-├── app.config.ts    # Expo configuration
-└── README.md        # Project-specific documentation
-```
+## Hard-won gotchas (do not relearn these)
 
-## How: Development Workflow
+1. **Never touch JSI/MMKV/TurboModules at module top-level.** Top-level native-module
+   access crashes at import time under the New Architecture. Lazy-init inside
+   functions/`useEffect`; storage access goes through `src/lib/storage.tsx`.
+2. **RN cookie libraries don't load under SDK 54 + New Arch.** Clearing the Circle
+   WebView session uses the **local Expo module** `modules/circle-cookies` (clears
+   `HTTPCookieStorage.shared` on iOS), wrapped by `src/lib/circle-cookies`. Don't
+   add `@react-native-cookies/cookies` or similar — they fail to load.
+3. **Never call Circle's `/home` endpoint** — it 401s for headless-provisioned
+   members (which all Rionna members are). The native member feed goes through the
+   backend's `circle.getMemberFeed` (`/spaces` aggregation, follow-filtered,
+   server-side cached). Circle content generally arrives **via the backend API**,
+   not by calling Circle directly from the app.
+4. **The Circle WebView is only needed for realtime DMs.** Feed, threads, events,
+   and notifications are native, built on the backend's Member-API-based endpoints.
+   Don't route new surfaces through the WebView.
 
-**Essential Commands:**
+## Backend relationship
+
+- All data comes from the rionna-ireland oRPC API at `EXPO_PUBLIC_API_URL`
+  (`src/lib/api/client.tsx`). Single club: `EXPO_PUBLIC_CLUB_ID` /
+  `EXPO_PUBLIC_CLUB_NAME` are baked into env.
+- Auth is Better Auth (session cookies) via `src/lib/auth`.
+- `env.ts` validates all `EXPO_PUBLIC_*` vars with zod
+  (`EXPO_PUBLIC_APP_ENV`: development | preview | production). Prebuilds run with
+  `STRICT_ENV_VALIDATION=1`. Never put server secrets in the public env schema.
+- Circle mock mode for local dev: `pnpm start:circle-mock` (backend must run
+  `pnpm dev:with-circle-mock`; mock server lives in `../circle-mock`).
+
+## Feature map (`src/features/`)
+
+- `member-content/` — **native member feed** (backend `getMemberFeed`), tiptap
+  rendering of Circle post bodies, screens + cache
+- `pulse/` — home/"pulse" surface: latest news, results, next run, trainer posts,
+  community feed tile
+- `community/` — Circle WebView session handling (`use-community-session` — cookie
+  install via minted member token; see gotchas 2–3)
+- `stables/` — horse profiles, race history; `paddock/` — paddock components
+- `events/`, `notifications/`, `news/`, `auth/`, `onboarding/`, `settings/`
+
+## Commands
+
 ```bash
-pnpm start              # Start dev server
-pnpm ios/android        # Run on platform
-pnpm lint               # ESLint check
-pnpm type-check         # TypeScript validation
-pnpm test               # Run Jest tests
-pnpm check-all          # All quality checks
+pnpm start                # Expo dev server (pnpm start:circle-mock for mock Circle)
+pnpm ios / pnpm android   # Run on platform (expo run:*)
+pnpm test                 # Jest
+pnpm lint                 # ESLint (+ lint:translations for i18n JSON)
+pnpm type-check           # tsc --noemit
+pnpm check-all            # lint + type-check + translations + tests
+pnpm prebuild:development # Expo prebuild with strict env validation
 ```
 
-**Environment-Specific:**
-```bash
-pnpm start:preview              # Preview environment
-pnpm ios:production             # Production iOS
-pnpm build:production:ios       # EAS production build
-```
+## Conventions
 
-## How: Key Patterns
-
-- **Create features**: New folder in `src/features/[your-feature]/` with screens, components, API hooks
-- **Add routes**: Create files in `src/app/` (file-based routing)
-- **Forms**: Use TanStack Form + Zod (see `src/features/auth/components/login-form.tsx`)
-- **Data fetching**: Use React Query (see `src/features/feed/api.ts`)
-- **Global state**: Use Zustand (see `src/features/auth/use-auth-store.tsx`)
-- **Styling**: NativeWind/Tailwind classes (see `src/components/ui/button.tsx`)
-- **Storage**: Use MMKV via `src/lib/storage.tsx` for sensitive data
-- **Imports**: Always use `@/` prefix, never relative imports
-
-## How: Essential Rules
-
-- ✅ **DO** use absolute imports: `@/components/ui/button`
-- ✅ **DO** follow feature-based structure: `src/features/[name]/`
-- ✅ **DO** use TanStack Form for forms (not react-hook-form)
-- ✅ **DO** use MMKV storage for sensitive data (not AsyncStorage)
-- ✅ **DO** use EAS Build for production: `pnpm build:production:ios`
-- ✅ **DO** prefix env vars with `EXPO_PUBLIC_*` for app access
-- ❌ **DO NOT** modify `android/` or `ios/` directly (use Expo config plugins)
+- Absolute imports only (`@/...`), feature-based structure
+  (`src/features/<name>/{screens,components,api,lib}`), routes in `src/app/`.
+- Data fetching with React Query hooks in each feature's `api/` dir; global state
+  in Zustand stores; forms with TanStack Form + Zod.
+- MMKV (via `src/lib/storage.tsx`) for persisted data — not AsyncStorage.
+- Don't edit `ios/`/`android/` directly — use Expo config plugins (`app.config.ts`).
+  The exception is the intentional local native module in `modules/circle-cookies`.
+- Tests colocated as `*.test.tsx?` next to the code; run `pnpm check-all` before
+  calling work done.
+- Commits: conventional format; no Co-Authored-By / "Generated with" trailers.
