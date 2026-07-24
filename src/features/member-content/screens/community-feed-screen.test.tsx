@@ -3,10 +3,14 @@ import type { AuthUser } from '@/lib/auth/utils';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import * as React from 'react';
 
-import { MemberHomeView } from '@/features/member-content/screens/member-home-screen';
+import { CommunityFeedView } from '@/features/member-content/screens/community-feed-screen';
 
 jest.mock('@/components/ui', () => ({
   Image: 'Image',
+}));
+
+jest.mock('@/components/ui/tab-bar-layout', () => ({
+  useTabBarContentPadding: () => 120,
 }));
 
 const MEMBER: AuthUser = {
@@ -38,14 +42,14 @@ const BASE_PROPS = {
   isRefetching: false,
   onRefresh: jest.fn(),
   onOpenPost: jest.fn(),
-  onSignOut: jest.fn(),
+  onOpenProfile: jest.fn(),
 };
 
-describe('memberHomeView', () => {
+describe('communityFeedView', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('shows the live member feed and opens a native post', () => {
-    render(<MemberHomeView {...BASE_PROPS} />);
+    render(<CommunityFeedView {...BASE_PROPS} />);
 
     expect(screen.getByText('Laska morning update')).toBeOnTheScreen();
     fireEvent.press(screen.getByRole('button', { name: 'Laska morning update' }));
@@ -53,7 +57,7 @@ describe('memberHomeView', () => {
   });
 
   it('labels cached content without hiding the saved feed', () => {
-    render(<MemberHomeView {...BASE_PROPS} contentState="saved" />);
+    render(<CommunityFeedView {...BASE_PROPS} contentState="saved" />);
 
     expect(screen.getByText('Showing saved content')).toBeOnTheScreen();
     expect(screen.getByText('Laska morning update')).toBeOnTheScreen();
@@ -64,16 +68,14 @@ describe('memberHomeView', () => {
     ['empty', { ...BASE_PROPS, items: [], contentState: 'empty' as const }],
     ['unavailable', { ...BASE_PROPS, items: undefined, contentState: 'unavailable' as const }],
   ])('renders the %s state', (_name, props) => {
-    render(<MemberHomeView {...props} />);
+    render(<CommunityFeedView {...props} />);
     expect(screen.getByTestId(`member-feed-${_name}`)).toBeOnTheScreen();
   });
 
-  it('opens the account sheet and signs out', () => {
-    render(<MemberHomeView {...BASE_PROPS} />);
+  it('opens the profile from the avatar', () => {
+    render(<CommunityFeedView {...BASE_PROPS} />);
 
-    fireEvent.press(screen.getByRole('button', { name: 'Open account' }));
-    expect(screen.getByText('jane@example.com')).toBeOnTheScreen();
-    fireEvent.press(screen.getByRole('button', { name: 'Sign out' }));
-    expect(BASE_PROPS.onSignOut).toHaveBeenCalledTimes(1);
+    fireEvent.press(screen.getByRole('button', { name: 'Open profile' }));
+    expect(BASE_PROPS.onOpenProfile).toHaveBeenCalledTimes(1);
   });
 });
