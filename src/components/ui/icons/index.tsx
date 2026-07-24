@@ -1,5 +1,6 @@
 /* eslint-disable react-refresh/only-export-components */
 export * from './arrow-right';
+export * from './calendar';
 export * from './caret-down';
 export * from './github';
 export * from './home';
@@ -8,6 +9,7 @@ export * from './language';
 export * from './menu';
 export * from './pulse';
 export * from './rate';
+export * from './rosette';
 export * from './settings';
 export * from './share';
 export * from './support';

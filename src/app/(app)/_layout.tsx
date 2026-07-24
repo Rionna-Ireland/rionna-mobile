@@ -1,6 +1,7 @@
-import { Redirect, Stack } from 'expo-router';
+import { Redirect, Tabs } from 'expo-router';
 import * as React from 'react';
 
+import { CustomTabBar } from '@/components/ui/tab-bar';
 import { useAuthStore as useAuth } from '@/features/auth/use-auth-store';
 
 export default function MemberLayout() {
@@ -10,8 +11,15 @@ export default function MemberLayout() {
     return <Redirect href="/login" />;
   }
   return (
-    <Stack>
-      <Stack.Screen name="index" options={{ headerShown: false }} />
-    </Stack>
+    <Tabs
+      tabBar={props => <CustomTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
+    >
+      <Tabs.Screen name="index" options={{ title: 'Home' }} />
+      <Tabs.Screen name="stables" options={{ title: 'Stables' }} />
+      <Tabs.Screen name="community" options={{ title: 'Community' }} />
+      <Tabs.Screen name="events" options={{ title: 'Events' }} />
+      <Tabs.Screen name="paddock" options={{ title: 'The Paddock' }} />
+    </Tabs>
   );
 }

@@ -1,13 +1,13 @@
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
-import { router } from 'expo-router';
 import * as React from 'react';
 import { Pressable, View } from 'react-native';
 
 import {
+  Calendar as CalendarIcon,
+  Home as HomeIcon,
   Horse as HorseIcon,
-  Menu as MenuIcon,
-  Pulse as PulseIcon,
+  Rosette as RosetteIcon,
   Users as UsersIcon,
 } from '@/components/ui/icons';
 import { useTabBarBottomOffset } from '@/components/ui/tab-bar-layout';
@@ -27,11 +27,6 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
         const isFocused = state.index === index;
 
         const onPress = () => {
-          if (route.name === 'community') {
-            router.push('/community-view');
-            return;
-          }
-
           const event = navigation.emit({
             type: 'tabPress',
             target: route.key,
@@ -43,13 +38,15 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
           }
         };
 
-        let Icon = PulseIcon;
+        let Icon = HomeIcon;
         if (route.name === 'stables')
           Icon = HorseIcon;
         if (route.name === 'community')
           Icon = UsersIcon;
-        if (route.name === 'more')
-          Icon = MenuIcon;
+        if (route.name === 'events')
+          Icon = CalendarIcon;
+        if (route.name === 'paddock')
+          Icon = RosetteIcon;
 
         return (
           <Pressable
