@@ -209,16 +209,20 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen
+          name="profile"
+          options={{ title: 'Profile', headerBackTitle: 'Back' }}
+        />
+        <Stack.Screen
           name="settings/notifications"
-          options={{ title: 'Notifications', headerBackTitle: 'More' }}
+          options={{ title: 'Notifications', headerBackTitle: 'Profile' }}
         />
         <Stack.Screen
           name="settings/change-password"
-          options={{ title: 'Password', headerBackTitle: 'More' }}
+          options={{ title: 'Password', headerBackTitle: 'Profile' }}
         />
         <Stack.Screen
           name="settings/delete-account"
-          options={{ title: 'Delete Account', headerBackTitle: 'More' }}
+          options={{ title: 'Delete Account', headerBackTitle: 'Profile' }}
         />
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
