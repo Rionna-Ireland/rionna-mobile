@@ -202,6 +202,15 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen
+          name="space-feed/[space-id]"
+          options={{
+            title: '',
+            headerBackTitle: 'Back',
+            headerShadowVisible: false,
+            headerStyle: { backgroundColor: '#F5F5F5' },
+          }}
+        />
+        <Stack.Screen
           name="news/[news-post-id]"
           options={{
             title: '',
