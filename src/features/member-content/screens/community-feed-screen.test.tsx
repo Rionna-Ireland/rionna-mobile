@@ -9,6 +9,10 @@ jest.mock('@/components/ui', () => ({
   Image: 'Image',
 }));
 
+jest.mock('@/components/ui/screen-layout', () => ({
+  useScreenTopPadding: () => 70,
+}));
+
 jest.mock('@/components/ui/tab-bar-layout', () => ({
   useTabBarContentPadding: () => 120,
 }));

@@ -9,6 +9,7 @@ import {
   Text,
   View,
 } from '@/components/ui';
+import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { HeadlineCard } from '@/features/home/components/headline-card';
@@ -26,6 +27,7 @@ export function HomeScreen() {
   const router = useRouter();
   const user = useAuthStore.use.user();
   const contentPaddingBottom = useTabBarContentPadding(24);
+  const contentPaddingTop = useScreenTopPadding();
 
   const nextRun = useNextRun();
   const results = useLatestResults();
@@ -62,7 +64,7 @@ export function HomeScreen() {
         className="flex-1 bg-background"
         contentContainerStyle={{
           paddingHorizontal: 20,
-          paddingTop: 56,
+          paddingTop: contentPaddingTop,
           paddingBottom: contentPaddingBottom,
         }}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />}

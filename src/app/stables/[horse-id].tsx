@@ -8,6 +8,7 @@ import {
   Text,
   View,
 } from '@/components/ui';
+import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { buildCommunityTargetUrl } from '@/features/community/lib/circle-target';
 import { useHorse } from '@/features/stables/api/use-horse';
 import { NextEntryCard } from '@/features/stables/components/next-entry-card';
@@ -68,6 +69,8 @@ export default function HorseProfileScreen() {
   const horseId = params['horse-id'];
   const { data: horse, isLoading, isError } = useHorse(horseId);
   const router = useRouter();
+  // Transparent nav header: content must clear the status bar itself.
+  const contentPaddingTop = useScreenTopPadding(0);
 
   if (isLoading) {
     return (
@@ -112,7 +115,10 @@ export default function HorseProfileScreen() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-background">
+    <ScrollView
+      className="flex-1 bg-background"
+      contentContainerStyle={{ paddingTop: contentPaddingTop }}
+    >
       <HorseHero horse={horse} />
 
       {/* Stats Grid -- tonal layering, no borders or shadows */}

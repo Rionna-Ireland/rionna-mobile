@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 
+import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { useMemberFeed } from '@/features/member-content/api/use-member-feed';
@@ -57,6 +58,7 @@ export function CommunityFeedView({
   onOpenProfile,
 }: CommunityFeedViewProps) {
   const contentPaddingBottom = useTabBarContentPadding(24);
+  const contentPaddingTop = useScreenTopPadding();
   const displayName = member.name?.trim() || 'Rionna member';
 
   return (
@@ -64,7 +66,7 @@ export function CommunityFeedView({
       className="flex-1 bg-neutral-100"
       contentContainerStyle={{
         paddingHorizontal: 20,
-        paddingTop: 56,
+        paddingTop: contentPaddingTop,
         paddingBottom: contentPaddingBottom,
       }}
       refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />}

@@ -8,30 +8,30 @@ jest.mock('@/components/ui', () => {
   return { ...actual, FocusAwareStatusBar: () => null };
 });
 
+jest.mock('@/components/ui/screen-layout', () => ({
+  useScreenTopPadding: () => 70,
+}));
+
 jest.mock('@/components/ui/tab-bar-layout', () => ({
   useTabBarContentPadding: () => 120,
 }));
 
 describe('paddockScreen', () => {
-  it('renders every hub row from the wireframe', () => {
+  it('renders the phase-1 hub rows only', () => {
     render(<PaddockScreen />);
 
-    for (const title of [
-      'My Rionna journey',
-      'Member benefits',
-      'Merchandise',
-      'Partner offers',
-      'Charity impact',
-      'Competitions',
-    ]) {
+    for (const title of ['My Rionna journey', 'Member benefits', 'Charity impact']) {
       expect(screen.getByText(title)).toBeOnTheScreen();
+    }
+    // Phase 2 with the client — must not render yet.
+    for (const title of ['Merchandise', 'Partner offers', 'Competitions']) {
+      expect(screen.queryByText(title)).toBeNull();
     }
   });
 
-  it('marks Competitions as future, everything else coming soon', () => {
+  it('labels every row coming soon', () => {
     render(<PaddockScreen />);
 
-    expect(screen.getByText('Future')).toBeOnTheScreen();
-    expect(screen.getAllByText('Coming soon')).toHaveLength(5);
+    expect(screen.getAllByText('Coming soon')).toHaveLength(3);
   });
 });

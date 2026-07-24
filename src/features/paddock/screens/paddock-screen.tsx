@@ -6,21 +6,17 @@ import {
   Text,
   View,
 } from '@/components/ui';
+import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 
 type HubRow = { title: string; subtitle: string; future?: boolean };
 
+// Merchandise, Partner offers and Competitions are phase 2 (client call
+// 2026-07-24) — reintroduce them here when that phase is agreed.
 const ROWS: HubRow[] = [
   { title: 'My Rionna journey', subtitle: 'Member, attendance and charity champion badges' },
   { title: 'Member benefits', subtitle: 'Restaurant, hotel and lifestyle partners' },
-  { title: 'Merchandise', subtitle: 'Caps, jackets, polos and accessories' },
-  { title: 'Partner offers', subtitle: 'Active offers and redemptions' },
   { title: 'Charity impact', subtitle: 'Total donated, voting and impact stories' },
-  {
-    title: 'Competitions',
-    subtitle: 'Final Fence · Last Woman Standing · Festival Challenge',
-    future: true,
-  },
 ];
 
 function PaddockRow({ row }: { row: HubRow }) {
@@ -44,6 +40,7 @@ function PaddockRow({ row }: { row: HubRow }) {
 
 export function PaddockScreen() {
   const contentPaddingBottom = useTabBarContentPadding(24);
+  const contentPaddingTop = useScreenTopPadding();
 
   return (
     <>
@@ -52,7 +49,7 @@ export function PaddockScreen() {
         className="flex-1 bg-background"
         contentContainerStyle={{
           paddingHorizontal: 20,
-          paddingTop: 56,
+          paddingTop: contentPaddingTop,
           paddingBottom: contentPaddingBottom,
         }}
       >
