@@ -1,1 +1,1 @@
-export { CommunityFeedScreen as default } from '@/features/member-content/screens/community-feed-screen';
+export { HomeScreen as default } from '@/features/home/screens/home-screen';

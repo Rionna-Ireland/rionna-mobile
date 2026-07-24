@@ -1,0 +1,63 @@
+import { fireEvent, render, screen } from '@testing-library/react-native';
+import * as React from 'react';
+
+import { HomeScreen } from '@/features/home/screens/home-screen';
+
+const mockPush = jest.fn();
+
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ push: mockPush }),
+}));
+
+jest.mock('@/components/ui', () => {
+  const actual = jest.requireActual('@/components/ui');
+  return { ...actual, FocusAwareStatusBar: () => null, Image: 'Image' };
+});
+
+jest.mock('@/components/ui/tab-bar-layout', () => ({
+  useTabBarContentPadding: () => 120,
+}));
+
+jest.mock('@/features/auth/use-auth-store', () => ({
+  useAuthStore: {
+    use: {
+      user: () => ({ id: 'member-1', email: 'jane@example.com', name: 'Jane Member' }),
+    },
+  },
+}));
+
+const mockEmptyQuery = {
+  data: undefined,
+  isLoading: false,
+  isRefetching: false,
+  refetch: jest.fn(),
+};
+
+jest.mock('@/features/pulse/api/use-next-run', () => ({
+  useNextRun: () => mockEmptyQuery,
+}));
+jest.mock('@/features/pulse/api/use-latest-results', () => ({
+  useLatestResults: () => mockEmptyQuery,
+}));
+jest.mock('@/features/pulse/api/use-latest-news', () => ({
+  useLatestNews: () => mockEmptyQuery,
+}));
+jest.mock('@/features/pulse/api/use-trainer-posts', () => ({
+  useTrainerPosts: () => mockEmptyQuery,
+}));
+
+describe('homeScreen', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('renders the headline card (welcome fallback with no data)', () => {
+    render(<HomeScreen />);
+    expect(screen.getByTestId('headline-card')).toBeOnTheScreen();
+    expect(screen.getByText('Welcome to the club')).toBeOnTheScreen();
+  });
+
+  it('opens the profile from the avatar', () => {
+    render(<HomeScreen />);
+    fireEvent.press(screen.getByTestId('home-avatar'));
+    expect(mockPush).toHaveBeenCalledWith('/profile');
+  });
+});
