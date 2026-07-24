@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 
 import { useAuthStore } from '@/features/auth/use-auth-store';
+import { usePostLike } from '@/features/member-content/api/use-post-like';
 import { useSpaceFeed } from '@/features/member-content/api/use-space-feed';
 import { MemberFeedCard } from '@/features/member-content/components/member-feed-card';
 
@@ -23,6 +24,8 @@ type SpaceFeedViewProps = {
   isRefetching: boolean;
   onRefresh: () => void;
   onOpenPost: (spaceId: string, postId: string) => void;
+  onToggleLike?: (postId: string, liked: boolean) => void;
+  pendingLikePostId?: string | null;
 };
 
 function EmptyState({
@@ -50,6 +53,8 @@ export function SpaceFeedView({
   isRefetching,
   onRefresh,
   onOpenPost,
+  onToggleLike,
+  pendingLikePostId,
 }: SpaceFeedViewProps) {
   return (
     <ScrollView
@@ -96,7 +101,13 @@ export function SpaceFeedView({
             )
           : null}
         {items?.map(item => (
-          <MemberFeedCard key={item.id} item={item} onOpen={onOpenPost} />
+          <MemberFeedCard
+            key={item.id}
+            item={item}
+            onOpen={onOpenPost}
+            onToggleLike={onToggleLike}
+            likePending={pendingLikePostId === item.id}
+          />
         ))}
       </View>
     </ScrollView>
@@ -115,6 +126,7 @@ export function SpaceFeedScreen() {
     [member?.id],
   );
   const feed = useSpaceFeed(scope, spaceId);
+  const like = usePostLike(scope);
 
   if (!member) {
     return null;
@@ -133,6 +145,8 @@ export function SpaceFeedScreen() {
         onOpenPost={(postSpaceId, postId) => router.push(
           `/post/${encodeURIComponent(postSpaceId)}/${encodeURIComponent(postId)}`,
         )}
+        onToggleLike={(postId, liked) => like.toggleLike({ postId, liked })}
+        pendingLikePostId={like.pendingPostId}
       />
     </>
   );

@@ -6,8 +6,10 @@ import * as React from 'react';
 import { ActivityIndicator, Linking, Pressable, ScrollView, Text, View } from 'react-native';
 
 import { Image } from '@/components/ui';
+import { Heart } from '@/components/ui/icons';
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { useMemberPost } from '@/features/member-content/api/use-member-post';
+import { usePostLike } from '@/features/member-content/api/use-post-like';
 import { CircleTiptapRenderer } from '@/features/member-content/components/circle-tiptap-renderer';
 import { formatCount, formatMemberContentDate } from '@/features/member-content/lib/content-format';
 import { hydrateCircleDoc } from '@/features/member-content/tiptap/hydrate';
@@ -19,6 +21,10 @@ type MemberPostViewProps = {
   isLoading?: boolean;
   onOpenUrl?: (url: string) => void;
   onRetry?: () => void;
+  /** Wire to flip the like; omitted → read-only count. */
+  onToggleLike?: (postId: string, liked: boolean) => void;
+  /** Disables the heart while the like mutation is in flight. */
+  likePending?: boolean;
 };
 
 function PostUnavailable({ onRetry }: { onRetry?: () => void }) {
@@ -70,12 +76,55 @@ function PostAuthor({ post }: { post: MemberPostDetail }) {
   );
 }
 
+function PostLikeControl({
+  post,
+  onToggleLike,
+  likePending = false,
+}: {
+  post: MemberPostDetail;
+  onToggleLike?: (postId: string, liked: boolean) => void;
+  likePending?: boolean;
+}) {
+  const countLabel = formatCount(post.likeCount, 'like', 'likes');
+  if (!onToggleLike) {
+    return <Text className="font-sans text-xs text-neutral-500">{countLabel}</Text>;
+  }
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={post.isLiked ? 'Unlike post' : 'Like post'}
+      disabled={likePending}
+      hitSlop={8}
+      onPress={() => onToggleLike(post.id, !post.isLiked)}
+      className="flex-row items-center gap-1.5"
+    >
+      <Heart
+        width={16}
+        height={16}
+        filled={post.isLiked}
+        color={post.isLiked ? '#BE123C' : '#737373'}
+      />
+      <Text
+        className={
+          post.isLiked
+            ? 'font-sans text-xs font-medium text-rose-700'
+            : 'font-sans text-xs text-neutral-500'
+        }
+      >
+        {countLabel}
+      </Text>
+    </Pressable>
+  );
+}
+
 export function MemberPostView({
   post,
   contentState,
   isLoading = false,
   onOpenUrl,
   onRetry,
+  onToggleLike,
+  likePending,
 }: MemberPostViewProps) {
   if (isLoading && !post) {
     return (
@@ -138,10 +187,8 @@ export function MemberPostView({
             {post.title}
           </Text>
           <PostAuthor post={post} />
-          <View className="mt-4 flex-row gap-4 border-b border-neutral-200 pb-5">
-            <Text className="font-sans text-xs text-neutral-500">
-              {formatCount(post.likeCount, 'like', 'likes')}
-            </Text>
+          <View className="mt-4 flex-row items-center gap-4 border-b border-neutral-200 pb-5">
+            <PostLikeControl post={post} onToggleLike={onToggleLike} likePending={likePending} />
             <Text className="font-sans text-xs text-neutral-500">
               {formatCount(post.commentCount, 'comment', 'comments')}
             </Text>
@@ -175,6 +222,7 @@ function SignedInMemberPost({
     [memberId],
   );
   const post = useMemberPost(scope, spaceId, postId);
+  const like = usePostLike(scope);
 
   return (
     <MemberPostView
@@ -183,6 +231,8 @@ function SignedInMemberPost({
       isLoading={post.isLoading}
       onOpenUrl={url => void Linking.openURL(url)}
       onRetry={() => void post.refetch()}
+      onToggleLike={(likedPostId, liked) => like.toggleLike({ postId: likedPostId, liked })}
+      likePending={like.isPending}
     />
   );
 }

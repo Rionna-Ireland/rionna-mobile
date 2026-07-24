@@ -28,6 +28,7 @@ function feedItem(index: number) {
     authorName: 'Jane',
     commentCount: 0,
     likeCount: 0,
+    isLiked: false,
     imageUrl: null,
     url: null,
   };
@@ -49,6 +50,7 @@ const POST_DETAIL = {
   createdAt: null,
   commentCount: 2,
   likeCount: 4,
+  isLiked: false,
   url: null,
 };
 

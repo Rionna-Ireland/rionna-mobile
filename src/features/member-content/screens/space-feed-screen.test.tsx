@@ -18,6 +18,7 @@ const ITEM = {
   authorName: 'Rionna Racing',
   commentCount: 3,
   likeCount: 7,
+  isLiked: false,
   imageUrl: null,
   url: null,
 };

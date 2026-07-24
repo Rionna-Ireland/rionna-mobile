@@ -34,6 +34,7 @@ const FEED_ITEM = {
   authorName: 'Jane',
   commentCount: 2,
   likeCount: 4,
+  isLiked: false,
   imageUrl: null,
   url: null,
 };
@@ -59,6 +60,7 @@ function postDetail(id: string) {
     createdAt: '2026-07-13T10:00:00.000Z',
     commentCount: 2,
     likeCount: 4,
+    isLiked: false,
     url: null,
   };
 }
@@ -123,10 +125,38 @@ describe('member content cache', () => {
     setCachedMemberFeed(SCOPE, [FEED_ITEM], NOW);
     const key = [...mockStore.keys()][0];
     mockStore.set(key, {
-      schemaVersion: 1,
+      schemaVersion: 2,
       scope: SCOPE,
       feed: { data: [FEED_ITEM], fetchedAt: NOW },
       posts: null,
+    });
+
+    expect(getCachedMemberFeed(SCOPE, NOW + 1)).toBeNull();
+  });
+
+  it('drops a schema-v1 envelope cached before isLiked existed', () => {
+    setCachedMemberFeed(SCOPE, [FEED_ITEM], NOW);
+    const key = [...mockStore.keys()][0];
+    const { isLiked: _isLiked, ...legacyItem } = FEED_ITEM;
+    mockStore.set(key, {
+      schemaVersion: 1,
+      scope: SCOPE,
+      feed: { data: [legacyItem], fetchedAt: NOW },
+      posts: {},
+    });
+
+    expect(getCachedMemberFeed(SCOPE, NOW + 1)).toBeNull();
+  });
+
+  it('rejects cached feed items that lack the isLiked flag even at the current version', () => {
+    setCachedMemberFeed(SCOPE, [FEED_ITEM], NOW);
+    const key = [...mockStore.keys()][0];
+    const { isLiked: _isLiked, ...legacyItem } = FEED_ITEM;
+    mockStore.set(key, {
+      schemaVersion: 2,
+      scope: SCOPE,
+      feed: { data: [legacyItem], fetchedAt: NOW },
+      posts: {},
     });
 
     expect(getCachedMemberFeed(SCOPE, NOW + 1)).toBeNull();

@@ -21,6 +21,7 @@ export type MemberFeedItem = {
   authorName: string | null;
   commentCount: number;
   likeCount: number;
+  isLiked: boolean;
   imageUrl: string | null;
   url: string | null;
 };
@@ -48,6 +49,7 @@ export type MemberPostDetail = {
   createdAt: string | null;
   commentCount: number;
   likeCount: number;
+  isLiked: boolean;
   url: string | null;
 };
 

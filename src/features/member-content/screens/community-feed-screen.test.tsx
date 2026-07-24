@@ -34,6 +34,7 @@ const ITEM = {
   authorName: 'Rionna Racing',
   commentCount: 2,
   likeCount: 5,
+  isLiked: false,
   imageUrl: null,
   url: null,
 };

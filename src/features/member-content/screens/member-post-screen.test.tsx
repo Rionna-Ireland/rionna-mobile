@@ -35,6 +35,7 @@ const POST: MemberPostDetail = {
   createdAt: '2026-07-13T08:00:00.000Z',
   commentCount: 2,
   likeCount: 5,
+  isLiked: false,
   url: null,
 };
 
@@ -72,6 +73,35 @@ describe('memberPostView', () => {
     );
     fireEvent.press(screen.getByRole('button', { name: 'Retry post' }));
     expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('likes the post from the heart control', () => {
+    const onToggleLike = jest.fn();
+    render(<MemberPostView post={POST} contentState="fresh" onToggleLike={onToggleLike} />);
+
+    fireEvent.press(screen.getByLabelText('Like post'));
+    expect(onToggleLike).toHaveBeenCalledWith('post-1', true);
+  });
+
+  it('unlikes a liked post and disables the heart while in flight', () => {
+    const onToggleLike = jest.fn();
+    render(
+      <MemberPostView
+        post={{ ...POST, isLiked: true }}
+        contentState="fresh"
+        onToggleLike={onToggleLike}
+        likePending
+      />,
+    );
+
+    fireEvent.press(screen.getByLabelText('Unlike post'));
+    expect(onToggleLike).not.toHaveBeenCalled();
+  });
+
+  it('keeps the like count read-only when no handler is wired', () => {
+    render(<MemberPostView post={POST} contentState="fresh" />);
+    expect(screen.queryByLabelText('Like post')).not.toBeOnTheScreen();
+    expect(screen.getByText('5 likes')).toBeOnTheScreen();
   });
 
   it('renders the loading state', () => {

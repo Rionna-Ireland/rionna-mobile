@@ -3,6 +3,7 @@ export * from './arrow-right';
 export * from './calendar';
 export * from './caret-down';
 export * from './github';
+export * from './heart';
 export * from './home';
 export * from './horse';
 export * from './language';

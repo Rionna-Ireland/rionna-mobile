@@ -17,6 +17,7 @@ import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { useMemberFeed } from '@/features/member-content/api/use-member-feed';
+import { usePostLike } from '@/features/member-content/api/use-post-like';
 import { MemberFeedCard } from '@/features/member-content/components/member-feed-card';
 
 type CommunityFeedViewProps = {
@@ -28,6 +29,8 @@ type CommunityFeedViewProps = {
   onRefresh: () => void;
   onOpenPost: (spaceId: string, postId: string) => void;
   onOpenProfile: () => void;
+  onToggleLike?: (postId: string, liked: boolean) => void;
+  pendingLikePostId?: string | null;
 };
 
 function EmptyState({
@@ -56,6 +59,8 @@ export function CommunityFeedView({
   onRefresh,
   onOpenPost,
   onOpenProfile,
+  onToggleLike,
+  pendingLikePostId,
 }: CommunityFeedViewProps) {
   const contentPaddingBottom = useTabBarContentPadding(24);
   const contentPaddingTop = useScreenTopPadding();
@@ -130,7 +135,13 @@ export function CommunityFeedView({
             )
           : null}
         {items?.map(item => (
-          <MemberFeedCard key={item.id} item={item} onOpen={onOpenPost} />
+          <MemberFeedCard
+            key={item.id}
+            item={item}
+            onOpen={onOpenPost}
+            onToggleLike={onToggleLike}
+            likePending={pendingLikePostId === item.id}
+          />
         ))}
       </View>
     </ScrollView>
@@ -144,6 +155,7 @@ function SignedInCommunityFeed({ member }: { member: AuthUser }) {
     [member.id],
   );
   const feed = useMemberFeed(scope);
+  const like = usePostLike(scope);
 
   return (
     <CommunityFeedView
@@ -157,6 +169,8 @@ function SignedInCommunityFeed({ member }: { member: AuthUser }) {
         `/post/${encodeURIComponent(spaceId)}/${encodeURIComponent(postId)}`,
       )}
       onOpenProfile={() => router.push('/profile')}
+      onToggleLike={(postId, liked) => like.toggleLike({ postId, liked })}
+      pendingLikePostId={like.pendingPostId}
     />
   );
 }

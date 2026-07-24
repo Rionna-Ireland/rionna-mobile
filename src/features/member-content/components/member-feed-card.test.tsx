@@ -18,6 +18,7 @@ const item: MemberFeedItem = {
   authorName: 'Jane Trainer',
   commentCount: 4,
   likeCount: 9,
+  isLiked: false,
   imageUrl: null,
   url: null,
 };
@@ -46,5 +47,50 @@ describe('memberFeedCard', () => {
     render(<MemberFeedCard item={{ ...item, spaceId: null }} onOpen={onOpen} />);
     expect(screen.queryByRole('button', { name: /morning from the yard/i })).toBeNull();
     expect(screen.getByText('Morning from the yard')).toBeOnTheScreen();
+  });
+
+  it('likes an unliked post from the heart button', async () => {
+    const onToggleLike = jest.fn();
+    const { user } = setup(
+      <MemberFeedCard item={item} onOpen={jest.fn()} onToggleLike={onToggleLike} />,
+    );
+
+    await user.press(screen.getByLabelText('Like post'));
+    expect(onToggleLike).toHaveBeenCalledWith('post-42', true);
+  });
+
+  it('unlikes a liked post from the heart button', async () => {
+    const onToggleLike = jest.fn();
+    const { user } = setup(
+      <MemberFeedCard
+        item={{ ...item, isLiked: true }}
+        onOpen={jest.fn()}
+        onToggleLike={onToggleLike}
+      />,
+    );
+
+    await user.press(screen.getByLabelText('Unlike post'));
+    expect(onToggleLike).toHaveBeenCalledWith('post-42', false);
+  });
+
+  it('disables the heart while its like is in flight', async () => {
+    const onToggleLike = jest.fn();
+    const { user } = setup(
+      <MemberFeedCard
+        item={item}
+        onOpen={jest.fn()}
+        onToggleLike={onToggleLike}
+        likePending
+      />,
+    );
+
+    await user.press(screen.getByLabelText('Like post'));
+    expect(onToggleLike).not.toHaveBeenCalled();
+  });
+
+  it('shows a read-only like count when no like handler is wired', () => {
+    render(<MemberFeedCard item={item} onOpen={jest.fn()} />);
+    expect(screen.queryByLabelText('Like post')).toBeNull();
+    expect(screen.getByText('9 likes')).toBeOnTheScreen();
   });
 });

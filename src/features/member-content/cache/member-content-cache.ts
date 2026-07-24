@@ -8,7 +8,8 @@ import type {
 
 import { getItem, removeItem, setItem } from '@/lib/storage';
 
-const CACHE_SCHEMA_VERSION = 1;
+// v2: feed items and post details carry isLiked (S7-03) — v1 envelopes are dropped.
+const CACHE_SCHEMA_VERSION = 2;
 const CACHE_KEY_PREFIX = 'member-content.v1';
 export const MEMBER_CONTENT_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_CACHED_POSTS = 50;
@@ -76,6 +77,7 @@ function isFeedItem(value: unknown): value is MemberFeedItem {
     && isNullableString(value.authorName)
     && typeof value.commentCount === 'number'
     && typeof value.likeCount === 'number'
+    && typeof value.isLiked === 'boolean'
     && isNullableString(value.imageUrl)
     && isNullableString(value.url)
   );
@@ -99,6 +101,7 @@ function isPostDetail(value: unknown): value is MemberPostDetail {
     && isNullableString(value.createdAt)
     && typeof value.commentCount === 'number'
     && typeof value.likeCount === 'number'
+    && typeof value.isLiked === 'boolean'
     && isNullableString(value.url)
   );
 }

@@ -4,14 +4,58 @@ import * as React from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { Image } from '@/components/ui';
+import { Heart } from '@/components/ui/icons';
 import { formatCount, formatMemberContentDate } from '@/features/member-content/lib/content-format';
 
 type MemberFeedCardProps = {
   item: MemberFeedItem;
   onOpen: (spaceId: string, postId: string) => void;
+  /** Wire to flip the like; omitted → read-only count (e.g. legacy surfaces). */
+  onToggleLike?: (postId: string, liked: boolean) => void;
+  /** Disables the heart while this post's like mutation is in flight. */
+  likePending?: boolean;
 };
 
-function CardBody({ item }: { item: MemberFeedItem }) {
+type LikeControlProps = {
+  item: MemberFeedItem;
+  onToggleLike?: (postId: string, liked: boolean) => void;
+  likePending?: boolean;
+};
+
+function LikeControl({ item, onToggleLike, likePending = false }: LikeControlProps) {
+  const countLabel = formatCount(item.likeCount, 'like', 'likes');
+  if (!onToggleLike) {
+    return <Text className="font-sans text-xs text-neutral-500">{countLabel}</Text>;
+  }
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={item.isLiked ? 'Unlike post' : 'Like post'}
+      disabled={likePending}
+      hitSlop={8}
+      onPress={() => onToggleLike(item.id, !item.isLiked)}
+      className="flex-row items-center gap-1.5"
+    >
+      <Heart
+        width={16}
+        height={16}
+        filled={item.isLiked}
+        color={item.isLiked ? '#BE123C' : '#737373'}
+      />
+      <Text
+        className={
+          item.isLiked
+            ? 'font-sans text-xs font-medium text-rose-700'
+            : 'font-sans text-xs text-neutral-500'
+        }
+      >
+        {countLabel}
+      </Text>
+    </Pressable>
+  );
+}
+
+function CardBody({ item, onToggleLike, likePending }: LikeControlProps) {
   const date = formatMemberContentDate(item.createdAt);
   const meta = [item.spaceName, date].filter(Boolean).join(' · ');
 
@@ -50,9 +94,7 @@ function CardBody({ item }: { item: MemberFeedItem }) {
           {item.authorName
             ? <Text className="font-sans text-xs text-neutral-600">{item.authorName}</Text>
             : null}
-          <Text className="font-sans text-xs text-neutral-500">
-            {formatCount(item.likeCount, 'like', 'likes')}
-          </Text>
+          <LikeControl item={item} onToggleLike={onToggleLike} likePending={likePending} />
           <Text className="font-sans text-xs text-neutral-500">
             {formatCount(item.commentCount, 'comment', 'comments')}
           </Text>
@@ -62,9 +104,9 @@ function CardBody({ item }: { item: MemberFeedItem }) {
   );
 }
 
-export function MemberFeedCard({ item, onOpen }: MemberFeedCardProps) {
+export function MemberFeedCard({ item, onOpen, onToggleLike, likePending }: MemberFeedCardProps) {
   if (!item.spaceId) {
-    return <CardBody item={item} />;
+    return <CardBody item={item} onToggleLike={onToggleLike} likePending={likePending} />;
   }
 
   return (
@@ -73,7 +115,7 @@ export function MemberFeedCard({ item, onOpen }: MemberFeedCardProps) {
       accessibilityLabel={item.title}
       onPress={() => onOpen(item.spaceId!, item.id)}
     >
-      <CardBody item={item} />
+      <CardBody item={item} onToggleLike={onToggleLike} likePending={likePending} />
     </Pressable>
   );
 }
