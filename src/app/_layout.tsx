@@ -193,6 +193,15 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen
+          name="post/[space-id]/[post-id]"
+          options={{
+            title: '',
+            headerBackTitle: 'Community',
+            headerShadowVisible: false,
+            headerStyle: { backgroundColor: '#F5F5F5' },
+          }}
+        />
+        <Stack.Screen
           name="news/[news-post-id]"
           options={{
             title: '',

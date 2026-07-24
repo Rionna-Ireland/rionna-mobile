@@ -157,7 +157,7 @@ function SignedInMemberHome({ member }: { member: AuthUser }) {
       isRefetching={feed.isRefetching}
       onRefresh={() => void feed.refetch()}
       onOpenPost={(spaceId, postId) => router.push(
-        `./post/${encodeURIComponent(spaceId)}/${encodeURIComponent(postId)}`,
+        `/post/${encodeURIComponent(spaceId)}/${encodeURIComponent(postId)}`,
       )}
       onSignOut={() => void signOut()}
     />

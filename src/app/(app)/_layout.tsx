@@ -12,15 +12,6 @@ export default function MemberLayout() {
   return (
     <Stack>
       <Stack.Screen name="index" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="post/[space-id]/[post-id]"
-        options={{
-          title: '',
-          headerBackTitle: 'Home',
-          headerShadowVisible: false,
-          headerStyle: { backgroundColor: '#F5F5F5' },
-        }}
-      />
     </Stack>
   );
 }
