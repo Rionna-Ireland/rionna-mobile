@@ -6,6 +6,7 @@ import {
   applyLikeToFeedItems,
   applyLikeToPostDetail,
   applyOptimisticLike,
+  reconcileLikeCount,
   rollbackOptimisticLike,
   sendPostLike,
 } from '@/features/member-content/api/use-post-like';
@@ -178,5 +179,45 @@ describe('optimistic cache update', () => {
     const queryClient = seededClient();
     const snapshots = applyOptimisticLike(queryClient, 'post-2', true);
     expect(snapshots.map(([key]) => key)).toEqual([FEED_KEY]);
+  });
+
+  describe('reconcileLikeCount', () => {
+    it('writes the server count over the optimistic count in every cache', () => {
+      const queryClient = seededClient();
+      applyOptimisticLike(queryClient, 'post-1', true); // optimistic 3 -> 4
+      reconcileLikeCount(queryClient, { postId: 'post-1', liked: true, likeCount: 9 }); // server says 9
+
+      expect(queryClient.getQueryData<MemberFeedItem[]>(FEED_KEY)?.[0]).toMatchObject({
+        isLiked: true,
+        likeCount: 9,
+      });
+      expect(queryClient.getQueryData<MemberFeedItem[]>(SPACE_FEED_KEY)?.[0]).toMatchObject({
+        isLiked: true,
+        likeCount: 9,
+      });
+      expect(queryClient.getQueryData<MemberPostDetail>(POST_KEY)).toMatchObject({
+        isLiked: true,
+        likeCount: 9,
+      });
+    });
+
+    it('leaves other posts and matching counts untouched (same references)', () => {
+      const queryClient = seededClient();
+      applyOptimisticLike(queryClient, 'post-1', true);
+      const feedBefore = queryClient.getQueryData<MemberFeedItem[]>(FEED_KEY);
+      reconcileLikeCount(queryClient, { postId: 'post-1', liked: true, likeCount: 4 }); // already 4 — no-op
+
+      const feedAfter = queryClient.getQueryData<MemberFeedItem[]>(FEED_KEY);
+      expect(feedAfter).toBe(feedBefore);
+      expect(feedAfter?.[1]).toMatchObject({ isLiked: false, likeCount: 3 });
+    });
+
+    it('is a no-op when the server did not return a count', () => {
+      const queryClient = seededClient();
+      applyOptimisticLike(queryClient, 'post-1', true);
+      const feedBefore = queryClient.getQueryData<MemberFeedItem[]>(FEED_KEY);
+      reconcileLikeCount(queryClient, { postId: 'post-1', liked: true, likeCount: null });
+      expect(queryClient.getQueryData<MemberFeedItem[]>(FEED_KEY)).toBe(feedBefore);
+    });
   });
 });

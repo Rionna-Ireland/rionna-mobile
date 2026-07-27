@@ -119,6 +119,41 @@ export function applyOptimisticLike(
   return snapshots;
 }
 
+/**
+ * Writes the server's authoritative like state over the optimistic guess in
+ * every cache the post appears in. Cheaper than invalidating the whole
+ * member-content root, which refetches every feed and makes the list jump.
+ */
+export function reconcileLikeCount(
+  queryClient: QueryClient,
+  { postId, liked, likeCount }: { postId: string; liked: boolean; likeCount: number | null },
+): void {
+  if (likeCount === null) {
+    return;
+  }
+  const entries = queryClient.getQueriesData<unknown>({
+    queryKey: [MEMBER_CONTENT_QUERY_ROOT],
+  });
+  for (const [queryKey, data] of entries) {
+    if (isFeedItems(data)) {
+      if (!data.some(item => item.id === postId
+        && (item.isLiked !== liked || item.likeCount !== likeCount))) {
+        continue;
+      }
+      queryClient.setQueryData(
+        queryKey,
+        data.map(item => (item.id === postId ? { ...item, isLiked: liked, likeCount } : item)),
+      );
+    }
+    else if (isPostDetail(data)) {
+      if (data.id !== postId || (data.isLiked === liked && data.likeCount === likeCount)) {
+        continue;
+      }
+      queryClient.setQueryData(queryKey, { ...data, isLiked: liked, likeCount });
+    }
+  }
+}
+
 export function rollbackOptimisticLike(
   queryClient: QueryClient,
   snapshots: LikeSnapshot[],
@@ -145,8 +180,18 @@ export function usePostLike(scope: MemberContentScope) {
     },
     onError: (_error, _variables, context) => {
       rollbackOptimisticLike(queryClient, context?.snapshots ?? []);
+      // Server state is unknown after a failure — resync in the background.
+      void queryClient.invalidateQueries({ queryKey: [MEMBER_CONTENT_QUERY_ROOT] });
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: [MEMBER_CONTENT_QUERY_ROOT] }),
+    // On success, patch in the server's count instead of invalidating the
+    // whole root — a blanket refetch replaces every feed and jumps the list.
+    onSuccess: (result, variables) => {
+      reconcileLikeCount(queryClient, {
+        postId: variables.postId,
+        liked: result.liked,
+        likeCount: result.likeCount,
+      });
+    },
   });
 
   return {
