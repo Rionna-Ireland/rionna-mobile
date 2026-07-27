@@ -1,4 +1,5 @@
 import type * as WebBrowserType from 'expo-web-browser';
+
 import Env from 'env';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
@@ -25,12 +26,13 @@ catch {
   WebBrowser = null;
 }
 
-const PRIVACY_URL = 'https://pinkconnections.com/legal/privacy-policy';
-const TERMS_URL = 'https://pinkconnections.com/legal/terms';
+const PRIVACY_URL = 'https://rionna.com/legal/privacy-policy';
+const TERMS_URL = 'https://rionna.com/legal/terms';
 
-export default function MoreScreen() {
+export function ProfileScreen() {
   const router = useRouter();
   const user = useAuthStore.use.user();
+  const displayName = user?.name?.trim() || 'Rionna member';
 
   const openLink = (url: string) => {
     if (WebBrowser) {
@@ -44,11 +46,33 @@ export default function MoreScreen() {
   return (
     <>
       <FocusAwareStatusBar />
-      <ScrollView className="flex-1 bg-background">
-        <View className="flex-1 px-4 pt-6 pb-10">
-          <Text className="font-display text-3xl text-black dark:text-white">
-            More
-          </Text>
+      <ScrollView className="flex-1 bg-background" contentContainerStyle={{ paddingBottom: 40 }}>
+        <View className="flex-1 px-4 pt-6">
+          <View className="mb-2 flex-row items-center gap-4">
+            <View className="size-14 items-center justify-center rounded-full border border-neutral-300 bg-neutral-100">
+              <Text className="font-sans text-xl font-semibold text-neutral-900">
+                {displayName.slice(0, 1).toUpperCase()}
+              </Text>
+            </View>
+            <View className="flex-1">
+              <Text className="font-sans text-xl font-semibold text-ink">{displayName}</Text>
+              <Text className="mt-0.5 font-sans text-sm text-neutral-600">
+                {user?.email ?? ''}
+              </Text>
+            </View>
+          </View>
+
+          {/* D9: membership is display-only — no billing actions, no renewal CTAs. */}
+          <SettingsContainer title="settings.profile.membership">
+            <SettingsItem
+              text="settings.profile.membershipStatus"
+              value="Active member"
+            />
+            <SettingsItem
+              text="settings.profile.club"
+              value={Env.EXPO_PUBLIC_CLUB_NAME}
+            />
+          </SettingsContainer>
 
           <SettingsContainer title="settings.notifications.title">
             <SettingsItem

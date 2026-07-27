@@ -18,12 +18,18 @@ import { useFonts as useLocalFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import * as React from 'react';
-import { LogBox, StyleSheet } from 'react-native';
+import { AppState, LogBox, StyleSheet } from 'react-native';
 import FlashMessage from 'react-native-flash-message';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useThemeConfig } from '@/components/ui/use-theme-config';
 import { hydrateAuth, useAuthStore as useAuth } from '@/features/auth/use-auth-store';
+import { CommunityPanel } from '@/features/community/components/community-panel';
+import { prewarmCircleSession } from '@/features/community/lib/circle-prewarm';
+import {
+  clearNotificationBadgeCount,
+  syncNotificationBadgeCount,
+} from '@/features/notifications/badge';
 import { handleNotificationResponse } from '@/features/notifications/deep-link';
 import { registerForPushNotifications } from '@/features/notifications/setup';
 import { APIProvider } from '@/lib/api';
@@ -54,6 +60,90 @@ SplashScreen.setOptions({
   fade: true,
 });
 
+function useHideSplashWhenReady(
+  fontsLoaded: boolean,
+  status: ReturnType<typeof useAuth.use.status>,
+) {
+  React.useEffect(() => {
+    if (!fontsLoaded || status === 'idle')
+      return;
+
+    const timer = setTimeout(() => {
+      SplashScreen.hideAsync();
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [fontsLoaded, status]);
+}
+
+function useNotificationRegistration(status: ReturnType<typeof useAuth.use.status>) {
+  React.useEffect(() => {
+    if (status === 'signIn') {
+      registerForPushNotifications()
+        .then(() => syncNotificationBadgeCount())
+        .catch(() => {});
+    }
+    if (status === 'signOut') {
+      clearNotificationBadgeCount().catch(() => {});
+    }
+  }, [status]);
+}
+
+function useNotificationBadgeSync(status: ReturnType<typeof useAuth.use.status>) {
+  React.useEffect(() => {
+    if (status !== 'signIn')
+      return;
+
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        syncNotificationBadgeCount().catch(() => {});
+      }
+    });
+
+    syncNotificationBadgeCount().catch(() => {});
+    return () => subscription.remove();
+  }, [status]);
+}
+
+// S6-03: pre-warm the Circle session on app foreground. The mint is throttled
+// internally (no-op when the cached token is still fresh), so this is cheap to
+// fire on every active transition. Also fires once on mount for the
+// already-signed-in cold-start case (sign-in itself triggers via the auth
+// store).
+function useCircleSessionPrewarm(status: ReturnType<typeof useAuth.use.status>) {
+  React.useEffect(() => {
+    if (status !== 'signIn')
+      return;
+
+    void prewarmCircleSession();
+
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        void prewarmCircleSession();
+      }
+    });
+
+    return () => subscription.remove();
+  }, [status]);
+}
+
+function useNotificationResponseListener() {
+  React.useEffect(() => {
+    let NotificationsMod: typeof NotificationsType | null = null;
+    try {
+      NotificationsMod = require('expo-notifications');
+    }
+    catch {
+      return;
+    }
+    if (!NotificationsMod)
+      return;
+    const subscription = NotificationsMod.addNotificationResponseReceivedListener(
+      handleNotificationResponse,
+    );
+    return () => subscription.remove();
+  }, []);
+}
+
 export default function RootLayout() {
   const status = useAuth.use.status();
 
@@ -73,43 +163,16 @@ export default function RootLayout() {
     'PPEiko-Thin': require('../../assets/fonts/PPEiko-Thin.otf'),
     'PPEiko-Heavy': require('../../assets/fonts/PPEiko-Heavy.otf'),
   });
+  const fontsLoaded = jakartaLoaded && monoLoaded && eikoLoaded;
 
-  // Hide splash once fonts are loaded and auth state is resolved
-  React.useEffect(() => {
-    if (jakartaLoaded && monoLoaded && eikoLoaded && status !== 'idle') {
-      const timer = setTimeout(() => {
-        SplashScreen.hideAsync();
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [jakartaLoaded, monoLoaded, eikoLoaded, status]);
-
-  // Register push token after sign-in; listen for tap-on-notification events
-  // regardless of auth state (cold-start taps arrive before sign-in hydrates).
-  React.useEffect(() => {
-    if (status === 'signIn') {
-      registerForPushNotifications().catch(() => {});
-    }
-  }, [status]);
-
-  React.useEffect(() => {
-    let NotificationsMod: typeof NotificationsType | null = null;
-    try {
-      NotificationsMod = require('expo-notifications');
-    }
-    catch {
-      return;
-    }
-    if (!NotificationsMod)
-      return;
-    const subscription = NotificationsMod.addNotificationResponseReceivedListener(
-      handleNotificationResponse,
-    );
-    return () => subscription.remove();
-  }, []);
+  useHideSplashWhenReady(fontsLoaded, status);
+  useNotificationRegistration(status);
+  useNotificationBadgeSync(status);
+  useNotificationResponseListener();
+  useCircleSessionPrewarm(status);
 
   // Keep splash visible until fonts are ready
-  if (!jakartaLoaded || !monoLoaded || !eikoLoaded) {
+  if (!fontsLoaded) {
     return null;
   }
 
@@ -118,11 +181,33 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="(app)" options={{ headerShown: false }} />
         <Stack.Screen
+          name="community-view"
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
           name="stables/[horse-id]"
           options={{
             title: '',
             headerBackTitle: 'Stables',
             headerTransparent: true,
+          }}
+        />
+        <Stack.Screen
+          name="post/[space-id]/[post-id]"
+          options={{
+            title: '',
+            headerBackTitle: 'Community',
+            headerShadowVisible: false,
+            headerStyle: { backgroundColor: '#F5F5F5' },
+          }}
+        />
+        <Stack.Screen
+          name="space-feed/[space-id]"
+          options={{
+            title: '',
+            headerBackTitle: 'Back',
+            headerShadowVisible: false,
+            headerStyle: { backgroundColor: '#F5F5F5' },
           }}
         />
         <Stack.Screen
@@ -133,16 +218,20 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen
+          name="profile"
+          options={{ title: 'Profile', headerBackTitle: 'Back' }}
+        />
+        <Stack.Screen
           name="settings/notifications"
-          options={{ title: 'Notifications', headerBackTitle: 'More' }}
+          options={{ title: 'Notifications', headerBackTitle: 'Profile' }}
         />
         <Stack.Screen
           name="settings/change-password"
-          options={{ title: 'Password', headerBackTitle: 'More' }}
+          options={{ title: 'Password', headerBackTitle: 'Profile' }}
         />
         <Stack.Screen
           name="settings/delete-account"
-          options={{ title: 'Delete Account', headerBackTitle: 'More' }}
+          options={{ title: 'Delete Account', headerBackTitle: 'Profile' }}
         />
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
@@ -164,6 +253,9 @@ function Providers({ children }: { children: React.ReactNode }) {
           <APIProvider>
             <BottomSheetModalProvider>
               {children}
+              {/* S6-05: persistent Community WebView singleton — mounted once,
+                  never unmounted by navigation. Renders null until first open. */}
+              <CommunityPanel />
               <FlashMessage position="top" />
             </BottomSheetModalProvider>
           </APIProvider>

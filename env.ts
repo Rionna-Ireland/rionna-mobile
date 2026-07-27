@@ -21,24 +21,24 @@ const EXPO_PUBLIC_APP_ENV = (process.env.EXPO_PUBLIC_APP_ENV
   ?? 'development') as z.infer<typeof envSchema>['EXPO_PUBLIC_APP_ENV'];
 
 const BUNDLE_IDS = {
-  development: 'com.rionna.pinkconnections.development',
-  preview: 'com.rionna.pinkconnections.preview',
-  production: 'com.rionna.pinkconnections',
+  development: 'com.rionna.app.development',
+  preview: 'com.rionna.app.preview',
+  production: 'com.rionna.app',
 } as const;
 
 const PACKAGES = {
-  development: 'com.rionna.pinkconnections.development',
-  preview: 'com.rionna.pinkconnections.preview',
-  production: 'com.rionna.pinkconnections',
+  development: 'com.rionna.app.development',
+  preview: 'com.rionna.app.preview',
+  production: 'com.rionna.app',
 } as const;
 
 const SCHEMES = {
-  development: 'pinkconnections',
-  preview: 'pinkconnections.preview',
-  production: 'pinkconnections',
+  development: 'rionna',
+  preview: 'rionna.preview',
+  production: 'rionna',
 } as const;
 
-const NAME = 'Pink Connections';
+const NAME = 'Rionna';
 
 const STRICT_ENV_VALIDATION = process.env.STRICT_ENV_VALIDATION === '1';
 
@@ -51,7 +51,7 @@ const _env: z.infer<typeof envSchema> = {
   EXPO_PUBLIC_VERSION: packageJSON.version,
   EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000',
   EXPO_PUBLIC_CLUB_ID: process.env.EXPO_PUBLIC_CLUB_ID ?? 'org_pink_connections',
-  EXPO_PUBLIC_CLUB_NAME: process.env.EXPO_PUBLIC_CLUB_NAME ?? 'Pink Connections',
+  EXPO_PUBLIC_CLUB_NAME: process.env.EXPO_PUBLIC_CLUB_NAME ?? 'Rionna',
   EXPO_PUBLIC_CIRCLE_MODE: process.env.EXPO_PUBLIC_CIRCLE_MODE as z.infer<typeof envSchema>['EXPO_PUBLIC_CIRCLE_MODE'],
   EXPO_PUBLIC_CIRCLE_MOCK_BASE_URL: process.env.EXPO_PUBLIC_CIRCLE_MOCK_BASE_URL,
   EXPO_PUBLIC_COMMUNITY_DOMAIN: process.env.EXPO_PUBLIC_COMMUNITY_DOMAIN,

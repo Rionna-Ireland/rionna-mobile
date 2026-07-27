@@ -31,7 +31,7 @@ function FormHeader() {
         testID="form-title"
         className="pb-2 text-center text-4xl font-bold text-black dark:text-white"
       >
-        Pink Connections
+        Rionna
       </Text>
       <Text className="mb-6 text-center text-charcoal-500">
         Sign in to your account
@@ -43,15 +43,15 @@ function FormHeader() {
 function FormFooter() {
   return (
     <View className="mt-8 items-center">
-      <Text className="text-center text-sm text-charcoal-500">
+      {/* <Text className="text-center text-sm text-charcoal-500">
         New members visit
         {' '}
         <Text className="font-bold text-black dark:text-white">
-          pinkconnections.com
+          rionna.com
         </Text>
         {' '}
         to join.
-      </Text>
+      </Text> */}
     </View>
   );
 }

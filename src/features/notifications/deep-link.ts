@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 type PushData
   = | { screen: 'horse'; horseId: string }
     | { screen: 'news'; newsPostId: string }
-    | { screen: 'community'; url: string };
+    | { screen: 'community'; url?: string };
 
 function isPushData(data: unknown): data is PushData {
   if (!data || typeof data !== 'object')
@@ -15,7 +15,7 @@ function isPushData(data: unknown): data is PushData {
   if (d.screen === 'news')
     return typeof d.newsPostId === 'string';
   if (d.screen === 'community')
-    return typeof d.url === 'string';
+    return d.url === undefined || typeof d.url === 'string';
   return false;
 }
 
@@ -40,9 +40,9 @@ export function handleNotificationResponse(
       });
       return;
     case 'community':
-      router.navigate({
-        pathname: '/(app)/community',
-        params: { url: data.url },
+      router.push({
+        pathname: '/community-view',
+        params: data.url ? { url: data.url } : {},
       });
   }
 }

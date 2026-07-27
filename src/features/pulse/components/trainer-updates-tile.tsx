@@ -27,7 +27,7 @@ function PostRow({ post }: { post: TrainerPost }) {
     <Pressable
       onPress={() =>
         router.navigate({
-          pathname: '/(app)/community',
+          pathname: '/community-view',
           params: post.url ? { url: post.url } : {},
         })}
       className="gap-2 px-6 py-4"

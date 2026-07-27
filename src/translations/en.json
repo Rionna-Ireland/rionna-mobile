@@ -57,6 +57,14 @@
       "whenSection": "When to notify me"
     },
     "privacy": "Privacy Policy",
+    "profile": {
+      "club": "Club",
+      "help": "Help & support",
+      "membership": "Membership",
+      "membershipStatus": "Status",
+      "membershipStatusValue": "Active member",
+      "title": "Profile"
+    },
     "rate": "Rate",
     "share": "Share",
     "support": "Support",

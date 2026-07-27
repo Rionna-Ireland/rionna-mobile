@@ -4,15 +4,24 @@ import * as React from 'react';
 import { Pressable, View } from 'react-native';
 
 import {
+  Calendar as CalendarIcon,
+  Home as HomeIcon,
   Horse as HorseIcon,
-  Menu as MenuIcon,
-  Pulse as PulseIcon,
+  Rosette as RosetteIcon,
   Users as UsersIcon,
 } from '@/components/ui/icons';
+import { useTabBarBottomOffset } from '@/components/ui/tab-bar-layout';
+
+// Floating bar metrics live in tab-bar-layout.ts for import from full-bleed screens.
 
 export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const bottomOffset = useTabBarBottomOffset();
+
   return (
-    <View className="absolute inset-x-6 bottom-6 flex-row items-center justify-between rounded-full bg-white/80 px-6 py-4 shadow-lg shadow-black/5">
+    <View
+      className="absolute inset-x-6 flex-row items-center justify-between rounded-full bg-white/80 px-6 py-4 shadow-lg shadow-black/5"
+      style={{ bottom: bottomOffset }}
+    >
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         const isFocused = state.index === index;
@@ -29,13 +38,15 @@ export function CustomTabBar({ state, descriptors, navigation }: BottomTabBarPro
           }
         };
 
-        let Icon = PulseIcon;
+        let Icon = HomeIcon;
         if (route.name === 'stables')
           Icon = HorseIcon;
         if (route.name === 'community')
           Icon = UsersIcon;
-        if (route.name === 'more')
-          Icon = MenuIcon;
+        if (route.name === 'events')
+          Icon = CalendarIcon;
+        if (route.name === 'paddock')
+          Icon = RosetteIcon;
 
         return (
           <Pressable

@@ -7,8 +7,8 @@ import 'tsx/cjs';
 // eslint-disable-next-line perfectionist/sort-imports
 import Env from './env';
 
-const EXPO_ACCOUNT_OWNER = 'tothepoweroftom1';
-const EAS_PROJECT_ID = 'c1b50631-77df-41d3-8cf2-cc27e48ac688';
+const EXPO_ACCOUNT_OWNER = 'rionna_ireland';
+const EAS_PROJECT_ID = '4b0041b1-d0cb-4d08-96f1-ef2ef7dda3b3';
 
 const appIconBadgeConfig: AppIconBadgeConfig = {
   enabled: Env.EXPO_PUBLIC_APP_ENV !== 'production',
@@ -32,7 +32,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   description: `${Env.EXPO_PUBLIC_NAME} Mobile App`,
   owner: EXPO_ACCOUNT_OWNER,
   scheme: Env.EXPO_PUBLIC_SCHEME,
-  slug: 'rionna-test',
+  slug: 'rionna',
   version: Env.EXPO_PUBLIC_VERSION.toString(),
   orientation: 'portrait',
   icon: './assets/icon.png',
@@ -55,7 +55,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   android: {
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
-      backgroundColor: '#374B6C',
+      backgroundColor: '#391d3a',
     },
     package: Env.EXPO_PUBLIC_PACKAGE,
   },
@@ -67,7 +67,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       'expo-splash-screen',
       {
-        backgroundColor: '#374B6C',
+        backgroundColor: '#391d3a',
         image: './assets/splash-icon.png',
         imageWidth: 150,
       },
@@ -119,6 +119,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       },
     ],
     'expo-localization',
+    'expo-notifications',
     'expo-router',
     ['app-icon-badge', appIconBadgeConfig],
     ['react-native-edge-to-edge'],

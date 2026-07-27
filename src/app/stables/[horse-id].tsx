@@ -2,15 +2,15 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
 import {
   ActivityIndicator,
-  Image,
   Pressable,
   ScrollView,
   Text,
   View,
 } from '@/components/ui';
-import { buildCommunityTargetUrl } from '@/features/community/lib/circle-target';
+import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { useHorse } from '@/features/stables/api/use-horse';
 import { NextEntryCard } from '@/features/stables/components/next-entry-card';
+import { PhotoCarousel } from '@/features/stables/components/photo-carousel';
 import { ResultRow } from '@/features/stables/components/result-row';
 
 type Horse = NonNullable<ReturnType<typeof useHorse>['data']>;
@@ -20,17 +20,7 @@ function HorseHero({ horse }: { horse: Horse }) {
     <View className="px-6 pt-8 pb-6">
       <View className="relative mb-6">
         <View className="aspect-4/5 overflow-hidden rounded-2xl bg-muted">
-          {horse.photos[0]
-            ? (
-                <Image
-                  source={{ uri: `${horse.photos[0].url}?width=800&quality=80` }}
-                  className="size-full"
-                  contentFit="cover"
-                />
-              )
-            : (
-                <View className="flex-1 bg-muted" />
-              )}
+          <PhotoCarousel photos={horse.photos} />
         </View>
         <View className="absolute -right-2 -bottom-6 hidden rounded-xl bg-primary p-6 md:flex">
           <Text className="font-display text-2xl text-on-primary italic">The Jewel of</Text>
@@ -68,6 +58,8 @@ export default function HorseProfileScreen() {
   const horseId = params['horse-id'];
   const { data: horse, isLoading, isError } = useHorse(horseId);
   const router = useRouter();
+  // Transparent nav header: content must clear the status bar itself.
+  const contentPaddingTop = useScreenTopPadding(0);
 
   if (isLoading) {
     return (
@@ -94,25 +86,19 @@ export default function HorseProfileScreen() {
   const wins = results.filter(e => e.finishingPosition === 1).length;
 
   const handleDiscussion = () => {
-    const discussionUrl = horse.circleSpaceId
-      ? buildCommunityTargetUrl({
-          realPath: `/spaces/${horse.circleSpaceId}`,
-          mockPath: `/__mock/ui/member/spaces/${horse.circleSpaceId}`,
-        })
-      : null;
-
-    if (discussionUrl) {
+    if (horse.circleSpaceId) {
       router.push({
-        pathname: '/(app)/community',
-        params: {
-          url: discussionUrl,
-        },
+        pathname: '/space-feed/[space-id]',
+        params: { 'space-id': horse.circleSpaceId, 'name': horse.name },
       });
     }
   };
 
   return (
-    <ScrollView className="flex-1 bg-background">
+    <ScrollView
+      className="flex-1 bg-background"
+      contentContainerStyle={{ paddingTop: contentPaddingTop }}
+    >
       <HorseHero horse={horse} />
 
       {/* Stats Grid -- tonal layering, no borders or shadows */}

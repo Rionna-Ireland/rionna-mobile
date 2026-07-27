@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android"],
+  "apple": {
+    "modules": ["CircleCookiesModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.circlecookies.CircleCookiesModule"]
+  }
+}
