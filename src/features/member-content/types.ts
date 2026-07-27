@@ -53,6 +53,27 @@ export type MemberPostDetail = {
   url: string | null;
 };
 
+export type PostComment = {
+  id: string;
+  parentCommentId: string | null;
+  bodyText: string | null;
+  tiptapDoc: Record<string, unknown> | null;
+  authorName: string | null;
+  authorAvatarUrl: string | null;
+  createdAt: string | null;
+  likeCount: number;
+  isLiked: boolean;
+  canDelete: boolean;
+  replies: PostComment[];
+};
+
+export type PostCommentsPage = {
+  ok: boolean;
+  comments: PostComment[];
+  hasNextPage: boolean;
+  totalCount: number | null;
+};
+
 export type MemberContentState = 'fresh' | 'saved' | 'empty' | 'unavailable';
 
 export type CachedContent<T> = {

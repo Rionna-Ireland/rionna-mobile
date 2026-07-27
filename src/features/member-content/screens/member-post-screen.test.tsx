@@ -1,4 +1,4 @@
-import type { MemberPostDetail } from '@/features/member-content/types';
+import type { MemberPostDetail, PostComment } from '@/features/member-content/types';
 
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import * as React from 'react';
@@ -7,6 +7,11 @@ import { MemberPostView } from '@/features/member-content/screens/member-post-sc
 
 jest.mock('@/components/ui', () => ({
   Image: 'Image',
+}));
+
+jest.mock('@/components/ui/screen-layout', () => ({
+  useScreenTopPadding: () => 70,
+  useScreenBottomPadding: () => 34,
 }));
 
 jest.mock('react-native-webview', () => ({
@@ -113,5 +118,112 @@ describe('memberPostView', () => {
       />,
     );
     expect(screen.getByTestId('member-post-loading')).toBeOnTheScreen();
+  });
+});
+
+function comment(overrides: Partial<PostComment> = {}): PostComment {
+  return {
+    id: 'c-1',
+    parentCommentId: null,
+    bodyText: 'What a run!',
+    tiptapDoc: null,
+    authorName: 'Jane Member',
+    authorAvatarUrl: null,
+    createdAt: '2026-07-27T10:00:00.000Z',
+    likeCount: 0,
+    isLiked: false,
+    canDelete: false,
+    replies: [],
+    ...overrides,
+  };
+}
+
+describe('memberPostView comments', () => {
+  it('renders comments with authors and one level of replies', () => {
+    render(
+      <MemberPostView
+        post={POST}
+        contentState="fresh"
+        comments={[
+          comment({
+            replies: [comment({ id: 'r-1', parentCommentId: 'c-1', bodyText: 'Agreed!', authorName: 'Sam' })],
+          }),
+          comment({ id: 'c-2', bodyText: 'Great going.', authorName: 'Pat Owner' }),
+        ]}
+      />,
+    );
+    expect(screen.getByText('What a run!')).toBeOnTheScreen();
+    expect(screen.getByText('Jane Member')).toBeOnTheScreen();
+    expect(screen.getByText('Agreed!')).toBeOnTheScreen();
+    expect(screen.getByText('Great going.')).toBeOnTheScreen();
+  });
+
+  it('shows the empty state when there are no comments yet', () => {
+    render(<MemberPostView post={POST} contentState="fresh" comments={[]} />);
+    expect(screen.getByText('No comments yet')).toBeOnTheScreen();
+  });
+
+  it('shows the unavailable state when comments failed to load', () => {
+    render(
+      <MemberPostView post={POST} contentState="fresh" commentsUnavailable />,
+    );
+    expect(screen.getByTestId('post-comments-unavailable')).toBeOnTheScreen();
+  });
+
+  it('submits the composer text and ignores empty submissions', () => {
+    const onSubmitComment = jest.fn();
+    render(
+      <MemberPostView
+        post={POST}
+        contentState="fresh"
+        comments={[]}
+        onSubmitComment={onSubmitComment}
+      />,
+    );
+
+    fireEvent.press(screen.getByLabelText('Send comment'));
+    expect(onSubmitComment).not.toHaveBeenCalled();
+
+    fireEvent.changeText(screen.getByLabelText('Write a comment'), '  Well done!  ');
+    fireEvent.press(screen.getByLabelText('Send comment'));
+    expect(onSubmitComment).toHaveBeenCalledWith('post-1', 'Well done!');
+  });
+
+  it('disables the composer while a comment is submitting', () => {
+    const onSubmitComment = jest.fn();
+    render(
+      <MemberPostView
+        post={POST}
+        contentState="fresh"
+        comments={[]}
+        onSubmitComment={onSubmitComment}
+        commentSubmitting
+      />,
+    );
+    fireEvent.changeText(screen.getByLabelText('Write a comment'), 'Hi');
+    fireEvent.press(screen.getByLabelText('Send comment'));
+    expect(onSubmitComment).not.toHaveBeenCalled();
+  });
+
+  it('offers delete only on the member own comments', () => {
+    const onDeleteComment = jest.fn();
+    render(
+      <MemberPostView
+        post={POST}
+        contentState="fresh"
+        comments={[comment({ canDelete: true }), comment({ id: 'c-2', bodyText: 'Not mine' })]}
+        onDeleteComment={onDeleteComment}
+      />,
+    );
+    const deleteButtons = screen.getAllByLabelText('Delete comment');
+    expect(deleteButtons).toHaveLength(1);
+    fireEvent.press(deleteButtons[0]!);
+    expect(onDeleteComment).toHaveBeenCalledWith('post-1', 'c-1');
+  });
+
+  it('renders no comments section when the feature is not wired', () => {
+    render(<MemberPostView post={POST} contentState="fresh" />);
+    expect(screen.queryByText('No comments yet')).not.toBeOnTheScreen();
+    expect(screen.queryByLabelText('Write a comment')).not.toBeOnTheScreen();
   });
 });
