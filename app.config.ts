@@ -64,6 +64,9 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     bundler: 'metro',
   },
   plugins: [
+    // Horse audio notes player (S8-01 §5) — native module, requires a dev
+    // client rebuild (pnpm ios / pnpm android) before it can be exercised.
+    'expo-audio',
     [
       'expo-splash-screen',
       {

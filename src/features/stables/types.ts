@@ -73,10 +73,36 @@ export type Entry = {
   timeformComment: string | null;
   performanceRating: number | null;
   starRating: number | null;
+  // Admin-set link to race footage (S8-01 §5/§6). Backend field has no
+  // select-narrowing so it's already on every entry response, but may be
+  // absent/undefined on older cached payloads -- treat as optional.
+  replayUrl?: string | null;
   createdAt: string;
   updatedAt: string;
   jockey: Jockey | null;
   race: Race;
+};
+
+export type HorseWellbeingType = 'VET' | 'TRAINING' | 'REHAB' | 'REST';
+
+/**
+ * GET /horses/{horseId}/wellbeing returns raw Prisma HorseWellbeingUpdate
+ * rows (no dedicated response schema on the backend) -- this type is
+ * hand-matched to packages/database/prisma/schema.prisma's
+ * HorseWellbeingUpdate model and may drift if the backend shape changes.
+ * Member-facing endpoint only ever returns published (publishedAt != null)
+ * rows, but the field stays nullable to match the Prisma column.
+ */
+export type WellbeingUpdate = {
+  id: string;
+  horseId: string;
+  organizationId: string;
+  type: HorseWellbeingType;
+  body: string;
+  publishedAt: string | null;
+  notifyMembers: boolean;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type Horse = {
@@ -87,8 +113,16 @@ export type Horse = {
   status: HorseStatus;
   isFollowing: boolean;
   bio: string | null;
+  // Long-form "Story & pedigree" narrative -- deliberately separate from
+  // `bio` on the backend. Optional here too: older cached payloads (or a
+  // backend that hasn't deployed the S8-01 §5 migration yet) won't have it.
+  story?: string | null;
   trainerNotes: string | null;
   photos: HorsePhoto[];
+  // Parallel array to `photos`, same {url, caption} shape, no `kind`
+  // discriminator on the backend. Optional/defaulted for the same reason
+  // as `story`.
+  audioNotes?: HorsePhoto[];
   pedigree: HorsePedigree | null;
   ownershipBlurb: string | null;
   circleSpaceId: string | null;
@@ -96,6 +130,10 @@ export type Horse = {
   trainer: Trainer | null;
   sortOrder: number;
   publishedAt: string;
+  // Second visibility gate (public marketing site), separate from
+  // `publishedAt` (in-app visibility). Not currently used by the mobile
+  // app but included so the type matches the backend response.
+  publicProfileAt?: string | null;
   latestEntryId: string | null;
   nextEntryId: string | null;
   providerEntityId: string | null;
