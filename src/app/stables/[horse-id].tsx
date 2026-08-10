@@ -1,3 +1,5 @@
+import type { Entry, WellbeingUpdate } from '@/features/stables/types';
+
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
 import {
@@ -10,12 +12,76 @@ import {
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { useHorse } from '@/features/stables/api/use-horse';
 import { useFollowHorse } from '@/features/stables/api/use-horse-follow';
+import { useHorseWellbeing } from '@/features/stables/api/use-horse-wellbeing';
+import { AudioNotes } from '@/features/stables/components/audio-notes';
 import { FollowToggle } from '@/features/stables/components/follow-toggle';
 import { NextEntryCard } from '@/features/stables/components/next-entry-card';
 import { PhotoCarousel } from '@/features/stables/components/photo-carousel';
 import { ResultRow } from '@/features/stables/components/result-row';
+import { StorySection } from '@/features/stables/components/story-section';
+import { WellbeingTimeline } from '@/features/stables/components/wellbeing-timeline';
 
 type Horse = NonNullable<ReturnType<typeof useHorse>['data']>;
+
+function DetailModules({
+  horse,
+  nextEntry,
+  results,
+  wellbeingUpdates,
+  onDiscussion,
+}: {
+  horse: Horse;
+  nextEntry: Entry | undefined;
+  results: Entry[];
+  wellbeingUpdates: WellbeingUpdate[] | undefined;
+  onDiscussion: () => void;
+}) {
+  return (
+    <View className="mb-12 gap-6 px-6">
+      {nextEntry && (
+        <View className="rounded-2xl bg-card p-6">
+          <Text className="mb-4 font-mono text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Next Up</Text>
+          <NextEntryCard entry={nextEntry} />
+        </View>
+      )}
+
+      {results.length > 0 && (
+        <View className="rounded-2xl bg-card p-6">
+          <Text className="mb-4 font-mono text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Recent Results</Text>
+          <View className="overflow-hidden">
+            {results.map(entry => (
+              <ResultRow key={entry.id} entry={entry} />
+            ))}
+          </View>
+        </View>
+      )}
+
+      <StorySection story={horse.story} pedigree={horse.pedigree} />
+
+      <WellbeingTimeline updates={wellbeingUpdates} />
+
+      <AudioNotes notes={horse.audioNotes} />
+
+      {horse.trainer && (
+        <View className="rounded-2xl bg-primary p-6">
+          <Text className="mb-2 font-mono text-[10px] font-bold tracking-widest uppercase" style={{ color: '#c39cc0' }}>Trainer</Text>
+          <Text className="font-display text-2xl text-on-primary">{horse.trainer.name}</Text>
+        </View>
+      )}
+
+      {horse.circleSpaceId && (
+        <Pressable
+          onPress={onDiscussion}
+          className="mt-4 items-center rounded-full bg-primary py-4 duration-200 active:scale-95"
+        >
+          <Text className="font-mono text-sm font-bold tracking-widest text-on-primary uppercase">
+            Join the Discussion
+          </Text>
+        </Pressable>
+      )}
+    </View>
+  );
+}
 
 function HorseHero({
   horse,
@@ -74,6 +140,7 @@ export default function HorseProfileScreen() {
   const params = useLocalSearchParams<{ 'horse-id': string }>();
   const horseId = params['horse-id'];
   const { data: horse, isLoading, isError } = useHorse(horseId);
+  const { data: wellbeingUpdates } = useHorseWellbeing(horseId);
   const { toggleFollow, pendingHorseId } = useFollowHorse();
   const router = useRouter();
   // Transparent nav header: content must clear the status bar itself.
@@ -135,44 +202,13 @@ export default function HorseProfileScreen() {
         </View>
       </View>
 
-      {/* Detail Modules */}
-      <View className="mb-12 gap-6 px-6">
-        {nextEntry && (
-          <View className="rounded-2xl bg-card p-6">
-            <Text className="mb-4 font-mono text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Next Up</Text>
-            <NextEntryCard entry={nextEntry} />
-          </View>
-        )}
-
-        {results.length > 0 && (
-          <View className="rounded-2xl bg-card p-6">
-            <Text className="mb-4 font-mono text-[10px] font-bold tracking-widest text-muted-foreground uppercase">Recent Results</Text>
-            <View className="overflow-hidden">
-              {results.map(entry => (
-                <ResultRow key={entry.id} entry={entry} />
-              ))}
-            </View>
-          </View>
-        )}
-
-        {horse.trainer && (
-          <View className="rounded-2xl bg-primary p-6">
-            <Text className="mb-2 font-mono text-[10px] font-bold tracking-widest uppercase" style={{ color: '#c39cc0' }}>Trainer</Text>
-            <Text className="font-display text-2xl text-on-primary">{horse.trainer.name}</Text>
-          </View>
-        )}
-
-        {horse.circleSpaceId && (
-          <Pressable
-            onPress={handleDiscussion}
-            className="mt-4 items-center rounded-full bg-primary py-4 duration-200 active:scale-95"
-          >
-            <Text className="font-mono text-sm font-bold tracking-widest text-on-primary uppercase">
-              Join the Discussion
-            </Text>
-          </Pressable>
-        )}
-      </View>
+      <DetailModules
+        horse={horse}
+        nextEntry={nextEntry}
+        results={results}
+        wellbeingUpdates={wellbeingUpdates}
+        onDiscussion={handleDiscussion}
+      />
     </ScrollView>
   );
 }

@@ -1,5 +1,6 @@
 import type { Entry } from '@/features/stables/types';
-import { Text, View } from '@/components/ui';
+import { Pressable, Text, View } from '@/components/ui';
+import { openExternalLink } from '@/lib/open-external-link';
 
 type ResultRowProps = {
   entry: Entry;
@@ -126,6 +127,22 @@ export function ResultRow({ entry }: ResultRowProps) {
               >
                 {entry.timeformComment}
               </Text>
+            )
+          : null}
+
+        {entry.replayUrl
+          ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Watch replay"
+                hitSlop={8}
+                onPress={() => openExternalLink(entry.replayUrl as string)}
+                className="mt-1.5 self-start"
+              >
+                <Text className="font-mono text-[10px] font-bold tracking-widest text-primary uppercase">
+                  Watch Replay
+                </Text>
+              </Pressable>
             )
           : null}
       </View>
