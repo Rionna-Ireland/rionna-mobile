@@ -155,7 +155,13 @@ export function useFollowHorse() {
   const mutation = useMutation({
     mutationFn: (variables: HorseFollowVariables) => sendHorseFollow(variables),
     onMutate: async (variables: HorseFollowVariables) => {
-      await queryClient.cancelQueries({ queryKey: [STABLES_QUERY_ROOT] });
+      // Cancel only the queries the optimistic patch rewrites; the wellbeing
+      // timeline ([root, horseId, 'wellbeing']) is never patched, and
+      // cancelling it mid-fetch would strand it idle/undefined.
+      await queryClient.cancelQueries({
+        queryKey: [STABLES_QUERY_ROOT],
+        predicate: query => query.queryKey[query.queryKey.length - 1] !== 'wellbeing',
+      });
       return {
         snapshots: applyOptimisticFollow(queryClient, variables.horseId, variables.following),
       };

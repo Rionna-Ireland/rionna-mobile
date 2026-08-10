@@ -16,11 +16,30 @@ catch {
   ExpoAudio = null;
 }
 
+// Without escalating the AVAudioSession to playback, the iOS ring/silent
+// switch mutes audio while the UI still shows the pause state. Set once,
+// lazily on first play (never at module top level -- New Arch).
+let audioModeSet = false;
+function ensurePlaysInSilentMode() {
+  if (audioModeSet || !ExpoAudio) {
+    return;
+  }
+  audioModeSet = true;
+  ExpoAudio.setAudioModeAsync({ playsInSilentMode: true }).catch(() => {});
+}
+
 type AudioNotesProps = {
   notes: HorsePhoto[] | undefined;
 };
 
-function AudioNoteRow({ note, index }: { note: HorsePhoto; index: number }) {
+type AudioNoteRowProps = {
+  note: HorsePhoto;
+  index: number;
+  /** Called before this row starts playing so the parent can pause siblings. */
+  onWillPlay: (pauseSelf: () => void) => void;
+};
+
+function AudioNoteRow({ note, index, onWillPlay }: AudioNoteRowProps) {
   const [isPlaying, setIsPlaying] = React.useState(false);
   const playerRef = React.useRef<InstanceType<typeof ExpoAudioType.AudioPlayer> | null>(null);
 
@@ -51,6 +70,8 @@ function AudioNoteRow({ note, index }: { note: HorsePhoto; index: number }) {
       playerRef.current.pause();
     }
     else {
+      ensurePlaysInSilentMode();
+      onWillPlay(() => playerRef.current?.pause());
       playerRef.current.play();
     }
   };
@@ -74,13 +95,24 @@ function AudioNoteRow({ note, index }: { note: HorsePhoto; index: number }) {
 }
 
 /**
- * Simple play/pause list for admin-uploaded horse audio notes. Renders
+ * Simple play/pause list for admin-uploaded horse audio notes. Only one
+ * note plays at a time (starting one pauses the previous). Renders
  * nothing when there are none; if expo-audio isn't linked into the
  * current build (native module requiring a dev client rebuild), shows a
  * quiet fallback instead of crashing.
  */
 export function AudioNotes({ notes }: AudioNotesProps) {
   const items = notes ?? [];
+  // Pause callback for whichever row is currently playing, so a newly
+  // played row can stop it first -- prevents overlapping streams.
+  const activePauseRef = React.useRef<(() => void) | null>(null);
+
+  const handleWillPlay = React.useCallback((pauseSelf: () => void) => {
+    if (activePauseRef.current && activePauseRef.current !== pauseSelf) {
+      activePauseRef.current();
+    }
+    activePauseRef.current = pauseSelf;
+  }, []);
 
   if (items.length === 0) {
     return null;
@@ -95,7 +127,12 @@ export function AudioNotes({ notes }: AudioNotesProps) {
         ? (
             <View>
               {items.map((note, index) => (
-                <AudioNoteRow key={note.url} note={note} index={index} />
+                <AudioNoteRow
+                  key={`${index}-${note.url}`}
+                  note={note}
+                  index={index}
+                  onWillPlay={handleWillPlay}
+                />
               ))}
             </View>
           )
