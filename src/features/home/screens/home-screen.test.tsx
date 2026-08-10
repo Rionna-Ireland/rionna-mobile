@@ -49,6 +49,9 @@ jest.mock('@/features/pulse/api/use-latest-news', () => ({
 jest.mock('@/features/pulse/api/use-trainer-posts', () => ({
   useTrainerPosts: () => mockEmptyQuery,
 }));
+jest.mock('@/features/stables/api/use-followed-horses', () => ({
+  useFollowedHorses: () => mockEmptyQuery,
+}));
 
 describe('homeScreen', () => {
   beforeEach(() => jest.clearAllMocks());
@@ -57,6 +60,12 @@ describe('homeScreen', () => {
     render(<HomeScreen />);
     expect(screen.getByTestId('headline-card')).toBeOnTheScreen();
     expect(screen.getByText('Welcome to the club')).toBeOnTheScreen();
+  });
+
+  it('renders the My Horses tile with its empty-state nudge', () => {
+    render(<HomeScreen />);
+    expect(screen.getByText('My Horses')).toBeOnTheScreen();
+    expect(screen.getByText('Follow horses in the Stables to see them here.')).toBeOnTheScreen();
   });
 
   it('opens the profile from the avatar', () => {
