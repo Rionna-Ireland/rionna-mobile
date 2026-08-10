@@ -25,7 +25,7 @@ function ensurePlaysInSilentMode() {
     return;
   }
   audioModeSet = true;
-  ExpoAudio.setAudioModeAsync({ playsInSilentMode: true }).catch(() => {});
+  ExpoAudio.setAudioModeAsync?.({ playsInSilentMode: true }).catch(() => {});
 }
 
 type AudioNotesProps = {
