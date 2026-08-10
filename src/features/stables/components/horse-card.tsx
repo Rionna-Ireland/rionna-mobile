@@ -1,13 +1,17 @@
 import type { Horse } from '@/features/stables/types';
 import { Image, Pressable, Text, View } from '@/components/ui';
+import { FollowToggle } from '@/features/stables/components/follow-toggle';
 import { StatusBadge } from '@/features/stables/components/status-badge';
 
 type HorseCardProps = {
   horse: Horse;
   onPress: () => void;
+  /** Omit to render the card read-only, without the follow heart. */
+  onToggleFollow?: (horseId: string, following: boolean) => void;
+  followPending?: boolean;
 };
 
-export function HorseCard({ horse, onPress }: HorseCardProps) {
+export function HorseCard({ horse, onPress, onToggleFollow, followPending = false }: HorseCardProps) {
   const photoUrl = horse.photos[0]?.url;
 
   return (
@@ -15,19 +19,32 @@ export function HorseCard({ horse, onPress }: HorseCardProps) {
       onPress={onPress}
       className="overflow-hidden rounded-2xl bg-card"
     >
-      {photoUrl
-        ? (
-            <Image
-              source={{ uri: `${photoUrl}?width=400&quality=80` }}
-              className="aspect-3/2 w-full"
-              contentFit="cover"
-            />
-          )
-        : (
-            <View className="aspect-3/2 w-full items-center justify-center bg-muted">
-              <Text className="text-sm text-muted-foreground">No photo</Text>
-            </View>
-          )}
+      <View className="relative">
+        {photoUrl
+          ? (
+              <Image
+                source={{ uri: `${photoUrl}?width=400&quality=80` }}
+                className="aspect-3/2 w-full"
+                contentFit="cover"
+              />
+            )
+          : (
+              <View className="aspect-3/2 w-full items-center justify-center bg-muted">
+                <Text className="text-sm text-muted-foreground">No photo</Text>
+              </View>
+            )}
+
+        {onToggleFollow
+          ? (
+              <FollowToggle
+                variant="overlay"
+                isFollowing={horse.isFollowing}
+                pending={followPending}
+                onToggle={following => onToggleFollow(horse.id, following)}
+              />
+            )
+          : null}
+      </View>
 
       <View className="gap-2 p-4">
         <View className="flex-row items-center justify-between">

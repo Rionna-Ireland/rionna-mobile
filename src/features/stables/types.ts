@@ -1,3 +1,8 @@
+// Shared root for horse-related query keys (list ['horses', clubId], detail
+// ['horses', horseId], following ['horses', 'following', clubId]) so cache
+// helpers can target them all with a single partial-match queryKey.
+export const STABLES_QUERY_ROOT = 'horses';
+
 export type HorseStatus
   = | 'PRE_TRAINING'
     | 'IN_TRAINING'
@@ -80,6 +85,7 @@ export type Horse = {
   slug: string;
   name: string;
   status: HorseStatus;
+  isFollowing: boolean;
   bio: string | null;
   trainerNotes: string | null;
   photos: HorsePhoto[];

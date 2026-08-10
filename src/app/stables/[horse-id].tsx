@@ -9,13 +9,23 @@ import {
 } from '@/components/ui';
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { useHorse } from '@/features/stables/api/use-horse';
+import { useFollowHorse } from '@/features/stables/api/use-horse-follow';
+import { FollowToggle } from '@/features/stables/components/follow-toggle';
 import { NextEntryCard } from '@/features/stables/components/next-entry-card';
 import { PhotoCarousel } from '@/features/stables/components/photo-carousel';
 import { ResultRow } from '@/features/stables/components/result-row';
 
 type Horse = NonNullable<ReturnType<typeof useHorse>['data']>;
 
-function HorseHero({ horse }: { horse: Horse }) {
+function HorseHero({
+  horse,
+  isFollowPending,
+  onToggleFollow,
+}: {
+  horse: Horse;
+  isFollowPending: boolean;
+  onToggleFollow: (following: boolean) => void;
+}) {
   return (
     <View className="px-6 pt-8 pb-6">
       <View className="relative mb-6">
@@ -28,9 +38,16 @@ function HorseHero({ horse }: { horse: Horse }) {
         </View>
       </View>
       <View className="mt-8">
-        <Text className="mb-2 font-mono text-[10px] font-bold tracking-widest text-primary uppercase">
-          Equestrian Profile
-        </Text>
+        <View className="mb-2 flex-row items-center justify-between">
+          <Text className="font-mono text-[10px] font-bold tracking-widest text-primary uppercase">
+            Equestrian Profile
+          </Text>
+          <FollowToggle
+            isFollowing={horse.isFollowing}
+            pending={isFollowPending}
+            onToggle={onToggleFollow}
+          />
+        </View>
         <Text className="mb-4 font-display text-6xl text-primary">
           {horse.name}
         </Text>
@@ -57,6 +74,7 @@ export default function HorseProfileScreen() {
   const params = useLocalSearchParams<{ 'horse-id': string }>();
   const horseId = params['horse-id'];
   const { data: horse, isLoading, isError } = useHorse(horseId);
+  const { toggleFollow, pendingHorseId } = useFollowHorse();
   const router = useRouter();
   // Transparent nav header: content must clear the status bar itself.
   const contentPaddingTop = useScreenTopPadding(0);
@@ -99,7 +117,11 @@ export default function HorseProfileScreen() {
       className="flex-1 bg-background"
       contentContainerStyle={{ paddingTop: contentPaddingTop }}
     >
-      <HorseHero horse={horse} />
+      <HorseHero
+        horse={horse}
+        isFollowPending={pendingHorseId === horse.id}
+        onToggleFollow={following => toggleFollow({ horseId: horse.id, following })}
+      />
 
       {/* Stats Grid -- tonal layering, no borders or shadows */}
       <View className="mb-10 flex-row flex-wrap gap-4 px-6">
