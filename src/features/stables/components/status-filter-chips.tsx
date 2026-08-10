@@ -1,10 +1,16 @@
 import type { StatusFilter } from '@/features/stables/lib/filter-horses';
 import { Pressable, ScrollView, Text } from '@/components/ui';
 
+// TODO(S8-01 §4 open question): re-add a "Declared" chip once its semantics
+// are resolved with the spec owner. 'DECLARED' isn't a horse.status value —
+// it's an entry-level EntryStatus — so filterHorsesByStatus can never match
+// it today; shipping the chip would show every member "No horses match this
+// filter" even when horses have genuinely declared entries. Wiring it up
+// needs the list payload to carry the next entry's status (backend already
+// exposes nextEntryId) and a filter on nextEntry.status === 'DECLARED'.
 const FILTERS: { value: StatusFilter; label: string }[] = [
   { value: 'ALL', label: 'All' },
   { value: 'IN_TRAINING', label: 'In training' },
-  { value: 'DECLARED', label: 'Declared' },
   { value: 'PRE_TRAINING', label: 'Pre-training' },
   { value: 'RETIRED', label: 'Retired' },
 ];
@@ -15,10 +21,9 @@ type StatusFilterChipsProps = {
 };
 
 /**
- * "Declared" isn't a horse.status value today (it's an entry-level status —
- * see S8-01 §4 open question); the chip renders and filters to an empty
- * list until that's resolved rather than being hidden or crashing (see
- * filterHorsesByStatus in ../lib/filter-horses).
+ * Status filter chips for the stables list. The "Declared" chip is
+ * intentionally omitted — see the TODO above FILTERS and
+ * filterHorsesByStatus in ../lib/filter-horses.
  */
 export function StatusFilterChips({ value, onChange }: StatusFilterChipsProps) {
   return (

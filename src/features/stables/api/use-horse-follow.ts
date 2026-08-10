@@ -176,6 +176,15 @@ export function useFollowHorse() {
         isFollowing: result.isFollowing,
       });
     },
+    onSettled: () => {
+      // reconcileFollow/rollback only flip isFollowing on horses already
+      // present in a cache — neither inserts a newly-followed horse into
+      // the followed-list cache nor removes a newly-unfollowed one.
+      // Invalidate just that list (not the whole STABLES_QUERY_ROOT) so
+      // membership stays correct without refetching/jumping the stables
+      // list itself.
+      void queryClient.invalidateQueries({ queryKey: [STABLES_QUERY_ROOT, 'following'] });
+    },
   });
 
   return {

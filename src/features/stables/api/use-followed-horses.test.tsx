@@ -27,8 +27,22 @@ function wrapper({ children }: { children: React.ReactNode }) {
 describe('useFollowedHorses', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('fetches the followed horses scoped to the active club', async () => {
-    mockGet.mockResolvedValue({ data: [{ id: 'horse-1', isFollowing: true }] });
+  it('maps the HorseFollow join rows the backend returns into followed horses', async () => {
+    // GET /api/horses/following (listFollowedHorses) returns HorseFollow join
+    // rows, not Horse rows: the row's own `id` is the follow id, not the
+    // horse id, and there is no isFollowing field.
+    mockGet.mockResolvedValue({
+      data: [
+        {
+          id: 'follow-1',
+          userId: 'user-1',
+          horseId: 'horse-1',
+          organizationId: 'org-1',
+          createdAt: '2026-01-01T00:00:00.000Z',
+          horse: { id: 'horse-1', name: 'Laska' },
+        },
+      ],
+    });
 
     const { result } = renderHook(() => useFollowedHorses(), { wrapper });
 
@@ -37,7 +51,7 @@ describe('useFollowedHorses', () => {
     expect(mockGet).toHaveBeenCalledWith('/api/horses/following', {
       params: { organizationId: 'org-1' },
     });
-    expect(result.current.data).toEqual([{ id: 'horse-1', isFollowing: true }]);
+    expect(result.current.data).toEqual([{ id: 'horse-1', name: 'Laska', isFollowing: true }]);
   });
 
   it('shares the STABLES_QUERY_ROOT constant used by the follow cache helpers', () => {

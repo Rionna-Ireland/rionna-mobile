@@ -1,6 +1,8 @@
 import type { Horse, HorseDetail } from '@/features/stables/types';
 
-import { QueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { renderHook, waitFor } from '@testing-library/react-native';
+import * as React from 'react';
 
 import {
   applyFollowToHorseDetail,
@@ -9,6 +11,7 @@ import {
   reconcileFollow,
   rollbackOptimisticFollow,
   sendHorseFollow,
+  useFollowHorse,
 } from '@/features/stables/api/use-horse-follow';
 import { STABLES_QUERY_ROOT } from '@/features/stables/types';
 import { client } from '@/lib/api/client';
@@ -162,5 +165,48 @@ describe('optimistic cache update', () => {
 
       expect(queryClient.getQueryData<Horse[]>(LIST_KEY)).toBe(listBefore);
     });
+  });
+});
+
+describe('useFollowHorse', () => {
+  const FOLLOWING_KEY = [STABLES_QUERY_ROOT, 'following', 'org-1'];
+
+  beforeEach(() => jest.clearAllMocks());
+
+  function wrapper(queryClient: QueryClient) {
+    return function Wrapper({ children }: { children: React.ReactNode }) {
+      return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+    };
+  }
+
+  it('invalidates the followed-horses list on settle so membership refetches, not just cached flips', async () => {
+    // reconcileFollow only flips isFollowing on horses already present in a
+    // cache — it never inserts a newly-followed horse into the following
+    // list, so that cache must be invalidated directly instead.
+    mockPost.mockResolvedValue({ data: {} });
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    queryClient.setQueryData(FOLLOWING_KEY, [horse({ isFollowing: true })]);
+    const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+    const { result } = renderHook(() => useFollowHorse(), { wrapper: wrapper(queryClient) });
+    result.current.toggleFollow({ horseId: 'horse-2', following: true });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: [STABLES_QUERY_ROOT, 'following'] });
+  });
+
+  it('still invalidates the followed-horses list when the mutation fails', async () => {
+    mockDelete.mockRejectedValue(new Error('network error'));
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    queryClient.setQueryData(FOLLOWING_KEY, [horse({ isFollowing: true })]);
+    const invalidateSpy = jest.spyOn(queryClient, 'invalidateQueries');
+
+    const { result } = renderHook(() => useFollowHorse(), { wrapper: wrapper(queryClient) });
+    result.current.toggleFollow({ horseId: 'horse-1', following: false });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: [STABLES_QUERY_ROOT, 'following'] });
   });
 });
