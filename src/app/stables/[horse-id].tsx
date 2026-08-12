@@ -1,4 +1,4 @@
-import type { Entry, WellbeingUpdate } from '@/features/stables/types';
+import type { Entry, HorseUpdate } from '@/features/stables/types';
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
@@ -12,14 +12,13 @@ import {
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { useHorse } from '@/features/stables/api/use-horse';
 import { useFollowHorse } from '@/features/stables/api/use-horse-follow';
-import { useHorseWellbeing } from '@/features/stables/api/use-horse-wellbeing';
-import { AudioNotes } from '@/features/stables/components/audio-notes';
+import { useHorseUpdates } from '@/features/stables/api/use-horse-updates';
 import { FollowToggle } from '@/features/stables/components/follow-toggle';
+import { HorseUpdatesTimeline } from '@/features/stables/components/horse-updates-timeline';
 import { NextEntryCard } from '@/features/stables/components/next-entry-card';
 import { PhotoCarousel } from '@/features/stables/components/photo-carousel';
 import { ResultRow } from '@/features/stables/components/result-row';
 import { StorySection } from '@/features/stables/components/story-section';
-import { WellbeingTimeline } from '@/features/stables/components/wellbeing-timeline';
 
 type Horse = NonNullable<ReturnType<typeof useHorse>['data']>;
 
@@ -27,13 +26,13 @@ function DetailModules({
   horse,
   nextEntry,
   results,
-  wellbeingUpdates,
+  horseUpdates,
   onDiscussion,
 }: {
   horse: Horse;
   nextEntry: Entry | undefined;
   results: Entry[];
-  wellbeingUpdates: WellbeingUpdate[] | undefined;
+  horseUpdates: HorseUpdate[] | undefined;
   onDiscussion: () => void;
 }) {
   return (
@@ -58,9 +57,7 @@ function DetailModules({
 
       <StorySection story={horse.story} pedigree={horse.pedigree} />
 
-      <WellbeingTimeline updates={wellbeingUpdates} />
-
-      <AudioNotes notes={horse.audioNotes} />
+      <HorseUpdatesTimeline updates={horseUpdates} />
 
       {horse.trainer && (
         <View className="rounded-2xl bg-primary p-6">
@@ -140,7 +137,7 @@ export default function HorseProfileScreen() {
   const params = useLocalSearchParams<{ 'horse-id': string }>();
   const horseId = params['horse-id'];
   const { data: horse, isLoading, isError } = useHorse(horseId);
-  const { data: wellbeingUpdates } = useHorseWellbeing(horseId);
+  const { data: horseUpdates } = useHorseUpdates(horseId);
   const { toggleFollow, pendingHorseId } = useFollowHorse();
   const router = useRouter();
   // Transparent nav header: content must clear the status bar itself.
@@ -206,7 +203,7 @@ export default function HorseProfileScreen() {
         horse={horse}
         nextEntry={nextEntry}
         results={results}
-        wellbeingUpdates={wellbeingUpdates}
+        horseUpdates={horseUpdates}
         onDiscussion={handleDiscussion}
       />
     </ScrollView>
