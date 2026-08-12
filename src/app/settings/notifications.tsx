@@ -33,6 +33,11 @@ const PUSH_ROWS: Row[] = [
     set: v => ({ pushPreferences: { raceResult: v } }),
   },
   {
+    labelKey: 'settings.notifications.horseUpdates',
+    get: p => p.pushPreferences.horseUpdates !== false,
+    set: v => ({ pushPreferences: { horseUpdates: v } }),
+  },
+  {
     labelKey: 'settings.notifications.trainerPost',
     get: p => p.pushPreferences.trainerPost !== false,
     set: v => ({ pushPreferences: { trainerPost: v } }),
