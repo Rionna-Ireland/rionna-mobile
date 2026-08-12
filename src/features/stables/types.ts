@@ -1,3 +1,8 @@
+// Shared root for horse-related query keys (list ['horses', clubId], detail
+// ['horses', horseId], following ['horses', 'following', clubId]) so cache
+// helpers can target them all with a single partial-match queryKey.
+export const STABLES_QUERY_ROOT = 'horses';
+
 export type HorseStatus
   = | 'PRE_TRAINING'
     | 'IN_TRAINING'
@@ -68,10 +73,30 @@ export type Entry = {
   timeformComment: string | null;
   performanceRating: number | null;
   starRating: number | null;
+  // Admin-set link to race footage (S8-01 §5/§6). Backend field has no
+  // select-narrowing so it's already on every entry response, but may be
+  // absent/undefined on older cached payloads -- treat as optional.
+  replayUrl?: string | null;
   createdAt: string;
   updatedAt: string;
   jockey: Jockey | null;
   race: Race;
+};
+
+export type HorseUpdateType = 'trainer' | 'wellbeing' | 'general' | 'race';
+
+/**
+ * GET /horses/{horseId}/updates -- the horse profile timeline, sourced from
+ * the "Horse updates" (MemberPost) feature (the parallel wellbeing system
+ * it replaces has been deleted backend-side). Newest first, published only.
+ */
+export type HorseUpdate = {
+  id: string;
+  updateType: HorseUpdateType | null;
+  title: string;
+  bodyText: string;
+  publishedAt: string;
+  circlePostId: string | null;
 };
 
 export type Horse = {
@@ -80,7 +105,12 @@ export type Horse = {
   slug: string;
   name: string;
   status: HorseStatus;
+  isFollowing: boolean;
   bio: string | null;
+  // Long-form "Story & pedigree" narrative -- deliberately separate from
+  // `bio` on the backend. Optional here too: older cached payloads (or a
+  // backend that hasn't deployed the S8-01 §5 migration yet) won't have it.
+  story?: string | null;
   trainerNotes: string | null;
   photos: HorsePhoto[];
   pedigree: HorsePedigree | null;
@@ -90,6 +120,10 @@ export type Horse = {
   trainer: Trainer | null;
   sortOrder: number;
   publishedAt: string;
+  // Second visibility gate (public marketing site), separate from
+  // `publishedAt` (in-app visibility). Not currently used by the mobile
+  // app but included so the type matches the backend response.
+  publicProfileAt?: string | null;
   latestEntryId: string | null;
   nextEntryId: string | null;
   providerEntityId: string | null;

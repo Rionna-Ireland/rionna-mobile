@@ -20,8 +20,10 @@ import { useNextRun } from '@/features/pulse/api/use-next-run';
 import { useTrainerPosts } from '@/features/pulse/api/use-trainer-posts';
 import { LatestNewsTile } from '@/features/pulse/components/latest-news-tile';
 import { LatestResultsTile } from '@/features/pulse/components/latest-results-tile';
+import { MyHorsesTile } from '@/features/pulse/components/my-horses-tile';
 import { NextRunTile } from '@/features/pulse/components/next-run-tile';
 import { TrainerUpdatesTile } from '@/features/pulse/components/trainer-updates-tile';
+import { useFollowedHorses } from '@/features/stables/api/use-followed-horses';
 
 export function HomeScreen() {
   const router = useRouter();
@@ -33,6 +35,7 @@ export function HomeScreen() {
   const results = useLatestResults();
   const news = useLatestNews();
   const trainerPosts = useTrainerPosts();
+  const followedHorses = useFollowedHorses();
 
   const headline = selectHeadline(
     {
@@ -47,12 +50,14 @@ export function HomeScreen() {
     = nextRun.isRefetching
       || results.isRefetching
       || news.isRefetching
-      || trainerPosts.isRefetching;
+      || trainerPosts.isRefetching
+      || followedHorses.isRefetching;
   const onRefresh = () => {
     void nextRun.refetch();
     void results.refetch();
     void news.refetch();
     void trainerPosts.refetch();
+    void followedHorses.refetch();
   };
 
   const displayName = user?.name?.trim() || 'Rionna member';
@@ -92,6 +97,7 @@ export function HomeScreen() {
         <View className="gap-6">
           <HeadlineCard headline={headline} />
           <NextRunTile data={nextRun.data} isLoading={nextRun.isLoading} />
+          <MyHorsesTile data={followedHorses.data} isLoading={followedHorses.isLoading} />
           <LatestResultsTile data={results.data} isLoading={results.isLoading} />
           <TrainerUpdatesTile data={trainerPosts.data} isLoading={trainerPosts.isLoading} />
           <LatestNewsTile data={news.data} isLoading={news.isLoading} />

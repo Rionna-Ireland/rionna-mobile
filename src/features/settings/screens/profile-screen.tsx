@@ -1,9 +1,5 @@
-import type * as WebBrowserType from 'expo-web-browser';
-
 import Env from 'env';
 import { useRouter } from 'expo-router';
-import * as React from 'react';
-import { Linking } from 'react-native';
 
 import {
   FocusAwareStatusBar,
@@ -15,16 +11,7 @@ import { Button } from '@/components/ui/button';
 import { signOut, useAuthStore } from '@/features/auth/use-auth-store';
 import { SettingsContainer } from '@/features/settings/components/settings-container';
 import { SettingsItem } from '@/features/settings/components/settings-item';
-
-// Lazy-require so a missing native module (dev client not yet rebuilt) doesn't
-// crash the whole route. Falls back to Linking.openURL (system browser).
-let WebBrowser: typeof WebBrowserType | null = null;
-try {
-  WebBrowser = require('expo-web-browser');
-}
-catch {
-  WebBrowser = null;
-}
+import { openExternalLink } from '@/lib/open-external-link';
 
 const PRIVACY_URL = 'https://rionna.com/legal/privacy-policy';
 const TERMS_URL = 'https://rionna.com/legal/terms';
@@ -33,15 +20,6 @@ export function ProfileScreen() {
   const router = useRouter();
   const user = useAuthStore.use.user();
   const displayName = user?.name?.trim() || 'Rionna member';
-
-  const openLink = (url: string) => {
-    if (WebBrowser) {
-      WebBrowser.openBrowserAsync(url).catch(() => {});
-    }
-    else {
-      Linking.openURL(url).catch(() => {});
-    }
-  };
 
   return (
     <>
@@ -110,11 +88,11 @@ export function ProfileScreen() {
           <SettingsContainer title="settings.legal">
             <SettingsItem
               text="settings.privacy"
-              onPress={() => openLink(PRIVACY_URL)}
+              onPress={() => openExternalLink(PRIVACY_URL)}
             />
             <SettingsItem
               text="settings.terms"
-              onPress={() => openLink(TERMS_URL)}
+              onPress={() => openExternalLink(TERMS_URL)}
             />
           </SettingsContainer>
 

@@ -5,6 +5,7 @@ import { client } from '@/lib/api/client';
 export type PushPreferences = {
   horseDeclared?: boolean;
   raceResult?: boolean;
+  horseUpdates?: boolean;
   trainerPost?: boolean;
   newsPost?: boolean;
   circleMention?: boolean;

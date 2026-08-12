@@ -1,3 +1,4 @@
+import type { StatusFilter } from '@/features/stables/lib/filter-horses';
 import type { Horse } from '@/features/stables/types';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
@@ -7,22 +8,34 @@ import { ActivityIndicator, Text, View } from '@/components/ui';
 import { List } from '@/components/ui/list';
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
+import { useFollowHorse } from '@/features/stables/api/use-horse-follow';
 import { useHorses } from '@/features/stables/api/use-horses';
 import { HorseCard } from '@/features/stables/components/horse-card';
+import { StatusFilterChips } from '@/features/stables/components/status-filter-chips';
+import { filterHorsesByStatus } from '@/features/stables/lib/filter-horses';
 
-function StablesHeader() {
+function StablesHeader({
+  statusFilter,
+  onStatusFilterChange,
+}: {
+  statusFilter: StatusFilter;
+  onStatusFilterChange: (filter: StatusFilter) => void;
+}) {
   return (
-    <View className="mb-6 px-1">
+    <View className="mb-2 px-1">
       <Text className="font-mono text-[10px] tracking-widest text-violet-700 uppercase">
         Our horses
       </Text>
-      <Text className="mt-2 font-sans text-3xl font-semibold text-ink">Stables</Text>
+      <Text className="mt-2 mb-4 font-sans text-3xl font-semibold text-ink">Stables</Text>
+      <StatusFilterChips value={statusFilter} onChange={onStatusFilterChange} />
     </View>
   );
 }
 
 export default function StablesScreen() {
   const { data, isLoading, isError, refetch, isRefetching } = useHorses();
+  const { toggleFollow, pendingHorseId } = useFollowHorse();
+  const [statusFilter, setStatusFilter] = React.useState<StatusFilter>('ALL');
   const router = useRouter();
   const contentPaddingBottom = useTabBarContentPadding(16);
   const contentPaddingTop = useScreenTopPadding();
@@ -34,11 +47,35 @@ export default function StablesScreen() {
     [router],
   );
 
+  const handleToggleFollow = React.useCallback(
+    (horseId: string, following: boolean) => {
+      toggleFollow({ horseId, following });
+    },
+    [toggleFollow],
+  );
+
+  const filteredData = React.useMemo(
+    () => (data ? filterHorsesByStatus(data, statusFilter) : data),
+    [data, statusFilter],
+  );
+
   const renderItem = React.useCallback(
     ({ item }: { item: Horse }) => (
-      <HorseCard horse={item} onPress={() => handlePress(item.id)} />
+      <HorseCard
+        horse={item}
+        onPress={() => handlePress(item.id)}
+        onToggleFollow={handleToggleFollow}
+        followPending={pendingHorseId === item.id}
+      />
     ),
-    [handlePress],
+    [handlePress, handleToggleFollow, pendingHorseId],
+  );
+
+  const listHeader = React.useCallback(
+    () => (
+      <StablesHeader statusFilter={statusFilter} onStatusFilterChange={setStatusFilter} />
+    ),
+    [statusFilter],
   );
 
   if (isLoading) {
@@ -75,8 +112,15 @@ export default function StablesScreen() {
   return (
     <View className="flex-1 bg-background">
       <List
-        data={data}
-        ListHeaderComponent={StablesHeader}
+        data={filteredData}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={(
+          <View className="items-center px-1 py-12">
+            <Text className="text-center text-charcoal-500">
+              No horses match this filter.
+            </Text>
+          </View>
+        )}
         renderItem={renderItem}
         keyExtractor={(item: Horse) => item.id}
         contentContainerStyle={{
