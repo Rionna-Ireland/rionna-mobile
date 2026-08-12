@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react-native';
 import * as React from 'react';
 
-import { useHorseWellbeing } from '@/features/stables/api/use-horse-wellbeing';
+import { useHorseUpdates } from '@/features/stables/api/use-horse-updates';
 import { client } from '@/lib/api/client';
 
 jest.mock('@/lib/api/client', () => ({
@@ -18,39 +18,36 @@ function wrapper({ children }: { children: React.ReactNode }) {
   return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
 }
 
-describe('useHorseWellbeing', () => {
+describe('useHorseUpdates', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('fetches the published wellbeing timeline for a horse', async () => {
+  it('fetches the published updates timeline for a horse', async () => {
     mockGet.mockResolvedValue({
       data: [
         {
-          id: 'wb-1',
-          horseId: 'horse-1',
-          organizationId: 'org-1',
-          type: 'VET',
-          body: 'Routine checkup, all clear.',
+          id: 'update-1',
+          updateType: 'wellbeing',
+          title: 'All clear',
+          bodyText: 'Routine checkup, all clear.',
           publishedAt: '2026-08-01T00:00:00.000Z',
-          notifyMembers: true,
-          createdAt: '2026-08-01T00:00:00.000Z',
-          updatedAt: '2026-08-01T00:00:00.000Z',
+          circlePostId: 'post-1',
         },
       ],
     });
 
-    const { result } = renderHook(() => useHorseWellbeing('horse-1'), { wrapper });
+    const { result } = renderHook(() => useHorseUpdates('horse-1'), { wrapper });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
-    expect(mockGet).toHaveBeenCalledWith('/api/horses/horse-1/wellbeing');
+    expect(mockGet).toHaveBeenCalledWith('/api/horses/horse-1/updates');
     expect(result.current.data).toHaveLength(1);
-    expect(result.current.data?.[0].type).toBe('VET');
+    expect(result.current.data?.[0].updateType).toBe('wellbeing');
   });
 
   it('tolerates a missing/empty response body', async () => {
     mockGet.mockResolvedValue({ data: undefined });
 
-    const { result } = renderHook(() => useHorseWellbeing('horse-1'), { wrapper });
+    const { result } = renderHook(() => useHorseUpdates('horse-1'), { wrapper });
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
 
@@ -58,7 +55,7 @@ describe('useHorseWellbeing', () => {
   });
 
   it('does not fetch when horseId is undefined', () => {
-    const { result } = renderHook(() => useHorseWellbeing(undefined), { wrapper });
+    const { result } = renderHook(() => useHorseUpdates(undefined), { wrapper });
 
     expect(result.current.fetchStatus).toBe('idle');
     expect(mockGet).not.toHaveBeenCalled();

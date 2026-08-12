@@ -83,26 +83,20 @@ export type Entry = {
   race: Race;
 };
 
-export type HorseWellbeingType = 'VET' | 'TRAINING' | 'REHAB' | 'REST';
+export type HorseUpdateType = 'trainer' | 'wellbeing' | 'general' | 'race';
 
 /**
- * GET /horses/{horseId}/wellbeing returns raw Prisma HorseWellbeingUpdate
- * rows (no dedicated response schema on the backend) -- this type is
- * hand-matched to packages/database/prisma/schema.prisma's
- * HorseWellbeingUpdate model and may drift if the backend shape changes.
- * Member-facing endpoint only ever returns published (publishedAt != null)
- * rows, but the field stays nullable to match the Prisma column.
+ * GET /horses/{horseId}/updates -- the horse profile timeline, sourced from
+ * the "Horse updates" (MemberPost) feature (the parallel wellbeing system
+ * it replaces has been deleted backend-side). Newest first, published only.
  */
-export type WellbeingUpdate = {
+export type HorseUpdate = {
   id: string;
-  horseId: string;
-  organizationId: string;
-  type: HorseWellbeingType;
-  body: string;
-  publishedAt: string | null;
-  notifyMembers: boolean;
-  createdAt: string;
-  updatedAt: string;
+  updateType: HorseUpdateType | null;
+  title: string;
+  bodyText: string;
+  publishedAt: string;
+  circlePostId: string | null;
 };
 
 export type Horse = {
