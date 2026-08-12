@@ -113,10 +113,6 @@ export type Horse = {
   story?: string | null;
   trainerNotes: string | null;
   photos: HorsePhoto[];
-  // Parallel array to `photos`, same {url, caption} shape, no `kind`
-  // discriminator on the backend. Optional/defaulted for the same reason
-  // as `story`.
-  audioNotes?: HorsePhoto[];
   pedigree: HorsePedigree | null;
   ownershipBlurb: string | null;
   circleSpaceId: string | null;
