@@ -17,7 +17,7 @@ import { selectHeadline } from '@/features/home/lib/select-headline';
 import { useLatestNews } from '@/features/pulse/api/use-latest-news';
 import { useLatestResults } from '@/features/pulse/api/use-latest-results';
 import { useNextRun } from '@/features/pulse/api/use-next-run';
-import { useTrainerPosts } from '@/features/pulse/api/use-trainer-posts';
+import { useTrainerUpdates } from '@/features/pulse/api/use-trainer-updates';
 import { LatestNewsTile } from '@/features/pulse/components/latest-news-tile';
 import { LatestResultsTile } from '@/features/pulse/components/latest-results-tile';
 import { MyHorsesTile } from '@/features/pulse/components/my-horses-tile';
@@ -34,7 +34,7 @@ export function HomeScreen() {
   const nextRun = useNextRun();
   const results = useLatestResults();
   const news = useLatestNews();
-  const trainerPosts = useTrainerPosts();
+  const trainerUpdates = useTrainerUpdates();
   const followedHorses = useFollowedHorses();
 
   const headline = selectHeadline(
@@ -50,13 +50,13 @@ export function HomeScreen() {
     = nextRun.isRefetching
       || results.isRefetching
       || news.isRefetching
-      || trainerPosts.isRefetching
+      || trainerUpdates.isRefetching
       || followedHorses.isRefetching;
   const onRefresh = () => {
     void nextRun.refetch();
     void results.refetch();
     void news.refetch();
-    void trainerPosts.refetch();
+    void trainerUpdates.refetch();
     void followedHorses.refetch();
   };
 
@@ -99,7 +99,7 @@ export function HomeScreen() {
           <NextRunTile data={nextRun.data} isLoading={nextRun.isLoading} />
           <MyHorsesTile data={followedHorses.data} isLoading={followedHorses.isLoading} />
           <LatestResultsTile data={results.data} isLoading={results.isLoading} />
-          <TrainerUpdatesTile data={trainerPosts.data} isLoading={trainerPosts.isLoading} />
+          <TrainerUpdatesTile data={trainerUpdates.data} isLoading={trainerUpdates.isLoading} />
           <LatestNewsTile data={news.data} isLoading={news.isLoading} />
         </View>
       </ScrollView>

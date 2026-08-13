@@ -42,12 +42,13 @@ export type LatestResult = {
   };
 };
 
-export type TrainerPost = {
-  id: number;
-  name: string;
-  body: { plain_text_body?: string } | null;
-  created_at: string;
-  url: string;
+export type TrainerUpdate = {
+  id: string;
+  horseId: string;
+  horseName: string;
+  title: string;
+  bodyText: string;
+  publishedAt: string;
 };
 
 export type CircleFeedItem = {
