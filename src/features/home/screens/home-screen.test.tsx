@@ -46,8 +46,8 @@ jest.mock('@/features/pulse/api/use-latest-results', () => ({
 jest.mock('@/features/pulse/api/use-latest-news', () => ({
   useLatestNews: () => mockEmptyQuery,
 }));
-jest.mock('@/features/pulse/api/use-trainer-posts', () => ({
-  useTrainerPosts: () => mockEmptyQuery,
+jest.mock('@/features/pulse/api/use-trainer-updates', () => ({
+  useTrainerUpdates: () => mockEmptyQuery,
 }));
 jest.mock('@/features/stables/api/use-followed-horses', () => ({
   useFollowedHorses: () => mockEmptyQuery,

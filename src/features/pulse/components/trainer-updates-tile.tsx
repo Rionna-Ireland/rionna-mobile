@@ -1,4 +1,4 @@
-import type { TrainerPost } from '@/features/pulse/types';
+import type { TrainerUpdate } from '@/features/pulse/types';
 
 import { useRouter } from 'expo-router';
 
@@ -7,7 +7,7 @@ import { relativeTime } from '@/features/pulse/components/relative-time';
 import { TileWrapper } from '@/features/pulse/components/tile-wrapper';
 
 type TrainerUpdatesTileProps = {
-  data: TrainerPost[] | undefined;
+  data: TrainerUpdate[] | undefined;
   isLoading: boolean;
 };
 
@@ -17,24 +17,21 @@ function truncate(text: string, maxLength: number): string {
   return `${text.slice(0, maxLength).trimEnd()}...`;
 }
 
-function PostRow({ post }: { post: TrainerPost }) {
+function UpdateRow({ update }: { update: TrainerUpdate }) {
   const router = useRouter();
-  const excerpt = post.body?.plain_text_body
-    ? truncate(post.body.plain_text_body, 80)
-    : post.name;
+  const excerpt = truncate(update.bodyText, 80);
 
   return (
     <Pressable
-      onPress={() =>
-        router.navigate({
-          pathname: '/community-view',
-          params: post.url ? { url: post.url } : {},
-        })}
+      onPress={() => router.push(`/stables/${update.horseId}`)}
       className="gap-2 px-6 py-4"
     >
+      <Text className="font-mono text-[10px] font-bold tracking-widest text-primary uppercase">
+        {update.horseName}
+      </Text>
       <Text className="font-sans text-base text-ink">{excerpt}</Text>
       <Text className="font-mono text-xs tracking-wider text-ink-variant uppercase">
-        {relativeTime(post.created_at)}
+        {relativeTime(update.publishedAt)}
       </Text>
     </Pressable>
   );
@@ -51,8 +48,8 @@ export function TrainerUpdatesTile({
       {hasUpdates
         ? (
             <View className="pb-2">
-              {data.map(post => (
-                <PostRow key={post.id} post={post} />
+              {data.map(update => (
+                <UpdateRow key={update.id} update={update} />
               ))}
             </View>
           )
