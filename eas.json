@@ -62,6 +62,23 @@
         "EXPO_PUBLIC_CLUB_NAME": "Rionna"
       }
     },
+    "staging": {
+      "channel": "staging",
+      "autoIncrement": true,
+      "distribution": "internal",
+      "environment": "preview",
+      "ios": {
+        "image": "latest"
+      },
+      "env": {
+        "EXPO_PUBLIC_APP_ENV": "preview",
+        "EXPO_PUBLIC_CLUB_ID": "cmpzmgn040000gcy5pg1rg3dn",
+        "EXPO_PUBLIC_API_URL": "https://app-staging.rionna.com",
+        "EXPO_PUBLIC_CIRCLE_MODE": "real",
+        "EXPO_PUBLIC_COMMUNITY_DOMAIN": "community.rionna.com",
+        "EXPO_PUBLIC_CLUB_NAME": "Rionna"
+      }
+    },
     "development": {
       "developmentClient": true,
       "distribution": "internal",

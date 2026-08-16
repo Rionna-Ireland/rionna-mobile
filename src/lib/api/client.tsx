@@ -1,6 +1,6 @@
 import axios from 'axios';
 import Env from 'env';
-import { signOut } from '@/features/auth/use-auth-store';
+import { getAuthStatus, signOut } from '@/features/auth/use-auth-store';
 import { getToken } from '@/lib/auth/utils';
 
 function getApiOrigin() {
@@ -26,12 +26,15 @@ client.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle 401 (session expired)
+// Handle 401 (session expired). Only tear down an established session —
+// during login bootstrap status is still signOut, and a 401 on verify
+// must not yank the token out from under the in-flight membership check
+// (or from a concurrent Circle prewarm).
 client.interceptors.response.use(
   response => response,
   (error) => {
-    if (error.response?.status === 401) {
-      signOut();
+    if (error.response?.status === 401 && getAuthStatus() === 'signIn') {
+      void signOut();
     }
     return Promise.reject(error);
   },

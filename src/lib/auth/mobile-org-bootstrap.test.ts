@@ -57,4 +57,17 @@ describe('mobile organization bootstrap', () => {
 
     expect(post).not.toHaveBeenCalled();
   });
+
+  it('does not treat a verify request failure as a club mismatch', async () => {
+    const networkError = new Error('Request failed with status code 401');
+    verifyClubMembership.mockRejectedValue(networkError);
+
+    const { bootstrapMobileOrganization } = loadModule();
+
+    await expect(
+      bootstrapMobileOrganization({ verifyMembership: true }),
+    ).rejects.toBe(networkError);
+
+    expect(post).not.toHaveBeenCalled();
+  });
 });

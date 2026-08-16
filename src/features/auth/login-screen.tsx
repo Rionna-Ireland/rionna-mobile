@@ -5,21 +5,27 @@ import * as React from 'react';
 
 import { FocusAwareStatusBar } from '@/components/ui';
 import { bootstrapMobileOrganization } from '@/lib/auth/mobile-org-bootstrap';
+import { removeToken, removeUser, setToken, setUser } from '@/lib/auth/utils';
 import { LoginForm } from './components/login-form';
-import { signOut, useAuthStore } from './use-auth-store';
+import { useAuthStore } from './use-auth-store';
 
 export function LoginScreen() {
   const router = useRouter();
   const signIn = useAuthStore.use.signIn();
 
   const onSuccess = async (data: { token: string; user: AuthUser }) => {
-    signIn(data.token, data.user);
+    // Token first so verify can send Bearer. Delay signIn status until after
+    // bootstrap — that status starts push permission + Circle prewarm.
+    setToken(data.token);
+    setUser(data.user);
     try {
       await bootstrapMobileOrganization({ verifyMembership: true });
+      signIn(data.token, data.user);
       router.replace('/');
     }
     catch (error) {
-      await signOut();
+      removeToken();
+      removeUser();
       throw error;
     }
   };

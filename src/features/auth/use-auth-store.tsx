@@ -6,7 +6,6 @@ import Env from 'env';
 import Constants from 'expo-constants';
 import { create } from 'zustand';
 import { clearCircleWebViewCookies } from '@/features/community/lib/circle-cookie-clear';
-import { prewarmCircleSession } from '@/features/community/lib/circle-prewarm';
 import {
   clearCachedCircleSession,
   getCachedCircleSession,
@@ -103,9 +102,6 @@ const _useAuthStore = create<AuthState>((set, get) => ({
     setToken(token);
     setUser(user);
     set({ status: 'signIn', token, user });
-    // S6-03: pre-warm the Circle session in the background so the Community
-    // tab opens instantly. Best-effort — failures are swallowed internally.
-    void prewarmCircleSession();
   },
   signOut: async () => {
     const signedInMember = get().user;
@@ -205,5 +201,8 @@ export function signOut() {
 }
 export function signIn(token: TokenType, user: AuthUser) {
   return _useAuthStore.getState().signIn(token, user);
+}
+export function getAuthStatus() {
+  return _useAuthStore.getState().status;
 }
 export const hydrateAuth = () => _useAuthStore.getState().hydrate();
