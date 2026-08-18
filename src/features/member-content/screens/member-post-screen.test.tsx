@@ -1,7 +1,9 @@
 import type { MemberPostDetail, PostComment } from '@/features/member-content/types';
 
+import { HeaderHeightContext } from '@react-navigation/elements';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import * as React from 'react';
+import { KeyboardAvoidingView } from 'react-native';
 
 import { MemberPostView } from '@/features/member-content/screens/member-post-screen';
 
@@ -225,5 +227,26 @@ describe('memberPostView comments', () => {
     render(<MemberPostView post={POST} contentState="fresh" />);
     expect(screen.queryByText('No comments yet')).not.toBeOnTheScreen();
     expect(screen.queryByLabelText('Write a comment')).not.toBeOnTheScreen();
+  });
+});
+
+describe('memberPostView keyboard avoidance', () => {
+  it('offsets the composer by the native header height so the keyboard does not cover it', () => {
+    render(
+      <HeaderHeightContext value={88}>
+        <MemberPostView post={POST} contentState="fresh" comments={[]} />
+      </HeaderHeightContext>,
+    );
+
+    const avoidingView = screen.UNSAFE_getByType(KeyboardAvoidingView);
+    expect(avoidingView.props.behavior).toBe('padding');
+    expect(avoidingView.props.keyboardVerticalOffset).toBe(88);
+  });
+
+  it('falls back to a zero keyboard offset outside a navigator header context', () => {
+    render(<MemberPostView post={POST} contentState="fresh" comments={[]} />);
+
+    const avoidingView = screen.UNSAFE_getByType(KeyboardAvoidingView);
+    expect(avoidingView.props.keyboardVerticalOffset).toBe(0);
   });
 });
