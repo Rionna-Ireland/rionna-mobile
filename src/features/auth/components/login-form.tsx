@@ -4,6 +4,7 @@ import * as React from 'react';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
 import * as z from 'zod';
+import Env from 'env';
 
 import { Button, Input, Text, View } from '@/components/ui';
 import { getFieldError } from '@/components/ui/form-utils';
@@ -24,18 +25,51 @@ export type LoginFormProps = {
   onSuccess: (data: { token: string; user: AuthUser }) => Promise<void> | void;
 };
 
+function apiHost(): string {
+  try {
+    return new URL(Env.EXPO_PUBLIC_API_URL).host;
+  }
+  catch {
+    return Env.EXPO_PUBLIC_API_URL;
+  }
+}
+
+function describeLoginError(error: any): string {
+  const status = error?.response?.status as number | undefined;
+  if (status) {
+    return (
+      error.response?.data?.message
+      ?? error.response?.data?.error
+      ?? `Sign in failed (${status})`
+    );
+  }
+  if (error?.message === 'Network Error' || error?.code === 'ERR_NETWORK') {
+    return `Can't reach ${apiHost()}. Check connection, or the API is down.`;
+  }
+  return error?.message ?? 'Sign in failed. Please check your credentials.';
+}
+
 function FormHeader() {
+  const showHost = Env.EXPO_PUBLIC_APP_ENV !== 'production';
   return (
-    <View className="items-center justify-center">
+    <View className="mb-6 items-center justify-center">
       <Text
         testID="form-title"
         className="pb-2 text-center text-4xl font-bold text-black dark:text-white"
       >
         Rionna
       </Text>
-      <Text className="mb-6 text-center text-charcoal-500">
+      <Text className="text-center text-charcoal-500">
         Sign in to your account
       </Text>
+      {showHost && (
+        <Text
+          testID="api-host"
+          className="mt-1 text-center text-xs text-charcoal-500"
+        >
+          {apiHost()}
+        </Text>
+      )}
     </View>
   );
 }
@@ -73,12 +107,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         await onSuccess({ token, user });
       }
       catch (e: any) {
-        const message
-          = e?.message
-            ?? e.response?.data?.message
-            ?? e.response?.data?.error
-            ?? 'Sign in failed. Please check your credentials.';
-        setError(message);
+        setError(describeLoginError(e));
       }
     },
   });

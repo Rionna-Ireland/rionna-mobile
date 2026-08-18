@@ -5,6 +5,7 @@ import * as React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { CircleEmbedBlock } from '@/features/member-content/components/circle-embed-block';
+import { CircleFileBlock } from '@/features/member-content/components/circle-file-block';
 import { CircleImageBlock } from '@/features/member-content/components/circle-image-block';
 import { CircleUnsupportedBlock } from '@/features/member-content/components/circle-unsupported-block';
 import { nonEmptyString, safeExternalUrl } from '@/features/member-content/lib/content-format';
@@ -186,9 +187,10 @@ function renderBlock(
       return <CircleImageBlock key={key} node={node} />;
     case 'embed':
       return <CircleEmbedBlock key={key} node={node} onOpenUrl={context.onOpenUrl} />;
+    case 'file':
+      return <CircleFileBlock key={key} node={node} onOpenUrl={context.onOpenUrl} />;
     case 'mention':
     case 'poll':
-    case 'file':
     case 'entity':
       return <CircleUnsupportedBlock key={key} type={node.type} />;
     case 'hardBreak':

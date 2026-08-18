@@ -4,6 +4,7 @@ import type {
   PostComment,
 } from '@/features/member-content/types';
 
+import { HeaderHeightContext } from '@react-navigation/elements';
 import Env from 'env';
 import { useLocalSearchParams } from 'expo-router';
 import * as React from 'react';
@@ -412,6 +413,13 @@ export function MemberPostView({
   onDeleteComment,
   pendingDeleteCommentId,
 }: MemberPostViewProps) {
+  // The route renders under a native stack header, so the KeyboardAvoidingView's
+  // own frame (measured relative to its parent, not the screen) undercounts the
+  // space the header takes up. Without this offset the composer stays partly
+  // hidden behind the keyboard instead of being pushed fully above it.
+  // Falls back to 0 outside a navigator header context (e.g. unit tests).
+  const headerHeight = React.use(HeaderHeightContext) ?? 0;
+
   if (isLoading && !post) {
     return (
       <View testID="member-post-loading" className="flex-1 items-center justify-center bg-neutral-100">
@@ -439,6 +447,7 @@ export function MemberPostView({
     <KeyboardAvoidingView
       className="flex-1 bg-neutral-100"
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={headerHeight}
     >
       <ScrollView
         className="flex-1 bg-neutral-100"

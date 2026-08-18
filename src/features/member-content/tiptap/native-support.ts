@@ -22,7 +22,7 @@ export const CIRCLE_NATIVE_NODE_SUPPORT = {
   embed: 'webview',
   mention: 'placeholder',
   poll: 'placeholder',
-  file: 'placeholder',
+  file: 'webview',
   entity: 'placeholder',
 } as const satisfies Record<string, CircleNativeNodeSupport>;
 

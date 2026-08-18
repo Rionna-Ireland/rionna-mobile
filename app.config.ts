@@ -44,6 +44,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   updates: {
     url: `https://u.expo.dev/${EAS_PROJECT_ID}`,
     fallbackToCacheTimeout: 0,
+    // Preview/staging IPAs must not auto-apply OTAs. `eas update` from a
+    // checkout with `.env` → localhost will silently replace the baked
+    // staging API URL; the phone then dies with axios "Network Error".
+    checkAutomatically:
+      Env.EXPO_PUBLIC_APP_ENV === 'production' ? 'ON_LOAD' : 'NEVER',
   },
   assetBundlePatterns: ['**/*'],
   ios: {

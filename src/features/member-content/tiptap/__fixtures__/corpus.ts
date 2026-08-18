@@ -122,6 +122,34 @@ export const EMBED_TIPTAP_BODY = {
   },
 };
 
+export const FILE_VIDEO_TIPTAP_BODY = {
+  body: {
+    type: 'doc',
+    content: [{ type: 'file', attrs: { sgid: 'file-1' } }],
+  },
+  sgids_to_object_map: {
+    'file-1': {
+      url: 'https://assets-v2.circle.so/capturedvideo.MOV',
+      content_type: 'video/quicktime',
+      filename: 'capturedvideo.MOV',
+    },
+  },
+};
+
+export const FILE_DOWNLOAD_TIPTAP_BODY = {
+  body: {
+    type: 'doc',
+    content: [{ type: 'file', attrs: { sgid: 'file-2' } }],
+  },
+  sgids_to_object_map: {
+    'file-2': {
+      url: 'https://assets-v2.circle.so/gallops-notes.pdf',
+      content_type: 'application/pdf',
+      filename: 'gallops-notes.pdf',
+    },
+  },
+};
+
 export const UNSUPPORTED_TIPTAP_BODY = {
   body: {
     type: 'doc',
