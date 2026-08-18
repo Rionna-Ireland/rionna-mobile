@@ -2,8 +2,8 @@ import type { HydratedNode } from '@/features/member-content/tiptap/hydrate';
 
 import * as React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { WebView } from 'react-native-webview';
 
+import { CircleMediaFrame } from '@/features/member-content/components/circle-media-frame';
 import { nonEmptyString, safeExternalUrl } from '@/features/member-content/lib/content-format';
 
 type CircleEmbedBlockProps = {
@@ -16,15 +16,6 @@ type ResolvedEmbed = {
   url?: unknown;
 };
 
-type ShouldStartRequest = {
-  isTopFrame: boolean;
-  url: string;
-};
-
-type OpenWindowEvent = {
-  nativeEvent: { targetUrl: string };
-};
-
 function resolvedEmbed(node: HydratedNode): ResolvedEmbed | null {
   const value = node.attrs?._resolved;
   return value !== null && typeof value === 'object' && !Array.isArray(value)
@@ -32,67 +23,18 @@ function resolvedEmbed(node: HydratedNode): ResolvedEmbed | null {
     : null;
 }
 
-function embedDocument(fragment: string): string {
-  return `<!doctype html>
-<html>
-  <head>
-    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-    <meta http-equiv="Content-Security-Policy" content="default-src https: data: blob:; frame-src https:; img-src https: data: blob:; media-src https: blob:; script-src https: 'unsafe-inline'; style-src https: 'unsafe-inline'">
-    <style>
-      html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #f2f2f2; }
-      iframe, video { border: 0; width: 100% !important; height: 100% !important; }
-      img { max-width: 100%; height: auto; }
-    </style>
-  </head>
-  <body>${fragment}</body>
-</html>`;
-}
-
 export function CircleEmbedBlock({ node, onOpenUrl }: CircleEmbedBlockProps) {
   const embed = resolvedEmbed(node);
   const html = nonEmptyString(embed?.html);
   const fallbackUrl = safeExternalUrl(embed?.url);
 
-  const openExternal = React.useCallback((value: unknown) => {
-    const url = safeExternalUrl(value);
-    if (url && onOpenUrl)
-      onOpenUrl(url);
-  }, [onOpenUrl]);
-
-  const shouldStart = React.useCallback((request: ShouldStartRequest) => {
-    if (request.isTopFrame === false)
-      return true;
-    if (request.url === 'about:blank' || request.url.startsWith('data:text/html')) {
-      return true;
-    }
-    openExternal(request.url);
-    return false;
-  }, [openExternal]);
-
-  const onOpenWindow = React.useCallback((event: OpenWindowEvent) => {
-    openExternal(event.nativeEvent.targetUrl);
-  }, [openExternal]);
-
   if (html) {
     return (
-      <View style={styles.frame}>
-        <WebView
-          testID="circle-embed-webview"
-          allowsInlineMediaPlayback
-          cacheEnabled
-          javaScriptCanOpenWindowsAutomatically={false}
-          mediaPlaybackRequiresUserAction
-          nestedScrollEnabled={false}
-          originWhitelist={['about:blank', 'https://*']}
-          scrollEnabled={false}
-          setSupportMultipleWindows={false}
-          sharedCookiesEnabled={false}
-          source={{ html: embedDocument(html) }}
-          style={styles.webView}
-          onOpenWindow={onOpenWindow}
-          onShouldStartLoadWithRequest={shouldStart}
-        />
-      </View>
+      <CircleMediaFrame
+        fragment={html}
+        testID="circle-embed-webview"
+        onOpenUrl={onOpenUrl}
+      />
     );
   }
 
@@ -102,7 +44,7 @@ export function CircleEmbedBlock({ node, onOpenUrl }: CircleEmbedBlockProps) {
         accessibilityRole="link"
         disabled={!onOpenUrl}
         style={styles.fallback}
-        onPress={() => openExternal(fallbackUrl)}
+        onPress={() => onOpenUrl?.(fallbackUrl)}
       >
         <Text style={styles.fallbackText}>View media</Text>
       </Pressable>
@@ -117,20 +59,6 @@ export function CircleEmbedBlock({ node, onOpenUrl }: CircleEmbedBlockProps) {
 }
 
 const styles = StyleSheet.create({
-  frame: {
-    backgroundColor: '#F2F2F2',
-    borderColor: '#D9D9D9',
-    borderRadius: 8,
-    borderWidth: StyleSheet.hairlineWidth,
-    height: 220,
-    overflow: 'hidden',
-    width: '100%',
-  },
-  webView: {
-    backgroundColor: '#F2F2F2',
-    height: 220,
-    width: '100%',
-  },
   fallback: {
     alignItems: 'center',
     backgroundColor: '#F2F2F2',

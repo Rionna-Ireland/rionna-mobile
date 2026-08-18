@@ -5,6 +5,8 @@ import * as React from 'react';
 import { CircleTiptapRenderer } from '@/features/member-content/components/circle-tiptap-renderer';
 import {
   EMBED_TIPTAP_BODY,
+  FILE_DOWNLOAD_TIPTAP_BODY,
+  FILE_VIDEO_TIPTAP_BODY,
   IMAGE_TIPTAP_BODY,
   RICH_TEXT_TIPTAP_BODY,
   UNSUPPORTED_TIPTAP_BODY,
@@ -126,6 +128,50 @@ describe('circleTiptapRenderer', () => {
         .filter(([, support]) => support === 'placeholder')
         .map(([type]) => type)
         .sort(),
-    ).toEqual(['entity', 'file', 'mention', 'poll']);
+    ).toEqual(['entity', 'mention', 'poll']);
+  });
+});
+
+describe('circleTiptapRenderer file blocks', () => {
+  it('plays a native-uploaded video file inline through the isolated webview', () => {
+    const onOpenUrl = jest.fn();
+    render(
+      <CircleTiptapRenderer
+        doc={hydrateCircleDoc(FILE_VIDEO_TIPTAP_BODY)}
+        onOpenUrl={onOpenUrl}
+      />,
+    );
+
+    const webView = screen.getByTestId('circle-file-webview');
+    expect(webView.props.source.html).toContain('<video');
+    expect(webView.props.source.html).toContain(
+      'https://assets-v2.circle.so/capturedvideo.MOV',
+    );
+    expect(webView.props.source.html).toContain('playsinline');
+    expect(webView.props.sharedCookiesEnabled).toBe(false);
+
+    expect(
+      webView.props.onShouldStartLoadWithRequest({
+        isTopFrame: true,
+        url: 'https://media.example/full-page',
+      }),
+    ).toBe(false);
+    expect(onOpenUrl).toHaveBeenCalledWith('https://media.example/full-page');
+  });
+
+  it('renders a non-video file as a pressable download link', () => {
+    const onOpenUrl = jest.fn();
+    render(
+      <CircleTiptapRenderer
+        doc={hydrateCircleDoc(FILE_DOWNLOAD_TIPTAP_BODY)}
+        onOpenUrl={onOpenUrl}
+      />,
+    );
+
+    expect(screen.queryByTestId('circle-file-webview')).not.toBeOnTheScreen();
+    fireEvent.press(screen.getByText('gallops-notes.pdf'));
+    expect(onOpenUrl).toHaveBeenCalledWith(
+      'https://assets-v2.circle.so/gallops-notes.pdf',
+    );
   });
 });
