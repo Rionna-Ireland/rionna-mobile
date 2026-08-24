@@ -19,11 +19,24 @@ export type SetHorseFollowResult = {
 
 export type FollowSnapshot = [QueryKey, unknown];
 
+/** Thrown when the backend refuses a follow because the horse is invite-only. */
+export class InviteOnlyFollowError extends Error {
+  constructor() {
+    super('This horse is invite only');
+    this.name = 'InviteOnlyFollowError';
+  }
+}
+
 export async function sendHorseFollow(
   { horseId, following }: HorseFollowVariables,
 ): Promise<SetHorseFollowResult> {
   if (following) {
-    await client.post(`/api/horses/${horseId}/follow`);
+    const { data } = await client.post<{ ok?: boolean; inviteOnly?: boolean }>(
+      `/api/horses/${horseId}/follow`,
+    );
+    if (data?.ok === false && data?.inviteOnly === true) {
+      throw new InviteOnlyFollowError();
+    }
   }
   else {
     await client.delete(`/api/horses/${horseId}/follow`);
@@ -166,14 +179,16 @@ export function useFollowHorse() {
         snapshots: applyOptimisticFollow(queryClient, variables.horseId, variables.following),
       };
     },
-    onError: (_error, variables, context) => {
+    onError: (error, variables, context) => {
       rollbackOptimisticFollow(queryClient, context?.snapshots ?? []);
       // Server state is unknown after a failure — resync in the background.
       void queryClient.invalidateQueries({ queryKey: [STABLES_QUERY_ROOT] });
       showErrorMessage(
-        variables.following
-          ? 'Could not follow this horse. Please try again.'
-          : 'Could not unfollow this horse. Please try again.',
+        error instanceof InviteOnlyFollowError
+          ? error.message
+          : variables.following
+            ? 'Could not follow this horse. Please try again.'
+            : 'Could not unfollow this horse. Please try again.',
       );
     },
     onSuccess: (result, variables) => {

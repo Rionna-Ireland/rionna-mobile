@@ -41,6 +41,7 @@ export function HorseCard({ horse, onPress, onToggleFollow, followPending = fals
                 isFollowing={horse.isFollowing}
                 pending={followPending}
                 onToggle={following => onToggleFollow(horse.id, following)}
+                confirmBeforeUnfollow={horse.inviteOnly ? { horseName: horse.name } : undefined}
               />
             )
           : null}
@@ -51,7 +52,18 @@ export function HorseCard({ horse, onPress, onToggleFollow, followPending = fals
           <Text className="font-display text-2xl text-foreground">
             {horse.name}
           </Text>
-          <StatusBadge status={horse.status} />
+          <View className="flex-row items-center gap-2">
+            {horse.inviteOnly
+              ? (
+                  <View className="rounded-full bg-muted px-3.5 py-2">
+                    <Text className="font-mono text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+                      Private
+                    </Text>
+                  </View>
+                )
+              : null}
+            <StatusBadge status={horse.status} />
+          </View>
         </View>
 
         {horse.trainer

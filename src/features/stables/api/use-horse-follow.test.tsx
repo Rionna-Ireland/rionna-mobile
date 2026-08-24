@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react-native';
 import * as React from 'react';
 
+import { showErrorMessage } from '@/components/ui/utils';
 import {
   applyFollowToHorseDetail,
   applyFollowToHorseList,
@@ -35,6 +36,7 @@ function horse(overrides: Partial<Horse> = {}): Horse {
     name: 'Laska',
     status: 'IN_TRAINING',
     isFollowing: false,
+    inviteOnly: false,
     bio: null,
     trainerNotes: null,
     photos: [],
@@ -78,6 +80,11 @@ describe('sendHorseFollow', () => {
     });
     expect(mockDelete).toHaveBeenCalledWith('/api/horses/horse-1/follow');
     expect(mockPost).not.toHaveBeenCalled();
+  });
+
+  it('rejects when the backend refuses an invite-only follow', async () => {
+    mockPost.mockResolvedValue({ data: { ok: false, inviteOnly: true } });
+    await expect(sendHorseFollow({ horseId: 'horse-1', following: true })).rejects.toThrow();
   });
 });
 
@@ -208,5 +215,20 @@ describe('useFollowHorse', () => {
     await waitFor(() => expect(result.current.isError).toBe(true));
 
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: [STABLES_QUERY_ROOT, 'following'] });
+  });
+
+  it('rolls back and shows the invite-only toast when the backend rejects a follow as invite-only', async () => {
+    mockPost.mockResolvedValue({ data: { ok: false, inviteOnly: true } });
+    const LIST_KEY = [STABLES_QUERY_ROOT, 'org-1'];
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    queryClient.setQueryData(LIST_KEY, [horse({ id: 'horse-1', isFollowing: false })]);
+
+    const { result } = renderHook(() => useFollowHorse(), { wrapper: wrapper(queryClient) });
+    result.current.toggleFollow({ horseId: 'horse-1', following: true });
+
+    await waitFor(() => expect(result.current.isError).toBe(true));
+
+    expect(queryClient.getQueryData<Horse[]>(LIST_KEY)?.[0]).toMatchObject({ isFollowing: false });
+    expect(showErrorMessage).toHaveBeenCalledWith('This horse is invite only');
   });
 });
