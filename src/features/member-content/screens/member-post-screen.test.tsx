@@ -3,7 +3,7 @@ import type { MemberPostDetail, PostComment } from '@/features/member-content/ty
 import { HeaderHeightContext } from '@react-navigation/elements';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import * as React from 'react';
-import { KeyboardAvoidingView } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
 import { MemberPostView } from '@/features/member-content/screens/member-post-screen';
 
