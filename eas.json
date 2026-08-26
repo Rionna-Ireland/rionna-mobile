@@ -79,6 +79,13 @@
         "EXPO_PUBLIC_CLUB_NAME": "Rionna"
       }
     },
+    "staging_store": {
+      "extends": "staging",
+      "distribution": "store",
+      "ios": {
+        "image": "latest"
+      }
+    },
     "development": {
       "developmentClient": true,
       "distribution": "internal",
@@ -109,6 +116,7 @@
   },
   "submit": {
     "preview": {},
-    "production": {}
+    "production": {},
+    "staging_store": {}
   }
 }
