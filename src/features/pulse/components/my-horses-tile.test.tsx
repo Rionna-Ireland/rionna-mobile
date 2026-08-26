@@ -24,6 +24,7 @@ function makeHorse(overrides: Partial<Horse> = {}): Horse {
     name: 'Laska',
     status: 'IN_TRAINING',
     isFollowing: true,
+    inviteOnly: false,
     bio: null,
     trainerNotes: null,
     photos: [],

@@ -109,6 +109,7 @@ function HorseHero({
             isFollowing={horse.isFollowing}
             pending={isFollowPending}
             onToggle={onToggleFollow}
+            confirmBeforeUnfollow={horse.inviteOnly ? { horseName: horse.name } : undefined}
           />
         </View>
         <Text className="mb-4 font-display text-6xl text-primary">
@@ -120,6 +121,15 @@ function HorseHero({
               {horse.status}
             </Text>
           </View>
+          {horse.inviteOnly
+            ? (
+                <View className="rounded-full bg-muted px-3.5 py-2">
+                  <Text className="font-mono text-[10px] font-bold tracking-widest text-muted-foreground uppercase">
+                    Private
+                  </Text>
+                </View>
+              )
+            : null}
         </View>
         {horse.bio
           ? (

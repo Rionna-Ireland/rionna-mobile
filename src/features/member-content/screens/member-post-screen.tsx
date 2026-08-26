@@ -10,15 +10,14 @@ import { useLocalSearchParams } from 'expo-router';
 import * as React from 'react';
 import {
   ActivityIndicator,
-  KeyboardAvoidingView,
   Linking,
-  Platform,
   Pressable,
   ScrollView,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
 import { Image } from '@/components/ui';
 import { Heart } from '@/components/ui/icons';
@@ -445,8 +444,8 @@ export function MemberPostView({
 
   return (
     <KeyboardAvoidingView
-      className="flex-1 bg-neutral-100"
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={{ flex: 1 }}
+      behavior="padding"
       keyboardVerticalOffset={headerHeight}
     >
       <ScrollView

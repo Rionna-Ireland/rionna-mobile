@@ -30,6 +30,7 @@
     "ios:production": "cross-env EXPO_PUBLIC_APP_ENV=production pnpm run ios",
     "build:development:ios": "eas build --profile development --platform ios",
     "build:staging:ios": "eas build --profile staging --platform ios",
+    "build:staging:ios:testflight": "eas build --profile staging_store --platform ios --auto-submit",
     "build:development:android": "eas build --profile development --platform android",
     "build:preview:ios": "eas build --profile preview --platform ios",
     "build:preview:android": "eas build --profile preview --platform android",

@@ -1,7 +1,8 @@
 import type { HorseDetail } from '@/features/stables/types';
 
-import { render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import * as React from 'react';
+import { Alert } from 'react-native';
 
 import HorseProfileScreen from '@/app/stables/[horse-id]';
 
@@ -33,6 +34,7 @@ function baseHorse(overrides: Partial<HorseDetail> = {}): HorseDetail {
     name: 'Laska',
     status: 'IN_TRAINING',
     isFollowing: false,
+    inviteOnly: false,
     bio: null,
     story: null,
     trainerNotes: null,
@@ -123,5 +125,41 @@ describe('horseProfileScreen', () => {
     render(<HorseProfileScreen />);
 
     expect(screen.queryByText('Laska')).toBeNull();
+  });
+
+  it('renders a Private chip and confirms before unfollowing an invite-only horse', () => {
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    mockUseHorse.mockReturnValue({
+      data: baseHorse({ inviteOnly: true, isFollowing: true, name: 'Laska' }),
+      isLoading: false,
+      isError: false,
+    });
+
+    render(<HorseProfileScreen />);
+
+    expect(screen.getByText('Private')).toBeOnTheScreen();
+
+    fireEvent.press(screen.getByLabelText('Unfollow horse'));
+
+    expect(alertSpy).toHaveBeenCalledWith(
+      'Leave Laska?',
+      'You\'ll lose access to Laska. Only a club admin can add you back.',
+      expect.any(Array),
+    );
+    expect(mockToggleFollow).not.toHaveBeenCalled();
+
+    alertSpy.mockRestore();
+  });
+
+  it('does not render a Private chip for a regular horse', () => {
+    mockUseHorse.mockReturnValue({
+      data: baseHorse({ inviteOnly: false }),
+      isLoading: false,
+      isError: false,
+    });
+
+    render(<HorseProfileScreen />);
+
+    expect(screen.queryByText('Private')).toBeNull();
   });
 });

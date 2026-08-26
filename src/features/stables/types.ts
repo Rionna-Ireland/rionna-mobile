@@ -106,6 +106,10 @@ export type Horse = {
   name: string;
   status: HorseStatus;
   isFollowing: boolean;
+  // Invite-only horses are only ever present in a payload when the caller
+  // has access (Task 5, backend) -- this flag just says "flag it as
+  // private" for chip + unfollow-confirm UI, never a client-side gate.
+  inviteOnly: boolean;
   bio: string | null;
   // Long-form "Story & pedigree" narrative -- deliberately separate from
   // `bio` on the backend. Optional here too: older cached payloads (or a
