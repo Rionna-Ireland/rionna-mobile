@@ -1,3 +1,4 @@
+import Env from 'env';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
 import { RefreshControl } from 'react-native';
@@ -13,7 +14,9 @@ import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { HeadlineCard } from '@/features/home/components/headline-card';
+import { InsideTrackTile } from '@/features/home/components/inside-track-tile';
 import { selectHeadline } from '@/features/home/lib/select-headline';
+import { useInsideTrack } from '@/features/member-content/api/use-inside-track';
 import { useLatestNews } from '@/features/pulse/api/use-latest-news';
 import { useLatestResults } from '@/features/pulse/api/use-latest-results';
 import { useNextRun } from '@/features/pulse/api/use-next-run';
@@ -31,11 +34,17 @@ export function HomeScreen() {
   const contentPaddingBottom = useTabBarContentPadding(24);
   const contentPaddingTop = useScreenTopPadding();
 
+  const scope = React.useMemo(
+    () => ({ organizationId: Env.EXPO_PUBLIC_CLUB_ID, memberId: user?.id ?? '' }),
+    [user?.id],
+  );
+
   const nextRun = useNextRun();
   const results = useLatestResults();
   const news = useLatestNews();
   const trainerUpdates = useTrainerUpdates();
   const followedHorses = useFollowedHorses();
+  const insideTrack = useInsideTrack(scope);
 
   const headline = selectHeadline(
     {
@@ -51,13 +60,15 @@ export function HomeScreen() {
       || results.isRefetching
       || news.isRefetching
       || trainerUpdates.isRefetching
-      || followedHorses.isRefetching;
+      || followedHorses.isRefetching
+      || insideTrack.isRefetching;
   const onRefresh = () => {
     void nextRun.refetch();
     void results.refetch();
     void news.refetch();
     void trainerUpdates.refetch();
     void followedHorses.refetch();
+    void insideTrack.refetch();
   };
 
   const displayName = user?.name?.trim() || 'Rionna member';
@@ -101,6 +112,7 @@ export function HomeScreen() {
           <LatestResultsTile data={results.data} isLoading={results.isLoading} />
           <TrainerUpdatesTile data={trainerUpdates.data} isLoading={trainerUpdates.isLoading} />
           <LatestNewsTile data={news.data} isLoading={news.isLoading} />
+          <InsideTrackTile data={insideTrack.data} isLoading={insideTrack.isLoading} />
         </View>
       </ScrollView>
     </>

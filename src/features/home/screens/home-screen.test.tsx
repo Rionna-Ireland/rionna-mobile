@@ -52,6 +52,9 @@ jest.mock('@/features/pulse/api/use-trainer-updates', () => ({
 jest.mock('@/features/stables/api/use-followed-horses', () => ({
   useFollowedHorses: () => mockEmptyQuery,
 }));
+jest.mock('@/features/member-content/api/use-inside-track', () => ({
+  useInsideTrack: () => mockEmptyQuery,
+}));
 
 describe('homeScreen', () => {
   beforeEach(() => jest.clearAllMocks());
