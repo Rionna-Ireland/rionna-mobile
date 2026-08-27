@@ -13,6 +13,7 @@ export type PushPreferences = {
   circleReaction?: boolean;
   circleDm?: boolean;
   circleHorseDiscussion?: boolean;
+  insideTrack?: boolean;
 };
 
 export type EmailPreferences = {

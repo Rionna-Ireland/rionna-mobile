@@ -1,6 +1,7 @@
 import type { QueryClient, QueryKey } from '@tanstack/react-query';
 
 import type {
+  InsideTrackResult,
   MemberContentScope,
   MemberFeedItem,
   MemberPostDetail,
@@ -87,6 +88,19 @@ function isPostDetail(data: unknown): data is MemberPostDetail {
 }
 
 /**
+ * The Inside Track query caches `{ ok, configured, pinned, latest }` — not a
+ * bare feed array or a post detail — so it fell through both guards above
+ * and never got the optimistic flip applied (or reconciled on settle).
+ */
+function isInsideTrackResult(data: unknown): data is InsideTrackResult {
+  return Boolean(data) && typeof data === 'object' && !Array.isArray(data)
+    && typeof (data as InsideTrackResult).ok === 'boolean'
+    && typeof (data as InsideTrackResult).configured === 'boolean'
+    && Array.isArray((data as InsideTrackResult).pinned)
+    && Array.isArray((data as InsideTrackResult).latest);
+}
+
+/**
  * Optimistically flips the post in every member-content cache it appears in
  * (merged feed, space feeds, post detail) and returns snapshots of the
  * caches that changed, for rollback on error.
@@ -113,6 +127,14 @@ export function applyOptimisticLike(
       if (next !== data) {
         snapshots.push([queryKey, data]);
         queryClient.setQueryData(queryKey, next);
+      }
+    }
+    else if (isInsideTrackResult(data)) {
+      const nextPinned = applyLikeToFeedItems(data.pinned, postId, liked);
+      const nextLatest = applyLikeToFeedItems(data.latest, postId, liked);
+      if (nextPinned !== data.pinned || nextLatest !== data.latest) {
+        snapshots.push([queryKey, data]);
+        queryClient.setQueryData(queryKey, { ...data, pinned: nextPinned, latest: nextLatest });
       }
     }
   }
@@ -150,6 +172,18 @@ export function reconcileLikeCount(
         continue;
       }
       queryClient.setQueryData(queryKey, { ...data, isLiked: liked, likeCount });
+    }
+    else if (isInsideTrackResult(data)) {
+      const matches = (item: MemberFeedItem) =>
+        item.id === postId && (item.isLiked !== liked || item.likeCount !== likeCount);
+      if (!data.pinned.some(matches) && !data.latest.some(matches)) {
+        continue;
+      }
+      queryClient.setQueryData(queryKey, {
+        ...data,
+        pinned: data.pinned.map(item => (item.id === postId ? { ...item, isLiked: liked, likeCount } : item)),
+        latest: data.latest.map(item => (item.id === postId ? { ...item, isLiked: liked, likeCount } : item)),
+      });
     }
   }
 }

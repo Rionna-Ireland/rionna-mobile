@@ -47,6 +47,11 @@ const PUSH_ROWS: Row[] = [
     get: p => p.pushPreferences.newsPost !== false,
     set: v => ({ pushPreferences: { newsPost: v } }),
   },
+  {
+    labelKey: 'settings.notifications.insideTrack',
+    get: p => p.pushPreferences.insideTrack !== false,
+    set: v => ({ pushPreferences: { insideTrack: v } }),
+  },
 ];
 
 const COMMUNITY_ROWS: Row[] = [

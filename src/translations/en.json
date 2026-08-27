@@ -50,6 +50,7 @@
       "enablePush": "Enable push notifications",
       "horseDeclared": "Horse declared / non-runner",
       "horseUpdates": "Horse updates (trainer, wellbeing, race notes)",
+      "insideTrack": "Inside Track",
       "newsPost": "News posts",
       "preferences": "Notification preferences",
       "raceResult": "Race results",

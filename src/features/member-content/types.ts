@@ -33,6 +33,13 @@ export type MemberFeedResult = {
   hasNextPage: boolean;
 };
 
+export type InsideTrackResult = {
+  ok: boolean;
+  configured: boolean;
+  pinned: MemberFeedItem[];
+  latest: MemberFeedItem[];
+};
+
 export type MemberPostDetail = {
   id: string;
   spaceId: string | null;

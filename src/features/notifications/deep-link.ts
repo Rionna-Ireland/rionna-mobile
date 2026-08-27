@@ -4,7 +4,8 @@ import { router } from 'expo-router';
 type PushData
   = | { screen: 'horse'; horseId: string }
     | { screen: 'news'; newsPostId: string }
-    | { screen: 'community'; url?: string };
+    | { screen: 'community'; url?: string }
+    | { screen: 'insideTrack' };
 
 function isPushData(data: unknown): data is PushData {
   if (!data || typeof data !== 'object')
@@ -16,6 +17,8 @@ function isPushData(data: unknown): data is PushData {
     return typeof d.newsPostId === 'string';
   if (d.screen === 'community')
     return d.url === undefined || typeof d.url === 'string';
+  if (d.screen === 'insideTrack')
+    return true;
   return false;
 }
 
@@ -44,5 +47,8 @@ export function handleNotificationResponse(
         pathname: '/community-view',
         params: data.url ? { url: data.url } : {},
       });
+      return;
+    case 'insideTrack':
+      router.push('/inside-track');
   }
 }
