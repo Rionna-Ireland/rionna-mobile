@@ -1,4 +1,8 @@
-import type { MemberFeedItem, MemberPostDetail } from '@/features/member-content/types';
+import type {
+  InsideTrackResult,
+  MemberFeedItem,
+  MemberPostDetail,
+} from '@/features/member-content/types';
 
 import { QueryClient } from '@tanstack/react-query';
 
@@ -219,5 +223,92 @@ describe('optimistic cache update', () => {
       reconcileLikeCount(queryClient, { postId: 'post-1', liked: true, likeCount: null });
       expect(queryClient.getQueryData<MemberFeedItem[]>(FEED_KEY)).toBe(feedBefore);
     });
+  });
+});
+
+describe('inside track cache (pinned + latest arrays)', () => {
+  const INSIDE_TRACK_KEY = [MEMBER_CONTENT_QUERY_ROOT, 'inside-track', 'org-1', 'member-1'];
+
+  function insideTrackResult(overrides: Partial<InsideTrackResult> = {}): InsideTrackResult {
+    return {
+      ok: true,
+      configured: true,
+      pinned: [],
+      latest: [],
+      ...overrides,
+    };
+  }
+
+  function seededInsideTrackClient() {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { gcTime: Number.POSITIVE_INFINITY } },
+    });
+    queryClient.setQueryData(
+      INSIDE_TRACK_KEY,
+      insideTrackResult({
+        pinned: [feedItem({ id: 'pinned-1', likeCount: 2 })],
+        latest: [feedItem({ id: 'post-1' }), feedItem({ id: 'post-2', likeCount: 7 })],
+      }),
+    );
+    return queryClient;
+  }
+
+  it('applies an optimistic like to a post in the latest array', () => {
+    const queryClient = seededInsideTrackClient();
+    applyOptimisticLike(queryClient, 'post-1', true);
+
+    const result = queryClient.getQueryData<InsideTrackResult>(INSIDE_TRACK_KEY);
+    expect(result?.latest[0]).toMatchObject({ isLiked: true, likeCount: 4 });
+    expect(result?.latest[1]).toMatchObject({ isLiked: false, likeCount: 7 });
+    expect(result?.pinned[0]).toMatchObject({ isLiked: false, likeCount: 2 });
+  });
+
+  it('applies an optimistic like to a post in the pinned array', () => {
+    const queryClient = seededInsideTrackClient();
+    applyOptimisticLike(queryClient, 'pinned-1', true);
+
+    const result = queryClient.getQueryData<InsideTrackResult>(INSIDE_TRACK_KEY);
+    expect(result?.pinned[0]).toMatchObject({ isLiked: true, likeCount: 3 });
+  });
+
+  it('rolls back the Inside Track cache to its snapshot on error', () => {
+    const queryClient = seededInsideTrackClient();
+    const snapshots = applyOptimisticLike(queryClient, 'post-1', true);
+    rollbackOptimisticLike(queryClient, snapshots);
+
+    const result = queryClient.getQueryData<InsideTrackResult>(INSIDE_TRACK_KEY);
+    expect(result?.latest[0]).toMatchObject({ isLiked: false, likeCount: 3 });
+  });
+
+  it('does not snapshot the Inside Track cache when the post is not in it', () => {
+    const queryClient = seededInsideTrackClient();
+    const snapshots = applyOptimisticLike(queryClient, 'not-in-inside-track', true);
+    expect(snapshots).toEqual([]);
+  });
+
+  it('reconciles the server like count in the latest array', () => {
+    const queryClient = seededInsideTrackClient();
+    applyOptimisticLike(queryClient, 'post-1', true); // optimistic 3 -> 4
+    reconcileLikeCount(queryClient, { postId: 'post-1', liked: true, likeCount: 9 });
+
+    const result = queryClient.getQueryData<InsideTrackResult>(INSIDE_TRACK_KEY);
+    expect(result?.latest[0]).toMatchObject({ isLiked: true, likeCount: 9 });
+  });
+
+  it('reconciles the server like count in the pinned array', () => {
+    const queryClient = seededInsideTrackClient();
+    applyOptimisticLike(queryClient, 'pinned-1', true); // optimistic 2 -> 3
+    reconcileLikeCount(queryClient, { postId: 'pinned-1', liked: true, likeCount: 12 });
+
+    const result = queryClient.getQueryData<InsideTrackResult>(INSIDE_TRACK_KEY);
+    expect(result?.pinned[0]).toMatchObject({ isLiked: true, likeCount: 12 });
+  });
+
+  it('is a no-op (same reference) when nothing in the Inside Track cache changed', () => {
+    const queryClient = seededInsideTrackClient();
+    const before = queryClient.getQueryData<InsideTrackResult>(INSIDE_TRACK_KEY);
+    reconcileLikeCount(queryClient, { postId: 'not-in-inside-track', liked: true, likeCount: 5 });
+    const after = queryClient.getQueryData<InsideTrackResult>(INSIDE_TRACK_KEY);
+    expect(after).toBe(before);
   });
 });

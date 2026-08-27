@@ -14,7 +14,10 @@ export function InsideTrackTile({ data, isLoading }: InsideTrackTileProps) {
   const router = useRouter();
   const teaser = data?.latest[0] ?? data?.pinned[0];
 
-  if (data && (!data.configured || !teaser))
+  // Covers unconfigured, empty, AND error/offline (query errored -> data is
+  // undefined, isLoading has settled to false) — all render nothing rather
+  // than a non-tappable "Nothing here yet" placeholder.
+  if (!isLoading && !teaser)
     return null;
 
   return (
