@@ -27,4 +27,4 @@ modules/*/ios/build/
 
 expo-env.d.ts
 .env
-# @end expo-cli
+# @end expo-cli.superpowers/
