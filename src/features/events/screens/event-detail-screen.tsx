@@ -161,6 +161,12 @@ function AddToCalendarButton({
 type EventDetailViewProps = {
   event: ClubEvent | undefined;
   isLoading?: boolean;
+  /**
+   * Set when the upcoming/past queries backing this screen have both settled
+   * with an error and no cached event was found -- distinguishes a cold-start
+   * offline failure (push tap, no snapshot yet) from a genuinely missing event.
+   */
+  isError?: boolean;
   onToggleRsvp?: (going: boolean) => void;
   rsvpPending?: boolean;
   /**
@@ -173,17 +179,13 @@ type EventDetailViewProps = {
   calendarOutcome?: AddToCalendarOutcome | null;
 };
 
-export function EventDetailView({
-  event,
-  isLoading = false,
-  onToggleRsvp,
-  rsvpPending = false,
-  rsvpFullError = false,
-  onAddToCalendar,
-  calendarPending = false,
-  calendarOutcome = null,
-}: EventDetailViewProps) {
-  if (isLoading && !event) {
+/**
+ * Rendered whenever there's no event to show yet -- while still loading, when
+ * the backing queries errored out (e.g. cold-start offline via a push tap,
+ * nothing cached), or once queries settle successfully without a match.
+ */
+function EventUnresolvedState({ isLoading, isError }: { isLoading: boolean; isError: boolean }) {
+  if (isLoading) {
     return (
       <View testID="event-detail-loading" className="flex-1 items-center justify-center bg-neutral-100">
         <ActivityIndicator color="#6D28D9" />
@@ -192,14 +194,38 @@ export function EventDetailView({
     );
   }
 
-  if (!event) {
+  if (isError) {
     return (
-      <View testID="event-detail-unavailable" className="flex-1 items-center justify-center bg-neutral-100 px-8">
+      <View testID="event-detail-error" className="flex-1 items-center justify-center bg-neutral-100 px-8">
         <Text className="text-center font-sans text-base text-neutral-700">
-          This event is no longer available.
+          Couldn't load this event — check your connection and try again.
         </Text>
       </View>
     );
+  }
+
+  return (
+    <View testID="event-detail-unavailable" className="flex-1 items-center justify-center bg-neutral-100 px-8">
+      <Text className="text-center font-sans text-base text-neutral-700">
+        This event is no longer available.
+      </Text>
+    </View>
+  );
+}
+
+export function EventDetailView({
+  event,
+  isLoading = false,
+  isError = false,
+  onToggleRsvp,
+  rsvpPending = false,
+  rsvpFullError = false,
+  onAddToCalendar,
+  calendarPending = false,
+  calendarOutcome = null,
+}: EventDetailViewProps) {
+  if (!event) {
+    return <EventUnresolvedState isLoading={isLoading} isError={isError} />;
   }
 
   const date = formatEventDate(event.startsAt);
@@ -290,6 +316,7 @@ function SignedInEventDetail({
   const past = useEvents(scope, 'past');
   const event = findEventById([upcoming.data, past.data], eventId);
   const isLoading = (upcoming.isLoading || past.isLoading) && !event;
+  const isError = (upcoming.isError || past.isError) && !event;
 
   const rsvp = useEventRsvp(scope);
   const [rsvpFullError, setRsvpFullError] = React.useState(false);
@@ -325,6 +352,7 @@ function SignedInEventDetail({
     <EventDetailView
       event={event}
       isLoading={isLoading}
+      isError={isError}
       onToggleRsvp={handleToggleRsvp}
       rsvpPending={rsvp.isPending}
       rsvpFullError={rsvpFullError}

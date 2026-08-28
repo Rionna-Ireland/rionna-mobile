@@ -11,6 +11,7 @@ import {
   getCachedCircleSession,
 } from '@/features/community/lib/circle-session-store';
 import { resetCommunityPanel } from '@/features/community/lib/use-community-panel-store';
+import { clearEventsStorage } from '@/features/events/lib/events-logout';
 import { clearMemberContentForMember } from '@/features/member-content/lib/member-content-logout';
 import { client } from '@/lib/api/client';
 import { bootstrapMobileOrganization } from '@/lib/auth/mobile-org-bootstrap';
@@ -167,6 +168,15 @@ const _useAuthStore = create<AuthState>((set, get) => ({
       catch (e) {
         console.warn('[auth] Failed to clear member content (continuing logout):', e);
       }
+    }
+
+    // Clear every persisted events snapshot (any member/org) + the in-memory
+    // events query cache so the next member on this device starts clean.
+    try {
+      clearEventsStorage();
+    }
+    catch (e) {
+      console.warn('[auth] Failed to clear events cache (continuing logout):', e);
     }
 
     removeToken();

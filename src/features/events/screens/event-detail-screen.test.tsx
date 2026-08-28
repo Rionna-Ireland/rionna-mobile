@@ -102,6 +102,24 @@ describe('eventDetailView', () => {
     expect(screen.getByTestId('event-detail-loading')).toBeOnTheScreen();
     expect(screen.queryByText('This event is no longer available.')).toBeNull();
   });
+
+  it('shows a connection-problem message (not the unavailable message) when the backing queries errored', () => {
+    render(<EventDetailView event={undefined} isError />);
+    expect(screen.getByTestId('event-detail-error')).toBeOnTheScreen();
+    expect(
+      screen.getByText('Couldn\'t load this event — check your connection and try again.'),
+    ).toBeOnTheScreen();
+    expect(screen.queryByText('This event is no longer available.')).toBeNull();
+  });
+
+  it('shows the unavailable message (not the connection-problem message) when the queries settled without error', () => {
+    render(<EventDetailView event={undefined} isError={false} />);
+    expect(screen.getByTestId('event-detail-unavailable')).toBeOnTheScreen();
+    expect(screen.getByText('This event is no longer available.')).toBeOnTheScreen();
+    expect(
+      screen.queryByText('Couldn\'t load this event — check your connection and try again.'),
+    ).toBeNull();
+  });
 });
 
 describe('eventDetailView rsvp count', () => {
@@ -265,6 +283,23 @@ describe('eventDetailScreen', () => {
     mockUseLocalSearchParams.mockReturnValue({ 'event-id': 'unknown-event' });
     render(<EventDetailScreen />);
     expect(screen.getByText('This event is no longer available.')).toBeOnTheScreen();
+  });
+
+  it('shows a connection-problem message instead of the unavailable fallback on a cold-start offline open (both queries errored, nothing cached)', () => {
+    mockUseLocalSearchParams.mockReturnValue({ 'event-id': 'event-1' });
+    mockUseEvents.mockImplementation(() => ({
+      data: undefined,
+      isLoading: false,
+      isError: true,
+    }));
+
+    render(<EventDetailScreen />);
+
+    expect(screen.getByTestId('event-detail-error')).toBeOnTheScreen();
+    expect(
+      screen.getByText('Couldn\'t load this event — check your connection and try again.'),
+    ).toBeOnTheScreen();
+    expect(screen.queryByText('This event is no longer available.')).toBeNull();
   });
 
   it('calls the RSVP mutation with the event id when the RSVP button is pressed', () => {
