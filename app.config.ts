@@ -26,6 +26,74 @@ const appIconBadgeConfig: AppIconBadgeConfig = {
   ],
 };
 
+const plugins: ExpoConfig['plugins'] = [
+  [
+    'expo-splash-screen',
+    {
+      backgroundColor: '#391d3a',
+      image: './assets/splash-icon.png',
+      imageWidth: 150,
+    },
+  ],
+  [
+    'expo-font',
+    {
+      ios: {
+        fonts: [
+          'assets/fonts/PPEiko-Thin.otf',
+          'assets/fonts/PPEiko-LightItalic.otf',
+          'assets/fonts/PPEiko-Medium.otf',
+          'assets/fonts/PPEiko-Heavy.otf',
+          'assets/fonts/PPEiko-BlackItalic.otf',
+          'node_modules/@expo-google-fonts/plus-jakarta-sans/400Regular/PlusJakartaSans_400Regular.ttf',
+          'node_modules/@expo-google-fonts/plus-jakarta-sans/500Medium/PlusJakartaSans_500Medium.ttf',
+          'node_modules/@expo-google-fonts/plus-jakarta-sans/600SemiBold/PlusJakartaSans_600SemiBold.ttf',
+          'node_modules/@expo-google-fonts/plus-jakarta-sans/700Bold/PlusJakartaSans_700Bold.ttf',
+          'node_modules/@expo-google-fonts/ibm-plex-mono/400Regular/IBMPlexMono_400Regular.ttf',
+        ],
+      },
+      android: {
+        fonts: [
+          {
+            fontFamily: 'PPEiko',
+            fontDefinitions: [
+              { path: 'assets/fonts/PPEiko-Thin.otf', weight: 100 },
+              { path: 'assets/fonts/PPEiko-Medium.otf', weight: 500 },
+              { path: 'assets/fonts/PPEiko-Heavy.otf', weight: 800 },
+            ],
+          },
+          {
+            fontFamily: 'PlusJakartaSans',
+            fontDefinitions: [
+              { path: 'node_modules/@expo-google-fonts/plus-jakarta-sans/400Regular/PlusJakartaSans_400Regular.ttf', weight: 400 },
+              { path: 'node_modules/@expo-google-fonts/plus-jakarta-sans/500Medium/PlusJakartaSans_500Medium.ttf', weight: 500 },
+              { path: 'node_modules/@expo-google-fonts/plus-jakarta-sans/600SemiBold/PlusJakartaSans_600SemiBold.ttf', weight: 600 },
+              { path: 'node_modules/@expo-google-fonts/plus-jakarta-sans/700Bold/PlusJakartaSans_700Bold.ttf', weight: 700 },
+            ],
+          },
+          {
+            fontFamily: 'IBMPlexMono',
+            fontDefinitions: [
+              { path: 'node_modules/@expo-google-fonts/ibm-plex-mono/400Regular/IBMPlexMono_400Regular.ttf', weight: 400 },
+            ],
+          },
+        ],
+      },
+    },
+  ],
+  'expo-localization',
+  'expo-notifications',
+  'expo-router',
+  [
+    'expo-calendar',
+    {
+      calendarPermission: 'Allow Rionna to add club events to your calendar.',
+    },
+  ],
+  ['app-icon-badge', appIconBadgeConfig],
+  ['react-native-edge-to-edge'],
+];
+
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: Env.EXPO_PUBLIC_NAME,
@@ -72,67 +140,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     favicon: './assets/favicon.png',
     bundler: 'metro',
   },
-  plugins: [
-    [
-      'expo-splash-screen',
-      {
-        backgroundColor: '#391d3a',
-        image: './assets/splash-icon.png',
-        imageWidth: 150,
-      },
-    ],
-    [
-      'expo-font',
-      {
-        ios: {
-          fonts: [
-            'assets/fonts/PPEiko-Thin.otf',
-            'assets/fonts/PPEiko-LightItalic.otf',
-            'assets/fonts/PPEiko-Medium.otf',
-            'assets/fonts/PPEiko-Heavy.otf',
-            'assets/fonts/PPEiko-BlackItalic.otf',
-            'node_modules/@expo-google-fonts/plus-jakarta-sans/400Regular/PlusJakartaSans_400Regular.ttf',
-            'node_modules/@expo-google-fonts/plus-jakarta-sans/500Medium/PlusJakartaSans_500Medium.ttf',
-            'node_modules/@expo-google-fonts/plus-jakarta-sans/600SemiBold/PlusJakartaSans_600SemiBold.ttf',
-            'node_modules/@expo-google-fonts/plus-jakarta-sans/700Bold/PlusJakartaSans_700Bold.ttf',
-            'node_modules/@expo-google-fonts/ibm-plex-mono/400Regular/IBMPlexMono_400Regular.ttf',
-          ],
-        },
-        android: {
-          fonts: [
-            {
-              fontFamily: 'PPEiko',
-              fontDefinitions: [
-                { path: 'assets/fonts/PPEiko-Thin.otf', weight: 100 },
-                { path: 'assets/fonts/PPEiko-Medium.otf', weight: 500 },
-                { path: 'assets/fonts/PPEiko-Heavy.otf', weight: 800 },
-              ],
-            },
-            {
-              fontFamily: 'PlusJakartaSans',
-              fontDefinitions: [
-                { path: 'node_modules/@expo-google-fonts/plus-jakarta-sans/400Regular/PlusJakartaSans_400Regular.ttf', weight: 400 },
-                { path: 'node_modules/@expo-google-fonts/plus-jakarta-sans/500Medium/PlusJakartaSans_500Medium.ttf', weight: 500 },
-                { path: 'node_modules/@expo-google-fonts/plus-jakarta-sans/600SemiBold/PlusJakartaSans_600SemiBold.ttf', weight: 600 },
-                { path: 'node_modules/@expo-google-fonts/plus-jakarta-sans/700Bold/PlusJakartaSans_700Bold.ttf', weight: 700 },
-              ],
-            },
-            {
-              fontFamily: 'IBMPlexMono',
-              fontDefinitions: [
-                { path: 'node_modules/@expo-google-fonts/ibm-plex-mono/400Regular/IBMPlexMono_400Regular.ttf', weight: 400 },
-              ],
-            },
-          ],
-        },
-      },
-    ],
-    'expo-localization',
-    'expo-notifications',
-    'expo-router',
-    ['app-icon-badge', appIconBadgeConfig],
-    ['react-native-edge-to-edge'],
-  ],
+  plugins,
   extra: {
     eas: {
       projectId: EAS_PROJECT_ID,

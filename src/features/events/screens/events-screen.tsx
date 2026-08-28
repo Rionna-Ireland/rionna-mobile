@@ -1,5 +1,3 @@
-import type { Href } from 'expo-router';
-
 import type { EventScope } from '@/features/events/types';
 
 import Env from 'env';
@@ -121,9 +119,7 @@ export function EventsScreen() {
                         onPress={() => router.push({
                           pathname: '/event/[event-id]',
                           params: { 'event-id': event.id },
-                          // The detail route lands in the next task; typed
-                          // routes can't see it yet, so cast through unknown.
-                        } as unknown as Href)}
+                        })}
                       />
                     ))}
                   </View>

@@ -211,6 +211,15 @@ export default function RootLayout() {
           }}
         />
         <Stack.Screen
+          name="event/[event-id]"
+          options={{
+            title: '',
+            headerBackTitle: 'Events',
+            headerShadowVisible: false,
+            headerStyle: { backgroundColor: '#F5F5F5' },
+          }}
+        />
+        <Stack.Screen
           name="news/[news-post-id]"
           options={{
             title: '',
