@@ -140,4 +140,19 @@ describe('addEventToDeviceCalendar', () => {
 
     expect(outcome).toBe('failed');
   });
+
+  it('returns "failed" without requiring expo-calendar when the native module is missing', async () => {
+    const host = globalThis as { __EXPO_CALENDAR_MISSING__?: boolean };
+    host.__EXPO_CALENDAR_MISSING__ = true;
+
+    try {
+      const outcome = await addEventToDeviceCalendar(clubEvent());
+
+      expect(outcome).toBe('failed');
+      expect(mockRequestPermissions).not.toHaveBeenCalled();
+    }
+    finally {
+      delete host.__EXPO_CALENDAR_MISSING__;
+    }
+  });
 });

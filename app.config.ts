@@ -26,6 +26,9 @@ const appIconBadgeConfig: AppIconBadgeConfig = {
   ],
 };
 
+const CALENDAR_PERMISSION = 'Allow Rionna to add club events to your calendar.';
+const REMINDERS_PERMISSION = 'Allow Rionna to access reminders when adding club events.';
+
 const plugins: ExpoConfig['plugins'] = [
   [
     'expo-splash-screen',
@@ -87,7 +90,8 @@ const plugins: ExpoConfig['plugins'] = [
   [
     'expo-calendar',
     {
-      calendarPermission: 'Allow Rionna to add club events to your calendar.',
+      calendarPermission: CALENDAR_PERMISSION,
+      remindersPermission: REMINDERS_PERMISSION,
     },
   ],
   ['app-icon-badge', appIconBadgeConfig],
@@ -124,6 +128,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     bundleIdentifier: Env.EXPO_PUBLIC_BUNDLE_ID,
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
+      // iOS 17+ EventKit reads these in ExpoCalendar's OnCreate. Missing keys
+      // are RCTFatal, not a JS exception — cannot be caught in add-to-calendar.ts.
+      NSCalendarsUsageDescription: CALENDAR_PERMISSION,
+      NSCalendarsFullAccessUsageDescription: CALENDAR_PERMISSION,
+      NSRemindersUsageDescription: REMINDERS_PERMISSION,
+      NSRemindersFullAccessUsageDescription: REMINDERS_PERMISSION,
     },
   },
   experiments: {

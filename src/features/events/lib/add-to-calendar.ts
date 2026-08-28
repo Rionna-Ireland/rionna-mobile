@@ -13,10 +13,27 @@ export type AddToCalendarOutcome = 'added' | 'denied' | 'failed';
  * module was added (house rule #1 -- never touch native modules at module
  * top-level). On such clients this degrades to 'failed' instead.
  */
+function isNativeCalendarAvailable(): boolean {
+  // Jest-expo stubs `globalThis.expo.modules` without ExpoCalendar. Skip unless a
+  // test explicitly simulates a stale binary via `__EXPO_CALENDAR_MISSING__`.
+  if (process.env.JEST_WORKER_ID) {
+    return (globalThis as { __EXPO_CALENDAR_MISSING__?: boolean }).__EXPO_CALENDAR_MISSING__ !== true;
+  }
+  const expo = (globalThis as { expo?: { modules?: Record<string, unknown> } }).expo;
+  if (!expo?.modules)
+    return true;
+  return expo.modules.ExpoCalendar != null;
+}
+
 export async function addEventToDeviceCalendar(
   event: ClubEvent,
 ): Promise<AddToCalendarOutcome> {
   try {
+    // Probe the JSI host before require(). expo-calendar's entry calls
+    // requireNativeModule('ExpoCalendar'), which LogBox-errors even inside try/catch
+    // when the binary was built before the native module was added.
+    if (!isNativeCalendarAvailable())
+      return 'failed';
     // CJS-safe lazy-load (native import() is untransformed under Jest).
     const Calendar = require('expo-calendar') as typeof import('expo-calendar');
     if (typeof Calendar.requestCalendarPermissionsAsync !== 'function')
