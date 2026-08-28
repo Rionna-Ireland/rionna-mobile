@@ -78,6 +78,7 @@ const pastQuery = {
 
 const emptyQuery = { data: { ok: true, configured: true, events: [] }, isLoading: false, isError: false };
 const unavailableQuery = { data: undefined, isLoading: false, isError: true };
+const loadingQuery = { data: undefined, isLoading: true, isError: false };
 
 let mockUseEvents = jest.fn();
 
@@ -133,6 +134,27 @@ describe('eventsScreen', () => {
     render(<EventsScreen />);
 
     expect(screen.getByTestId('events-unavailable')).toBeOnTheScreen();
+  });
+
+  it('shows a loading state on a genuine first fetch instead of the empty copy', () => {
+    mockUseEvents = jest.fn(() => loadingQuery);
+    render(<EventsScreen />);
+
+    expect(screen.getByTestId('events-loading')).toBeOnTheScreen();
+    expect(screen.queryByText('No upcoming events — check back soon.')).toBeNull();
+    expect(screen.queryByTestId('events-empty')).toBeNull();
+  });
+
+  it('marks the active segment as selected via accessibilityState', () => {
+    render(<EventsScreen />);
+
+    expect(screen.getByRole('button', { name: 'Upcoming' })).toHaveProp('accessibilityState', { selected: true });
+    expect(screen.getByRole('button', { name: 'Past' })).toHaveProp('accessibilityState', { selected: false });
+
+    fireEvent.press(screen.getByRole('button', { name: 'Past' }));
+
+    expect(screen.getByRole('button', { name: 'Past' })).toHaveProp('accessibilityState', { selected: true });
+    expect(screen.getByRole('button', { name: 'Upcoming' })).toHaveProp('accessibilityState', { selected: false });
   });
 
   it('navigates to the event detail route when a card is pressed', () => {

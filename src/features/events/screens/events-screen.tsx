@@ -7,6 +7,7 @@ import { useRouter } from 'expo-router';
 import * as React from 'react';
 
 import {
+  ActivityIndicator,
   FocusAwareStatusBar,
   ScrollView,
   Text,
@@ -41,6 +42,7 @@ export function EventsScreen() {
   );
 
   const events = useEvents(memberScope, scope);
+  const isLoading = events.isLoading && !events.data;
   const isUnavailable = events.isError && !events.data;
   const items = events.data?.events ?? [];
 
@@ -65,6 +67,7 @@ export function EventsScreen() {
             <Text
               key={segment.value}
               accessibilityRole="button"
+              accessibilityState={{ selected: scope === segment.value }}
               onPress={() => setScope(segment.value)}
               className={`rounded-full border px-4 py-2 font-sans text-sm ${
                 scope === segment.value
@@ -77,45 +80,54 @@ export function EventsScreen() {
           ))}
         </View>
 
-        {isUnavailable
+        {isLoading
           ? (
-              <View
-                testID="events-unavailable"
-                className="mt-6 rounded-2xl border border-neutral-300 bg-white p-6"
-              >
-                <Text className="font-sans text-lg font-semibold text-ink">Events unavailable</Text>
-                <Text className="mt-2 font-sans text-sm/5 text-neutral-600">
-                  Check your connection and try again shortly.
+              <View testID="events-loading" className="mt-6 items-center py-16">
+                <ActivityIndicator color="#391d3a" />
+                <Text className="mt-3 font-sans text-sm text-neutral-600">
+                  Loading events…
                 </Text>
               </View>
             )
-          : items.length === 0
+          : isUnavailable
             ? (
-                <View testID="events-empty" className="mt-6 rounded-2xl border border-neutral-300 bg-white p-6">
-                  <Text className="font-sans text-lg font-semibold text-ink">
-                    {scope === 'upcoming' ? 'Events are on the way' : 'Nothing here yet'}
-                  </Text>
+                <View
+                  testID="events-unavailable"
+                  className="mt-6 rounded-2xl border border-neutral-300 bg-white p-6"
+                >
+                  <Text className="font-sans text-lg font-semibold text-ink">Events unavailable</Text>
                   <Text className="mt-2 font-sans text-sm/5 text-neutral-600">
-                    {EMPTY_COPY[scope]}
+                    Check your connection and try again shortly.
                   </Text>
                 </View>
               )
-            : (
-                <View className="mt-6 gap-4">
-                  {items.map(event => (
-                    <EventCard
-                      key={event.id}
-                      event={event}
-                      onPress={() => router.push({
-                        pathname: '/event/[event-id]',
-                        params: { 'event-id': event.id },
-                        // The detail route lands in the next task; typed
-                        // routes can't see it yet, so cast through unknown.
-                      } as unknown as Href)}
-                    />
-                  ))}
-                </View>
-              )}
+            : items.length === 0
+              ? (
+                  <View testID="events-empty" className="mt-6 rounded-2xl border border-neutral-300 bg-white p-6">
+                    <Text className="font-sans text-lg font-semibold text-ink">
+                      {scope === 'upcoming' ? 'Events are on the way' : 'Nothing here yet'}
+                    </Text>
+                    <Text className="mt-2 font-sans text-sm/5 text-neutral-600">
+                      {EMPTY_COPY[scope]}
+                    </Text>
+                  </View>
+                )
+              : (
+                  <View className="mt-6 gap-4">
+                    {items.map(event => (
+                      <EventCard
+                        key={event.id}
+                        event={event}
+                        onPress={() => router.push({
+                          pathname: '/event/[event-id]',
+                          params: { 'event-id': event.id },
+                          // The detail route lands in the next task; typed
+                          // routes can't see it yet, so cast through unknown.
+                        } as unknown as Href)}
+                      />
+                    ))}
+                  </View>
+                )}
       </ScrollView>
     </>
   );
