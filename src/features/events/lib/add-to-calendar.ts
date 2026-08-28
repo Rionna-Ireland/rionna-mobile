@@ -1,6 +1,5 @@
 import type { ClubEvent } from '@/features/events/types';
 
-import * as Calendar from 'expo-calendar';
 import { Platform } from 'react-native';
 
 export type AddToCalendarOutcome = 'added' | 'denied' | 'failed';
@@ -8,11 +7,20 @@ export type AddToCalendarOutcome = 'added' | 'denied' | 'failed';
 /**
  * Write the event into the device calendar. Never throws -- the button
  * surfaces the outcome as a toast/label.
+ *
+ * expo-calendar is loaded lazily: it is a native module, and a top-level
+ * import crashes the whole route at load time on clients built before the
+ * module was added (house rule #1 -- never touch native modules at module
+ * top-level). On such clients this degrades to 'failed' instead.
  */
 export async function addEventToDeviceCalendar(
   event: ClubEvent,
 ): Promise<AddToCalendarOutcome> {
   try {
+    // CJS-safe lazy-load (native import() is untransformed under Jest).
+    const Calendar = require('expo-calendar') as typeof import('expo-calendar');
+    if (typeof Calendar.requestCalendarPermissionsAsync !== 'function')
+      return 'failed';
     const { status } = await Calendar.requestCalendarPermissionsAsync();
     if (status !== 'granted')
       return 'denied';
