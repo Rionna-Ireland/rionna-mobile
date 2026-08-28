@@ -55,6 +55,9 @@ jest.mock('@/features/stables/api/use-followed-horses', () => ({
 jest.mock('@/features/member-content/api/use-inside-track', () => ({
   useInsideTrack: () => mockEmptyQuery,
 }));
+jest.mock('@/features/events/api/use-events', () => ({
+  useEvents: () => mockEmptyQuery,
+}));
 
 describe('homeScreen', () => {
   beforeEach(() => jest.clearAllMocks());
