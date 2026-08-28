@@ -58,20 +58,51 @@ function eventsResult(overrides: Partial<EventsResult> = {}): EventsResult {
   };
 }
 
+const UPCOMING_KEY = eventsQueryKey(SCOPE, 'upcoming');
+const PAST_KEY = eventsQueryKey(SCOPE, 'past');
+
+function seededClient() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: Number.POSITIVE_INFINITY } },
+  });
+  queryClient.setQueryData(UPCOMING_KEY, eventsResult());
+  queryClient.setQueryData(PAST_KEY, eventsResult({ events: [clubEvent({ id: 'event-2' })] }));
+  return queryClient;
+}
+
+// event-1 can legitimately be cached in both scopes at once (e.g. right around the
+// upcoming/past boundary), so these tests seed the SAME event id into both caches
+// to actually exercise the hook's multi-cache flip/rollback path.
+function seededClientWithSharedEvent() {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: Number.POSITIVE_INFINITY } },
+  });
+  queryClient.setQueryData(UPCOMING_KEY, eventsResult());
+  queryClient.setQueryData(PAST_KEY, eventsResult({ events: [clubEvent()] }));
+  return queryClient;
+}
+
+function assertFlipped(queryClient: QueryClient, key: typeof UPCOMING_KEY) {
+  const data = queryClient.getQueryData<EventsResult>(key);
+  expect(data?.events[0]).toMatchObject({
+    rsvp: expect.objectContaining({ going: true, count: 4, status: 'yes' }),
+  });
+}
+
+function assertRolledBack(
+  queryClient: QueryClient,
+  key: typeof UPCOMING_KEY,
+  snapshot: EventsResult | undefined,
+) {
+  const data = queryClient.getQueryData<EventsResult>(key);
+  expect(data?.events[0]).toMatchObject({
+    rsvp: expect.objectContaining({ going: false, count: 3 }),
+  });
+  expect(data).toEqual(snapshot);
+}
+
 describe('useEventRsvp', () => {
-  const UPCOMING_KEY = eventsQueryKey(SCOPE, 'upcoming');
-  const PAST_KEY = eventsQueryKey(SCOPE, 'past');
-
   beforeEach(() => jest.clearAllMocks());
-
-  function seededClient() {
-    const queryClient = new QueryClient({
-      defaultOptions: { queries: { retry: false, gcTime: Number.POSITIVE_INFINITY } },
-    });
-    queryClient.setQueryData(UPCOMING_KEY, eventsResult());
-    queryClient.setQueryData(PAST_KEY, eventsResult({ events: [clubEvent({ id: 'event-2' })] }));
-    return queryClient;
-  }
 
   it('optimistically flips going to true and bumps the count in both scope caches before the mutation resolves', async () => {
     let resolvePost: (value: { data: { ok: true; going: boolean } }) => void;
@@ -81,17 +112,15 @@ describe('useEventRsvp', () => {
       }),
     );
 
-    const queryClient = seededClient();
+    const queryClient = seededClientWithSharedEvent();
     const { result } = renderHook(() => useEventRsvp(SCOPE), { wrapper: wrapper(queryClient) });
 
     result.current.mutate({ eventId: 'event-1', going: true });
 
     await waitFor(() => expect(result.current.isPending).toBe(true));
 
-    const upcoming = queryClient.getQueryData<EventsResult>(UPCOMING_KEY);
-    expect(upcoming?.events[0]).toMatchObject({
-      rsvp: expect.objectContaining({ going: true, count: 4, status: 'yes' }),
-    });
+    assertFlipped(queryClient, UPCOMING_KEY);
+    assertFlipped(queryClient, PAST_KEY);
 
     resolvePost!({ data: { ok: true, going: true } });
     await waitFor(() => expect(result.current.isSuccess).toBe(true));
@@ -100,17 +129,18 @@ describe('useEventRsvp', () => {
   it('rolls back both scope caches when the server rejects the mutation', async () => {
     mockPost.mockResolvedValue({ data: { ok: false, reason: 'event_full' } });
 
-    const queryClient = seededClient();
+    const queryClient = seededClientWithSharedEvent();
+    const upcomingSnapshot = queryClient.getQueryData<EventsResult>(UPCOMING_KEY);
+    const pastSnapshot = queryClient.getQueryData<EventsResult>(PAST_KEY);
     const { result } = renderHook(() => useEventRsvp(SCOPE), { wrapper: wrapper(queryClient) });
 
     result.current.mutate({ eventId: 'event-1', going: true });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
 
-    const upcoming = queryClient.getQueryData<EventsResult>(UPCOMING_KEY);
-    expect(upcoming?.events[0]).toMatchObject({
-      rsvp: expect.objectContaining({ going: false, count: 3 }),
-    });
+    assertRolledBack(queryClient, UPCOMING_KEY, upcomingSnapshot);
+    assertRolledBack(queryClient, PAST_KEY, pastSnapshot);
+
     expect(result.current.error).toBeInstanceOf(RsvpError);
     expect((result.current.error as RsvpError).reason).toBe('event_full');
   });
@@ -118,17 +148,17 @@ describe('useEventRsvp', () => {
   it('rolls back on a network error', async () => {
     mockPost.mockRejectedValue(new Error('network down'));
 
-    const queryClient = seededClient();
+    const queryClient = seededClientWithSharedEvent();
+    const upcomingSnapshot = queryClient.getQueryData<EventsResult>(UPCOMING_KEY);
+    const pastSnapshot = queryClient.getQueryData<EventsResult>(PAST_KEY);
     const { result } = renderHook(() => useEventRsvp(SCOPE), { wrapper: wrapper(queryClient) });
 
     result.current.mutate({ eventId: 'event-1', going: true });
 
     await waitFor(() => expect(result.current.isError).toBe(true));
 
-    const upcoming = queryClient.getQueryData<EventsResult>(UPCOMING_KEY);
-    expect(upcoming?.events[0]).toMatchObject({
-      rsvp: expect.objectContaining({ going: false, count: 3 }),
-    });
+    assertRolledBack(queryClient, UPCOMING_KEY, upcomingSnapshot);
+    assertRolledBack(queryClient, PAST_KEY, pastSnapshot);
   });
 
   it('invalidates both the upcoming and past event queries once settled', async () => {
