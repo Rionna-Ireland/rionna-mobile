@@ -5,6 +5,7 @@ type PushData
   = | { screen: 'horse'; horseId: string }
     | { screen: 'news'; newsPostId: string }
     | { screen: 'community'; url?: string }
+    | { screen: 'event'; eventId: string }
     | { screen: 'insideTrack' };
 
 function isPushData(data: unknown): data is PushData {
@@ -17,6 +18,8 @@ function isPushData(data: unknown): data is PushData {
     return typeof d.newsPostId === 'string';
   if (d.screen === 'community')
     return d.url === undefined || typeof d.url === 'string';
+  if (d.screen === 'event')
+    return typeof d.eventId === 'string';
   if (d.screen === 'insideTrack')
     return true;
   return false;
@@ -46,6 +49,12 @@ export function handleNotificationResponse(
       router.push({
         pathname: '/community-view',
         params: data.url ? { url: data.url } : {},
+      });
+      return;
+    case 'event':
+      router.push({
+        pathname: '/event/[event-id]',
+        params: { 'event-id': data.eventId },
       });
       return;
     case 'insideTrack':

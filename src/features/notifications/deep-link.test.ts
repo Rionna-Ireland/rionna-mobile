@@ -39,6 +39,15 @@ describe('handleNotificationResponse', () => {
     });
   });
 
+  it('routes event pushes to the event detail screen', () => {
+    handleNotificationResponse(makeResponse({ screen: 'event', eventId: 'e-1' }));
+
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/event/[event-id]',
+      params: { 'event-id': 'e-1' },
+    });
+  });
+
   it('routes insideTrack pushes to /inside-track', () => {
     handleNotificationResponse(makeResponse({ screen: 'insideTrack' }));
 

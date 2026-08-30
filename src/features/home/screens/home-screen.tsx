@@ -13,8 +13,10 @@ import {
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { useAuthStore } from '@/features/auth/use-auth-store';
+import { useEvents } from '@/features/events/api/use-events';
 import { HeadlineCard } from '@/features/home/components/headline-card';
 import { InsideTrackTile } from '@/features/home/components/inside-track-tile';
+import { NextEventTile } from '@/features/home/components/next-event-tile';
 import { selectHeadline } from '@/features/home/lib/select-headline';
 import { useInsideTrack } from '@/features/member-content/api/use-inside-track';
 import { useLatestNews } from '@/features/pulse/api/use-latest-news';
@@ -45,6 +47,7 @@ export function HomeScreen() {
   const trainerUpdates = useTrainerUpdates();
   const followedHorses = useFollowedHorses();
   const insideTrack = useInsideTrack(scope);
+  const upcomingEvents = useEvents(scope, 'upcoming');
 
   const headline = selectHeadline(
     {
@@ -61,7 +64,8 @@ export function HomeScreen() {
       || news.isRefetching
       || trainerUpdates.isRefetching
       || followedHorses.isRefetching
-      || insideTrack.isRefetching;
+      || insideTrack.isRefetching
+      || upcomingEvents.isRefetching;
   const onRefresh = () => {
     void nextRun.refetch();
     void results.refetch();
@@ -69,6 +73,7 @@ export function HomeScreen() {
     void trainerUpdates.refetch();
     void followedHorses.refetch();
     void insideTrack.refetch();
+    void upcomingEvents.refetch();
   };
 
   const displayName = user?.name?.trim() || 'Rionna member';
@@ -113,6 +118,7 @@ export function HomeScreen() {
           <TrainerUpdatesTile data={trainerUpdates.data} isLoading={trainerUpdates.isLoading} />
           <LatestNewsTile data={news.data} isLoading={news.isLoading} />
           <InsideTrackTile data={insideTrack.data} isLoading={insideTrack.isLoading} />
+          <NextEventTile data={upcomingEvents.data} isLoading={upcomingEvents.isLoading} />
         </View>
       </ScrollView>
     </>
