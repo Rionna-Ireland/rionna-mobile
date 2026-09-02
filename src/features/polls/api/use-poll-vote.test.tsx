@@ -16,6 +16,7 @@ const mockPost = client.post as jest.MockedFunction<typeof client.post>;
 const SCOPE = { organizationId: 'org-1', memberId: 'member-1' };
 const POLLS_KEY = activePollsQueryKey(SCOPE);
 const FEED_KEY = [MEMBER_CONTENT_QUERY_ROOT, 'feed', 'org-1', 'member-1'];
+const OTHER_FEED_KEY = [MEMBER_CONTENT_QUERY_ROOT, 'feed', 'org-1', 'other'];
 
 function poll(overrides: Partial<Poll> = {}): Poll {
   return {
@@ -37,15 +38,17 @@ function seeded() {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });
   queryClient.setQueryData(POLLS_KEY, { ok: true, polls: [poll()] });
   queryClient.setQueryData(FEED_KEY, [{ id: 'poll:p1', kind: 'poll', title: 'Q', poll: poll() }]);
+  const otherFeed = [{ id: 'post-1', kind: 'post', title: 'Hello' }];
+  queryClient.setQueryData(OTHER_FEED_KEY, otherFeed);
   const wrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
   );
-  return { queryClient, wrapper };
+  return { queryClient, wrapper, otherFeed };
 }
 
 describe('usePollVote', () => {
   it('optimistically marks the option in both caches, then reconciles with the server card', async () => {
-    const { queryClient, wrapper } = seeded();
+    const { queryClient, wrapper, otherFeed } = seeded();
     let resolve!: (v: { data: unknown }) => void;
     mockPost.mockReturnValue(new Promise((r) => {
       resolve = r;
@@ -55,6 +58,7 @@ describe('usePollVote', () => {
     result.current.vote({ pollId: 'p1', optionId: 'o2' });
     await waitFor(() => expect(result.current.pendingPollId).toBe('p1'));
     expect(queryClient.getQueryData<{ polls: Poll[] }>(POLLS_KEY)?.polls[0].myVoteOptionId).toBe('o2');
+    expect(queryClient.getQueryData(OTHER_FEED_KEY)).toBe(otherFeed);
 
     const server = poll({ myVoteOptionId: 'o2', results: { total: 1, byOption: { o1: 0, o2: 1 } } });
     resolve({ data: { ok: true, poll: server } });
@@ -62,6 +66,7 @@ describe('usePollVote', () => {
     expect(queryClient.getQueryData<{ polls: Poll[] }>(POLLS_KEY)?.polls[0]).toEqual(server);
     expect((queryClient.getQueryData<{ poll: Poll }[]>(FEED_KEY) ?? [])[0].poll).toEqual(server);
     expect(mockPost).toHaveBeenCalledWith('/api/polls/vote', { organizationId: 'org-1', pollId: 'p1', optionId: 'o2' });
+    expect(queryClient.getQueryData(OTHER_FEED_KEY)).toBe(otherFeed);
   });
 
   it('rolls back on ok:false', async () => {
@@ -71,5 +76,15 @@ describe('usePollVote', () => {
     result.current.vote({ pollId: 'p1', optionId: 'o2' });
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(queryClient.getQueryData<{ polls: Poll[] }>(POLLS_KEY)?.polls[0].myVoteOptionId).toBeNull();
+  });
+
+  it('rolls back both caches on a rejected vote request', async () => {
+    const { queryClient, wrapper } = seeded();
+    mockPost.mockRejectedValue(new Error('network'));
+    const { result } = renderHook(() => usePollVote(SCOPE), { wrapper });
+    result.current.vote({ pollId: 'p1', optionId: 'o2' });
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(queryClient.getQueryData<{ polls: Poll[] }>(POLLS_KEY)?.polls[0].myVoteOptionId).toBeNull();
+    expect((queryClient.getQueryData<{ poll: Poll }[]>(FEED_KEY) ?? [])[0].poll.myVoteOptionId).toBeNull();
   });
 });

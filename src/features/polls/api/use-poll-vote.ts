@@ -41,14 +41,20 @@ function patchPollCaches(
   for (const [queryKey, data] of queryClient.getQueriesData({ queryKey: [POLLS_QUERY_ROOT] })) {
     if (!isActivePollsResult(data))
       continue;
+    const nextPolls = patchPolls(data.polls);
+    if (nextPolls === data.polls)
+      continue;
     snapshots.push({ queryKey, data });
-    queryClient.setQueryData(queryKey, { ...data, polls: patchPolls(data.polls) });
+    queryClient.setQueryData(queryKey, { ...data, polls: nextPolls });
   }
   for (const [queryKey, data] of queryClient.getQueriesData({ queryKey: [MEMBER_CONTENT_QUERY_ROOT] })) {
     if (!isFeedItems(data))
       continue;
+    const nextItems = patchFeed(data);
+    if (nextItems === data)
+      continue;
     snapshots.push({ queryKey, data });
-    queryClient.setQueryData(queryKey, patchFeed(data));
+    queryClient.setQueryData(queryKey, nextItems);
   }
   return snapshots;
 }
@@ -58,7 +64,10 @@ export function usePollVote(scope: MemberContentScope) {
   const mutation = useMutation({
     mutationFn: (variables: PollVoteVariables) => sendVote(scope, variables),
     onMutate: async ({ pollId, optionId }) => {
-      await queryClient.cancelQueries({ queryKey: [POLLS_QUERY_ROOT] });
+      await Promise.all([
+        queryClient.cancelQueries({ queryKey: [POLLS_QUERY_ROOT] }),
+        queryClient.cancelQueries({ queryKey: [MEMBER_CONTENT_QUERY_ROOT] }),
+      ]);
       return {
         snapshots: patchPollCaches(
           queryClient,

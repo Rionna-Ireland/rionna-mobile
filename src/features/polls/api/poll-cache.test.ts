@@ -24,12 +24,34 @@ describe('applyVoteToPolls', () => {
     expect(out[0].myVoteOptionId).toBe('o2');
     expect(out[1].myVoteOptionId).toBeNull();
   });
+
+  it('returns the same array reference when the poll id is absent', () => {
+    const polls = [poll({ id: 'p2' }), poll({ id: 'p3' })];
+    expect(applyVoteToPolls(polls, 'p1', 'o2')).toBe(polls);
+  });
+
+  it('returns a new array reference when the poll id matches', () => {
+    const polls = [poll()];
+    expect(applyVoteToPolls(polls, 'p1', 'o2')).not.toBe(polls);
+  });
 });
 
 describe('reconcilePollInPolls', () => {
   it('replaces the poll with the server card', () => {
     const server = poll({ myVoteOptionId: 'o2', results: { total: 1, byOption: { o1: 0, o2: 1 } } });
     expect(reconcilePollInPolls([poll()], server)[0]).toEqual(server);
+  });
+
+  it('returns the same array reference when the poll id is absent', () => {
+    const polls = [poll({ id: 'p2' })];
+    const server = poll({ id: 'p1', myVoteOptionId: 'o2' });
+    expect(reconcilePollInPolls(polls, server)).toBe(polls);
+  });
+
+  it('returns a new array reference when the poll id matches', () => {
+    const polls = [poll()];
+    const server = poll({ myVoteOptionId: 'o2' });
+    expect(reconcilePollInPolls(polls, server)).not.toBe(polls);
   });
 });
 
@@ -45,5 +67,27 @@ describe('feed item patching', () => {
     const server = poll({ myVoteOptionId: 'o1', results: { total: 1, byOption: { o1: 1, o2: 0 } } });
     const out = reconcilePollInFeedItems([feedItem], server);
     expect((out[0] as typeof feedItem).poll).toEqual(server);
+  });
+
+  it('applyVoteToFeedItems returns the same array reference when the poll id is absent', () => {
+    const items = [postItem];
+    expect(applyVoteToFeedItems(items, 'p1', 'o1')).toBe(items);
+  });
+
+  it('applyVoteToFeedItems returns a new array reference when the poll id matches', () => {
+    const items = [feedItem];
+    expect(applyVoteToFeedItems(items, 'p1', 'o1')).not.toBe(items);
+  });
+
+  it('reconcilePollInFeedItems returns the same array reference when the poll id is absent', () => {
+    const items = [postItem];
+    const server = poll({ id: 'p1', myVoteOptionId: 'o1' });
+    expect(reconcilePollInFeedItems(items, server)).toBe(items);
+  });
+
+  it('reconcilePollInFeedItems returns a new array reference when the poll id matches', () => {
+    const items = [feedItem];
+    const server = poll({ myVoteOptionId: 'o1' });
+    expect(reconcilePollInFeedItems(items, server)).not.toBe(items);
   });
 });
