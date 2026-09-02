@@ -16,7 +16,7 @@ export function applyVoteToPolls(polls: Poll[], pollId: string, optionId: string
 export function reconcilePollInPolls(polls: Poll[], server: Poll): Poll[] {
   let changed = false;
   const next = polls.map((p) => {
-    if (p.id !== server.id || p === server)
+    if (p.id !== server.id)
       return p;
     changed = true;
     return server;

@@ -36,4 +36,9 @@ describe('pollScreenView', () => {
     render(<PollScreenView poll={undefined} isLoading={false} onVote={jest.fn()} pendingPollId={null} />);
     expect(screen.getByText('This vote has ended')).toBeOnTheScreen();
   });
+
+  it('shows a loading state instead of the ended message while still loading', () => {
+    render(<PollScreenView poll={undefined} isLoading onVote={jest.fn()} pendingPollId={null} />);
+    expect(screen.queryByText('This vote has ended')).not.toBeOnTheScreen();
+  });
 });
