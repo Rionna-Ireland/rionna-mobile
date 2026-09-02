@@ -58,6 +58,12 @@ jest.mock('@/features/member-content/api/use-inside-track', () => ({
 jest.mock('@/features/events/api/use-events', () => ({
   useEvents: () => mockEmptyQuery,
 }));
+jest.mock('@/features/polls/api/use-active-polls', () => ({
+  useActivePolls: () => mockEmptyQuery,
+}));
+jest.mock('@/features/polls/api/use-poll-vote', () => ({
+  usePollVote: () => ({ vote: jest.fn(), pendingPollId: null }),
+}));
 
 describe('homeScreen', () => {
   beforeEach(() => jest.clearAllMocks());
