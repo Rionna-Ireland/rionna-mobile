@@ -57,6 +57,11 @@ const PUSH_ROWS: Row[] = [
     get: p => p.pushPreferences.events !== false,
     set: v => ({ pushPreferences: { events: v } }),
   },
+  {
+    labelKey: 'settings.notifications.polls',
+    get: p => p.pushPreferences.polls !== false,
+    set: v => ({ pushPreferences: { polls: v } }),
+  },
 ];
 
 const COMMUNITY_ROWS: Row[] = [

@@ -6,6 +6,7 @@ type PushData
     | { screen: 'news'; newsPostId: string }
     | { screen: 'community'; url?: string }
     | { screen: 'event'; eventId: string }
+    | { screen: 'poll'; pollId: string }
     | { screen: 'insideTrack' };
 
 function isPushData(data: unknown): data is PushData {
@@ -20,6 +21,8 @@ function isPushData(data: unknown): data is PushData {
     return d.url === undefined || typeof d.url === 'string';
   if (d.screen === 'event')
     return typeof d.eventId === 'string';
+  if (d.screen === 'poll')
+    return typeof d.pollId === 'string';
   if (d.screen === 'insideTrack')
     return true;
   return false;
@@ -55,6 +58,12 @@ export function handleNotificationResponse(
       router.push({
         pathname: '/event/[event-id]',
         params: { 'event-id': data.eventId },
+      });
+      return;
+    case 'poll':
+      router.push({
+        pathname: '/poll/[poll-id]',
+        params: { 'poll-id': data.pollId },
       });
       return;
     case 'insideTrack':

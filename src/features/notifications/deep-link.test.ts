@@ -48,6 +48,15 @@ describe('handleNotificationResponse', () => {
     });
   });
 
+  it('routes poll pushes to the poll screen', () => {
+    handleNotificationResponse(makeResponse({ screen: 'poll', pollId: 'p1' }));
+
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/poll/[poll-id]',
+      params: { 'poll-id': 'p1' },
+    });
+  });
+
   it('routes insideTrack pushes to /inside-track', () => {
     handleNotificationResponse(makeResponse({ screen: 'insideTrack' }));
 

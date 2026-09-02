@@ -15,6 +15,7 @@ export type PushPreferences = {
   circleHorseDiscussion?: boolean;
   insideTrack?: boolean;
   events?: boolean;
+  polls?: boolean;
 };
 
 export type EmailPreferences = {
