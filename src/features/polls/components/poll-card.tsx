@@ -22,7 +22,8 @@ export function PollCard({ poll, onVote, pending, variant }: PollCardProps) {
   const closed = poll.status === 'closed';
   const showResults = poll.results !== null;
   const canVote = !closed && !pending;
-  const eyebrow = closed ? 'Closed' : poll.scope === 'space' ? 'Stable vote' : 'Club vote';
+  const eyebrowText = closed ? 'Closed' : poll.scope === 'space' ? 'Stable vote' : 'Club vote';
+  const showEyebrow = variant === 'card' || closed;
 
   return (
     <View
@@ -30,7 +31,9 @@ export function PollCard({ poll, onVote, pending, variant }: PollCardProps) {
       className={variant === 'card' ? 'gap-4 rounded-2xl border border-neutral-300 bg-white p-5' : 'gap-4 px-6 py-4'}
     >
       <View className="gap-1">
-        <Text className="font-mono text-[10px] tracking-widest text-violet-700 uppercase">{eyebrow}</Text>
+        {showEyebrow
+          ? <Text className="font-mono text-[10px] tracking-widest text-violet-700 uppercase">{eyebrowText}</Text>
+          : null}
         <Text className="font-sans text-lg font-semibold text-ink">{poll.question}</Text>
       </View>
 
@@ -44,6 +47,7 @@ export function PollCard({ poll, onVote, pending, variant }: PollCardProps) {
                 testID={`poll-option-${option.id}`}
                 accessibilityRole="button"
                 accessibilityLabel={option.label}
+                accessibilityState={{ selected: mine, disabled: !canVote }}
                 disabled={!canVote}
                 onPress={() => onVote(poll.id, option.id)}
               >
@@ -62,6 +66,7 @@ export function PollCard({ poll, onVote, pending, variant }: PollCardProps) {
               testID={`poll-option-${option.id}`}
               accessibilityRole="button"
               accessibilityLabel={option.label}
+              accessibilityState={{ selected: mine, disabled: !canVote }}
               disabled={!canVote}
               onPress={() => onVote(poll.id, option.id)}
               className={`rounded-full border px-4 py-3 ${

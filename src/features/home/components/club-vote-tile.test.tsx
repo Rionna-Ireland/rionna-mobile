@@ -34,9 +34,9 @@ describe('clubVoteTile', () => {
       polls: [poll({ id: 'p2', publishedAt: '2026-09-02T09:00:00.000Z' }), poll()],
     };
     render(<ClubVoteTile data={data} isLoading={false} onVote={onVote} pendingPollId={null} />);
-    // "Club vote" appears both as the TileWrapper heading and as the PollCard
-    // eyebrow for a club-scope open poll — assert both are present.
-    expect(screen.getAllByText('Club vote').length).toBeGreaterThanOrEqual(2);
+    // The card's own "Club vote" eyebrow is suppressed in tile variant so it
+    // isn't duplicated alongside the TileWrapper heading.
+    expect(screen.getAllByText('Club vote').length).toBe(1);
     expect(screen.getByTestId('poll-card-p2')).toBeOnTheScreen();
     fireEvent.press(screen.getByTestId('poll-option-o1'));
     expect(onVote).toHaveBeenCalledWith('p2', 'o1');

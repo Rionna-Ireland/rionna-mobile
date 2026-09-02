@@ -79,4 +79,45 @@ describe('pollCard', () => {
     render(<PollCard poll={poll({ myVoteOptionId: 'o1' })} onVote={jest.fn()} pending variant="card" />);
     expect(screen.getByText('Saving your vote…')).toBeOnTheScreen();
   });
+
+  it('marks the chosen option as selected for accessibility, pre-vote pill branch', () => {
+    render(<PollCard poll={poll({ myVoteOptionId: 'o1' })} onVote={jest.fn()} pending={false} variant="card" />);
+    expect(screen.getByTestId('poll-option-o1')).toBeSelected();
+    expect(screen.getByTestId('poll-option-o2')).not.toBeSelected();
+    expect(screen.getByTestId('poll-option-o1').props.accessibilityState).toEqual({ selected: true, disabled: false });
+    expect(screen.getByTestId('poll-option-o2').props.accessibilityState).toEqual({ selected: false, disabled: false });
+  });
+
+  it('marks the chosen option as selected for accessibility, results-row branch', () => {
+    render(
+      <PollCard
+        poll={poll({ myVoteOptionId: 'o1', results: { total: 4, byOption: { o1: 3, o2: 1 } } })}
+        onVote={jest.fn()}
+        pending={false}
+        variant="card"
+      />,
+    );
+    expect(screen.getByTestId('poll-option-o1')).toBeSelected();
+    expect(screen.getByTestId('poll-option-o2')).not.toBeSelected();
+    expect(screen.getByTestId('poll-option-o1').props.accessibilityState).toEqual({ selected: true, disabled: false });
+    expect(screen.getByTestId('poll-option-o2').props.accessibilityState).toEqual({ selected: false, disabled: false });
+    expect(screen.queryByTestId('poll-my-choice-o2')).not.toBeOnTheScreen();
+  });
+
+  it('does not show the "Club vote" eyebrow in tile variant for an open club poll', () => {
+    render(<PollCard poll={poll()} onVote={jest.fn()} pending={false} variant="tile" />);
+    expect(screen.queryByText('Club vote')).not.toBeOnTheScreen();
+  });
+
+  it('still shows the "Closed" eyebrow in tile variant for a closed poll', () => {
+    render(
+      <PollCard
+        poll={poll({ status: 'closed', results: { total: 0, byOption: { o1: 0, o2: 0 } } })}
+        onVote={jest.fn()}
+        pending={false}
+        variant="tile"
+      />,
+    );
+    expect(screen.getByText('Closed')).toBeOnTheScreen();
+  });
 });
