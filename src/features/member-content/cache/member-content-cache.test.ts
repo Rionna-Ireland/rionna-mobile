@@ -207,4 +207,20 @@ describe('member content cache — poll feed items (S12-01a)', () => {
       fetchedAt: NOW,
     });
   });
+
+  it('rejects a cached kind:poll item whose poll payload is malformed', () => {
+    setCachedMemberFeed(SCOPE, [FEED_ITEM], NOW);
+    const key = [...mockStore.keys()][0];
+    mockStore.set(key, {
+      schemaVersion: 2,
+      scope: SCOPE,
+      feed: {
+        data: [{ ...POLL_FEED_ITEM, poll: {} }],
+        fetchedAt: NOW,
+      },
+      posts: {},
+    });
+
+    expect(getCachedMemberFeed(SCOPE, NOW + 1)).toBeNull();
+  });
 });

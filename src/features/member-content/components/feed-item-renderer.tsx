@@ -24,6 +24,8 @@ export function FeedItemRenderer({
     return <PollCard poll={item.poll} onVote={onVote} pending={votePending} variant="card" />;
   }
 
+  // A `kind:'poll'` item without a `poll` payload deliberately falls back to
+  // MemberFeedCard (defensive; should not happen with a valid cache/backend).
   return (
     <MemberFeedCard
       item={item}
