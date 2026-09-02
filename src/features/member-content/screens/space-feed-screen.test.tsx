@@ -66,7 +66,7 @@ const BASE_PROPS = {
   onRefresh: jest.fn(),
   onOpenPost: jest.fn(),
   onVote: jest.fn(),
-  pendingVotePollId: null,
+  pendingVotePollIds: [],
 };
 
 describe('spaceFeedView', () => {

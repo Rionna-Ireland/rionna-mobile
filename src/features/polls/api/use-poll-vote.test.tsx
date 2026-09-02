@@ -60,7 +60,7 @@ describe('usePollVote', () => {
     const { result } = renderHook(() => usePollVote(SCOPE), { wrapper });
 
     result.current.vote({ pollId: 'p1', optionId: 'o2' });
-    await waitFor(() => expect(result.current.pendingPollId).toBe('p1'));
+    await waitFor(() => expect(result.current.pendingPollIds).toEqual(['p1']));
     expect(queryClient.getQueryData<{ polls: Poll[] }>(POLLS_KEY)?.polls[0].myVoteOptionId).toBe('o2');
     expect(queryClient.getQueryData(OTHER_FEED_KEY)).toBe(otherFeed);
 
@@ -102,7 +102,7 @@ describe('usePollVote', () => {
     const utils = renderHook(() => usePollVote(SCOPE), { wrapper });
 
     view.result.current.vote({ pollId: 'p1', optionId: 'o1' });
-    await waitFor(() => expect(utils.result.current.pendingPollId).toBe('p1'));
+    await waitFor(() => expect(utils.result.current.pendingPollIds).toEqual(['p1']));
     utils.result.current.vote({ pollId: 'p1', optionId: 'o2' });
     expect(mockPost).toHaveBeenCalledTimes(1);
 

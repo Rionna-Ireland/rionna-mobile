@@ -95,7 +95,7 @@ export function usePollVote(scope: MemberContentScope) {
     filters: { mutationKey: [POLLS_QUERY_ROOT, 'vote'], status: 'pending' },
     select: activeMutation => (activeMutation.state.variables as PollVoteVariables | undefined)?.pollId ?? null,
   });
-  const pendingPollId = pendingIds.find((pollId): pollId is string => pollId !== null) ?? null;
+  const pendingPollIds = pendingIds.filter((pollId): pollId is string => pollId !== null);
   const vote = useCallback((variables: PollVoteVariables) => {
     if (pendingIds.includes(variables.pollId))
       return;
@@ -105,6 +105,6 @@ export function usePollVote(scope: MemberContentScope) {
   return {
     ...mutation,
     vote,
-    pendingPollId,
+    pendingPollIds,
   };
 }

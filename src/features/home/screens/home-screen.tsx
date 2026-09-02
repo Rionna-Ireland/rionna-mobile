@@ -52,7 +52,7 @@ export function HomeScreen() {
   const insideTrack = useInsideTrack(scope);
   const upcomingEvents = useEvents(scope, 'upcoming');
   const activePolls = useActivePolls(scope);
-  const { vote, pendingPollId } = usePollVote(scope);
+  const { vote, pendingPollIds } = usePollVote(scope);
 
   const headline = selectHeadline(
     {
@@ -123,7 +123,7 @@ export function HomeScreen() {
             data={activePolls.data}
             isLoading={activePolls.isLoading}
             onVote={(pollId, optionId) => vote({ pollId, optionId })}
-            pendingPollId={pendingPollId}
+            pendingPollIds={pendingPollIds}
           />
           <NextRunTile data={nextRun.data} isLoading={nextRun.isLoading} />
           <MyHorsesTile data={followedHorses.data} isLoading={followedHorses.isLoading} />
