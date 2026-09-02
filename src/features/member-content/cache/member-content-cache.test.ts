@@ -39,6 +39,26 @@ const FEED_ITEM = {
   url: null,
 };
 
+const POLL_FEED_ITEM = {
+  ...FEED_ITEM,
+  id: 'poll:p1',
+  spaceId: null,
+  kind: 'poll' as const,
+  title: 'Which charity?',
+  poll: {
+    id: 'p1',
+    question: 'Which charity?',
+    scope: 'club' as const,
+    circleSpaceId: null,
+    status: 'open' as const,
+    publishedAt: '2026-07-13T09:00:00.000Z',
+    closesAt: null,
+    options: [{ id: 'o1', label: 'A', sortOrder: 0 }],
+    myVoteOptionId: null,
+    results: null,
+  },
+};
+
 function postLocator(postId: string) {
   return { ...SCOPE, spaceId: 'space-1', postId };
 }
@@ -170,5 +190,37 @@ describe('member content cache', () => {
 
     expect(getCachedMemberFeed(SCOPE, NOW + 1)).toBeNull();
     expect(getCachedMemberFeed(OTHER_SCOPE, NOW + 1)).not.toBeNull();
+  });
+});
+
+describe('member content cache — poll feed items (S12-01a)', () => {
+  beforeEach(() => {
+    mockStore.clear();
+    jest.clearAllMocks();
+  });
+
+  it('round-trips a feed containing a kind:poll item', () => {
+    setCachedMemberFeed(SCOPE, [FEED_ITEM, POLL_FEED_ITEM], NOW);
+
+    expect(getCachedMemberFeed(SCOPE, NOW + 1)).toEqual({
+      data: [FEED_ITEM, POLL_FEED_ITEM],
+      fetchedAt: NOW,
+    });
+  });
+
+  it('rejects a cached kind:poll item whose poll payload is malformed', () => {
+    setCachedMemberFeed(SCOPE, [FEED_ITEM], NOW);
+    const key = [...mockStore.keys()][0];
+    mockStore.set(key, {
+      schemaVersion: 2,
+      scope: SCOPE,
+      feed: {
+        data: [{ ...POLL_FEED_ITEM, poll: {} }],
+        fetchedAt: NOW,
+      },
+      posts: {},
+    });
+
+    expect(getCachedMemberFeed(SCOPE, NOW + 1)).toBeNull();
   });
 });

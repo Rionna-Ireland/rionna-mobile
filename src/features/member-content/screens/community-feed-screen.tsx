@@ -18,7 +18,8 @@ import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { useMemberFeed } from '@/features/member-content/api/use-member-feed';
 import { usePostLike } from '@/features/member-content/api/use-post-like';
-import { MemberFeedCard } from '@/features/member-content/components/member-feed-card';
+import { FeedItemRenderer } from '@/features/member-content/components/feed-item-renderer';
+import { usePollVote } from '@/features/polls/api/use-poll-vote';
 
 type CommunityFeedViewProps = {
   member: AuthUser;
@@ -31,6 +32,8 @@ type CommunityFeedViewProps = {
   onOpenProfile: () => void;
   onToggleLike?: (postId: string, liked: boolean) => void;
   pendingLikePostId?: string | null;
+  onVote: (pollId: string, optionId: string) => void;
+  pendingVotePollId: string | null;
 };
 
 function EmptyState({
@@ -61,6 +64,8 @@ export function CommunityFeedView({
   onOpenProfile,
   onToggleLike,
   pendingLikePostId,
+  onVote,
+  pendingVotePollId,
 }: CommunityFeedViewProps) {
   const contentPaddingBottom = useTabBarContentPadding(24);
   const contentPaddingTop = useScreenTopPadding();
@@ -135,12 +140,14 @@ export function CommunityFeedView({
             )
           : null}
         {items?.map(item => (
-          <MemberFeedCard
+          <FeedItemRenderer
             key={item.id}
             item={item}
             onOpen={onOpenPost}
             onToggleLike={onToggleLike}
             likePending={pendingLikePostId === item.id}
+            onVote={onVote}
+            votePending={item.poll?.id === pendingVotePollId}
           />
         ))}
       </View>
@@ -156,6 +163,7 @@ function SignedInCommunityFeed({ member }: { member: AuthUser }) {
   );
   const feed = useMemberFeed(scope);
   const like = usePostLike(scope);
+  const poll = usePollVote(scope);
 
   return (
     <CommunityFeedView
@@ -171,6 +179,8 @@ function SignedInCommunityFeed({ member }: { member: AuthUser }) {
       onOpenProfile={() => router.push('/profile')}
       onToggleLike={(postId, liked) => like.toggleLike({ postId, liked })}
       pendingLikePostId={like.pendingPostId}
+      onVote={(pollId, optionId) => poll.vote({ pollId, optionId })}
+      pendingVotePollId={poll.pendingPollId}
     />
   );
 }

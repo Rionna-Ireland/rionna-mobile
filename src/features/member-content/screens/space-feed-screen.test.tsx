@@ -3,9 +3,15 @@ import * as React from 'react';
 
 import { SpaceFeedView } from '@/features/member-content/screens/space-feed-screen';
 
-jest.mock('@/components/ui', () => ({
-  Image: 'Image',
-}));
+jest.mock('@/components/ui', () => {
+  const RN = jest.requireActual('react-native');
+  return {
+    Image: 'Image',
+    Pressable: RN.Pressable,
+    Text: RN.Text,
+    View: RN.View,
+  };
+});
 
 const ITEM = {
   id: 'post-9',
@@ -23,6 +29,34 @@ const ITEM = {
   url: null,
 };
 
+const POLL_ITEM = {
+  id: 'poll:p1',
+  spaceId: null,
+  kind: 'poll' as const,
+  title: 'Which charity?',
+  excerpt: null,
+  createdAt: null,
+  spaceName: null,
+  authorName: null,
+  commentCount: 0,
+  likeCount: 0,
+  isLiked: false,
+  imageUrl: null,
+  url: null,
+  poll: {
+    id: 'p1',
+    question: 'Which charity?',
+    scope: 'club' as const,
+    circleSpaceId: null,
+    status: 'open' as const,
+    publishedAt: '2026-09-01T09:00:00.000Z',
+    closesAt: null,
+    options: [{ id: 'o1', label: 'A', sortOrder: 0 }, { id: 'o2', label: 'B', sortOrder: 1 }],
+    myVoteOptionId: null,
+    results: null,
+  },
+};
+
 const BASE_PROPS = {
   title: 'Laska du Breuil',
   items: [ITEM],
@@ -31,6 +65,8 @@ const BASE_PROPS = {
   isRefetching: false,
   onRefresh: jest.fn(),
   onOpenPost: jest.fn(),
+  onVote: jest.fn(),
+  pendingVotePollId: null,
 };
 
 describe('spaceFeedView', () => {
@@ -52,5 +88,13 @@ describe('spaceFeedView', () => {
   ])('renders the %s state', (_name, props) => {
     render(<SpaceFeedView {...props} />);
     expect(screen.getByTestId(`space-feed-${_name}`)).toBeOnTheScreen();
+  });
+
+  it('renders kind:poll items with the poll question and votes', () => {
+    render(<SpaceFeedView {...BASE_PROPS} items={[ITEM, POLL_ITEM]} />);
+
+    expect(screen.getByText('Which charity?')).toBeOnTheScreen();
+    fireEvent.press(screen.getByTestId('poll-option-o2'));
+    expect(BASE_PROPS.onVote).toHaveBeenCalledWith('p1', 'o2');
   });
 });

@@ -5,9 +5,15 @@ import * as React from 'react';
 
 import { CommunityFeedView } from '@/features/member-content/screens/community-feed-screen';
 
-jest.mock('@/components/ui', () => ({
-  Image: 'Image',
-}));
+jest.mock('@/components/ui', () => {
+  const RN = jest.requireActual('react-native');
+  return {
+    Image: 'Image',
+    Pressable: RN.Pressable,
+    Text: RN.Text,
+    View: RN.View,
+  };
+});
 
 jest.mock('@/components/ui/screen-layout', () => ({
   useScreenTopPadding: () => 70,
@@ -48,6 +54,36 @@ const BASE_PROPS = {
   onRefresh: jest.fn(),
   onOpenPost: jest.fn(),
   onOpenProfile: jest.fn(),
+  onVote: jest.fn(),
+  pendingVotePollId: null,
+};
+
+const POLL_ITEM = {
+  id: 'poll:p1',
+  spaceId: null,
+  kind: 'poll' as const,
+  title: 'Which charity?',
+  excerpt: null,
+  createdAt: null,
+  spaceName: null,
+  authorName: null,
+  commentCount: 0,
+  likeCount: 0,
+  isLiked: false,
+  imageUrl: null,
+  url: null,
+  poll: {
+    id: 'p1',
+    question: 'Which charity?',
+    scope: 'club' as const,
+    circleSpaceId: null,
+    status: 'open' as const,
+    publishedAt: '2026-09-01T09:00:00.000Z',
+    closesAt: null,
+    options: [{ id: 'o1', label: 'A', sortOrder: 0 }, { id: 'o2', label: 'B', sortOrder: 1 }],
+    myVoteOptionId: null,
+    results: null,
+  },
 };
 
 describe('communityFeedView', () => {
@@ -82,5 +118,13 @@ describe('communityFeedView', () => {
 
     fireEvent.press(screen.getByRole('button', { name: 'Open profile' }));
     expect(BASE_PROPS.onOpenProfile).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders kind:poll items with the poll question', () => {
+    render(<CommunityFeedView {...BASE_PROPS} items={[ITEM, POLL_ITEM]} />);
+
+    expect(screen.getByText('Which charity?')).toBeOnTheScreen();
+    fireEvent.press(screen.getByTestId('poll-option-o2'));
+    expect(BASE_PROPS.onVote).toHaveBeenCalledWith('p1', 'o2');
   });
 });

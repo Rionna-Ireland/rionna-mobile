@@ -5,6 +5,7 @@ import type {
   MemberPostCacheLocator,
   MemberPostDetail,
 } from '@/features/member-content/types';
+import type { Poll } from '@/features/polls/types';
 
 import { getItem, removeItem, setItem } from '@/lib/storage';
 
@@ -63,13 +64,34 @@ function isNullableString(value: unknown): value is string | null {
   return value === null || typeof value === 'string';
 }
 
+function isCachedPoll(value: unknown): value is Poll {
+  if (!isRecord(value))
+    return false;
+  return (
+    typeof value.id === 'string'
+    && typeof value.question === 'string'
+    && (value.status === 'open' || value.status === 'closed')
+    && typeof value.publishedAt === 'string'
+    && Array.isArray(value.options)
+    && value.options.every(
+      option =>
+        isRecord(option)
+        && typeof option.id === 'string'
+        && typeof option.label === 'string',
+    )
+    && (value.myVoteOptionId === null || typeof value.myVoteOptionId === 'string')
+    && (value.results === null
+      || (isRecord(value.results) && typeof value.results.total === 'number'))
+  );
+}
+
 function isFeedItem(value: unknown): value is MemberFeedItem {
   if (!isRecord(value))
     return false;
   return (
     typeof value.id === 'string'
     && isNullableString(value.spaceId)
-    && (value.kind === 'news' || value.kind === 'post')
+    && (value.kind === 'news' || value.kind === 'post' || value.kind === 'poll')
     && typeof value.title === 'string'
     && isNullableString(value.excerpt)
     && isNullableString(value.createdAt)
@@ -80,6 +102,7 @@ function isFeedItem(value: unknown): value is MemberFeedItem {
     && typeof value.isLiked === 'boolean'
     && isNullableString(value.imageUrl)
     && isNullableString(value.url)
+    && (value.kind !== 'poll' || isCachedPoll(value.poll))
   );
 }
 

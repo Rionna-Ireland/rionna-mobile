@@ -14,11 +14,14 @@ import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { useEvents } from '@/features/events/api/use-events';
+import { ClubVoteTile } from '@/features/home/components/club-vote-tile';
 import { HeadlineCard } from '@/features/home/components/headline-card';
 import { InsideTrackTile } from '@/features/home/components/inside-track-tile';
 import { NextEventTile } from '@/features/home/components/next-event-tile';
 import { selectHeadline } from '@/features/home/lib/select-headline';
 import { useInsideTrack } from '@/features/member-content/api/use-inside-track';
+import { useActivePolls } from '@/features/polls/api/use-active-polls';
+import { usePollVote } from '@/features/polls/api/use-poll-vote';
 import { useLatestNews } from '@/features/pulse/api/use-latest-news';
 import { useLatestResults } from '@/features/pulse/api/use-latest-results';
 import { useNextRun } from '@/features/pulse/api/use-next-run';
@@ -48,6 +51,8 @@ export function HomeScreen() {
   const followedHorses = useFollowedHorses();
   const insideTrack = useInsideTrack(scope);
   const upcomingEvents = useEvents(scope, 'upcoming');
+  const activePolls = useActivePolls(scope);
+  const { vote, pendingPollId } = usePollVote(scope);
 
   const headline = selectHeadline(
     {
@@ -65,7 +70,8 @@ export function HomeScreen() {
       || trainerUpdates.isRefetching
       || followedHorses.isRefetching
       || insideTrack.isRefetching
-      || upcomingEvents.isRefetching;
+      || upcomingEvents.isRefetching
+      || activePolls.isRefetching;
   const onRefresh = () => {
     void nextRun.refetch();
     void results.refetch();
@@ -74,6 +80,7 @@ export function HomeScreen() {
     void followedHorses.refetch();
     void insideTrack.refetch();
     void upcomingEvents.refetch();
+    void activePolls.refetch();
   };
 
   const displayName = user?.name?.trim() || 'Rionna member';
@@ -112,6 +119,12 @@ export function HomeScreen() {
 
         <View className="gap-6">
           <HeadlineCard headline={headline} />
+          <ClubVoteTile
+            data={activePolls.data}
+            isLoading={activePolls.isLoading}
+            onVote={(pollId, optionId) => vote({ pollId, optionId })}
+            pendingPollId={pendingPollId}
+          />
           <NextRunTile data={nextRun.data} isLoading={nextRun.isLoading} />
           <MyHorsesTile data={followedHorses.data} isLoading={followedHorses.isLoading} />
           <LatestResultsTile data={results.data} isLoading={results.isLoading} />
