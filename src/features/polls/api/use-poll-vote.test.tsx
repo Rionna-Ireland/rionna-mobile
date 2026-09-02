@@ -47,6 +47,10 @@ function seeded() {
 }
 
 describe('usePollVote', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('optimistically marks the option in both caches, then reconciles with the server card', async () => {
     const { queryClient, wrapper, otherFeed } = seeded();
     let resolve!: (v: { data: unknown }) => void;
@@ -86,5 +90,24 @@ describe('usePollVote', () => {
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(queryClient.getQueryData<{ polls: Poll[] }>(POLLS_KEY)?.polls[0].myVoteOptionId).toBeNull();
     expect((queryClient.getQueryData<{ poll: Poll }[]>(FEED_KEY) ?? [])[0].poll.myVoteOptionId).toBeNull();
+  });
+
+  it('shares pending votes across hook instances and blocks a duplicate request', async () => {
+    const { wrapper } = seeded();
+    let resolve!: (value: { data: unknown }) => void;
+    mockPost.mockReturnValue(new Promise((complete) => {
+      resolve = complete;
+    }));
+    const view = renderHook(() => usePollVote(SCOPE), { wrapper });
+    const utils = renderHook(() => usePollVote(SCOPE), { wrapper });
+
+    view.result.current.vote({ pollId: 'p1', optionId: 'o1' });
+    await waitFor(() => expect(utils.result.current.pendingPollId).toBe('p1'));
+    utils.result.current.vote({ pollId: 'p1', optionId: 'o2' });
+    expect(mockPost).toHaveBeenCalledTimes(1);
+
+    utils.result.current.vote({ pollId: 'p2', optionId: 'o1' });
+    await waitFor(() => expect(mockPost).toHaveBeenCalledTimes(2));
+    resolve({ data: { ok: true, poll: poll({ myVoteOptionId: 'o1', results: { total: 1, byOption: { o1: 1, o2: 0 } } }) } });
   });
 });

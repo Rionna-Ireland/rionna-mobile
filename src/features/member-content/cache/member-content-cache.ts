@@ -70,18 +70,25 @@ function isCachedPoll(value: unknown): value is Poll {
   return (
     typeof value.id === 'string'
     && typeof value.question === 'string'
+    && (value.scope === 'club' || value.scope === 'space')
+    && isNullableString(value.circleSpaceId)
     && (value.status === 'open' || value.status === 'closed')
     && typeof value.publishedAt === 'string'
+    && isNullableString(value.closesAt)
     && Array.isArray(value.options)
     && value.options.every(
       option =>
         isRecord(option)
         && typeof option.id === 'string'
-        && typeof option.label === 'string',
+        && typeof option.label === 'string'
+        && typeof option.sortOrder === 'number',
     )
-    && (value.myVoteOptionId === null || typeof value.myVoteOptionId === 'string')
+    && isNullableString(value.myVoteOptionId)
     && (value.results === null
-      || (isRecord(value.results) && typeof value.results.total === 'number'))
+      || (isRecord(value.results)
+        && typeof value.results.total === 'number'
+        && isRecord(value.results.byOption)
+        && Object.values(value.results.byOption).every(count => typeof count === 'number')))
   );
 }
 
@@ -134,7 +141,7 @@ function isFeedEntry(value: unknown): value is FeedEntry {
     isRecord(value)
     && Number.isFinite(value.fetchedAt)
     && Array.isArray(value.data)
-    && value.data.every(isFeedItem)
+    && value.data.every(item => isFeedItem(item) || (isRecord(item) && item.kind === 'poll'))
   );
 }
 
@@ -171,7 +178,9 @@ function readEnvelope(scope: MemberContentScope): MemberContentEnvelope | null {
       void removeItem(key);
       return null;
     }
-    return envelope;
+    return envelope.feed
+      ? { ...envelope, feed: { ...envelope.feed, data: envelope.feed.data.filter(isFeedItem) } }
+      : envelope;
   }
   catch {
     void removeItem(key);
