@@ -14,7 +14,8 @@ import {
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { usePostLike } from '@/features/member-content/api/use-post-like';
 import { useSpaceFeed } from '@/features/member-content/api/use-space-feed';
-import { MemberFeedCard } from '@/features/member-content/components/member-feed-card';
+import { FeedItemRenderer } from '@/features/member-content/components/feed-item-renderer';
+import { usePollVote } from '@/features/polls/api/use-poll-vote';
 
 type SpaceFeedViewProps = {
   title: string;
@@ -26,6 +27,8 @@ type SpaceFeedViewProps = {
   onOpenPost: (spaceId: string, postId: string) => void;
   onToggleLike?: (postId: string, liked: boolean) => void;
   pendingLikePostId?: string | null;
+  onVote: (pollId: string, optionId: string) => void;
+  pendingVotePollId: string | null;
 };
 
 function EmptyState({
@@ -55,6 +58,8 @@ export function SpaceFeedView({
   onOpenPost,
   onToggleLike,
   pendingLikePostId,
+  onVote,
+  pendingVotePollId,
 }: SpaceFeedViewProps) {
   return (
     <ScrollView
@@ -101,12 +106,14 @@ export function SpaceFeedView({
             )
           : null}
         {items?.map(item => (
-          <MemberFeedCard
+          <FeedItemRenderer
             key={item.id}
             item={item}
             onOpen={onOpenPost}
             onToggleLike={onToggleLike}
             likePending={pendingLikePostId === item.id}
+            onVote={onVote}
+            votePending={item.poll?.id === pendingVotePollId}
           />
         ))}
       </View>
@@ -127,6 +134,7 @@ export function SpaceFeedScreen() {
   );
   const feed = useSpaceFeed(scope, spaceId);
   const like = usePostLike(scope);
+  const poll = usePollVote(scope);
 
   if (!member) {
     return null;
@@ -147,6 +155,8 @@ export function SpaceFeedScreen() {
         )}
         onToggleLike={(postId, liked) => like.toggleLike({ postId, liked })}
         pendingLikePostId={like.pendingPostId}
+        onVote={(pollId, optionId) => poll.vote({ pollId, optionId })}
+        pendingVotePollId={poll.pendingPollId}
       />
     </>
   );
