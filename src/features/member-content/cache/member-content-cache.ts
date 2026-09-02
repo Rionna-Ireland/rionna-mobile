@@ -69,7 +69,7 @@ function isFeedItem(value: unknown): value is MemberFeedItem {
   return (
     typeof value.id === 'string'
     && isNullableString(value.spaceId)
-    && (value.kind === 'news' || value.kind === 'post')
+    && (value.kind === 'news' || value.kind === 'post' || value.kind === 'poll')
     && typeof value.title === 'string'
     && isNullableString(value.excerpt)
     && isNullableString(value.createdAt)
@@ -80,6 +80,7 @@ function isFeedItem(value: unknown): value is MemberFeedItem {
     && typeof value.isLiked === 'boolean'
     && isNullableString(value.imageUrl)
     && isNullableString(value.url)
+    && (value.kind !== 'poll' || isRecord(value.poll))
   );
 }
 

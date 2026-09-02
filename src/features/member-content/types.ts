@@ -1,3 +1,5 @@
+import type { Poll } from '@/features/polls/types';
+
 export type MemberContentScope = {
   organizationId: string;
   memberId: string;
@@ -13,7 +15,9 @@ export const MEMBER_CONTENT_QUERY_ROOT = 'member-content';
 export type MemberFeedItem = {
   id: string;
   spaceId: string | null;
-  kind: 'news' | 'post';
+  kind: 'news' | 'post' | 'poll';
+  /** Present only when kind === 'poll' (S12-01a). */
+  poll?: Poll;
   title: string;
   excerpt: string | null;
   createdAt: string | null;
