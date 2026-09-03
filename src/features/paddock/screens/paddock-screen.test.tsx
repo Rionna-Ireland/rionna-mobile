@@ -39,12 +39,12 @@ describe('paddockHubView', () => {
     expect(screen.getByText('Total donated, voting and impact stories')).toBeOnTheScreen();
   });
 
-  it('keeps the deferred rows labelled coming soon', () => {
+  it('does not render deferred paddock rows', () => {
     renderHub();
     for (const title of ['My Rionna journey', 'Merchandise', 'Competitions']) {
-      expect(screen.getByText(title)).toBeOnTheScreen();
+      expect(screen.queryByText(title)).not.toBeOnTheScreen();
     }
-    expect(screen.getAllByText('Coming soon')).toHaveLength(3);
+    expect(screen.queryByText('Coming soon')).not.toBeOnTheScreen();
   });
 
   it('pluralises a single offer', () => {
