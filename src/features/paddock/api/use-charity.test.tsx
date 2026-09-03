@@ -1,0 +1,32 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { renderHook, waitFor } from '@testing-library/react-native';
+import * as React from 'react';
+
+import { useCharity } from '@/features/paddock/api/use-charity';
+import { client } from '@/lib/api/client';
+
+jest.mock('@/lib/api/client', () => ({ client: { get: jest.fn() } }));
+jest.mock('@/lib/storage', () => ({ getItem: jest.fn(() => null), setItem: jest.fn() }));
+
+const mockGet = client.get as jest.MockedFunction<typeof client.get>;
+const SCOPE = { organizationId: 'org-1', memberId: 'member-1' };
+
+function wrapper({ children }: { children: React.ReactNode }) {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>;
+}
+
+describe('useCharity', () => {
+  it('fetches the charity for the club', async () => {
+    mockGet.mockResolvedValue({ data: { ok: true, charity: null } });
+    const { result } = renderHook(() => useCharity(SCOPE), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(mockGet).toHaveBeenCalledWith('/api/charity', { params: { organizationId: 'org-1' } });
+    expect(result.current.data).toEqual({ ok: true, charity: null });
+  });
+  it('errors when the backend reports ok:false', async () => {
+    mockGet.mockResolvedValue({ data: { ok: false, charity: null } });
+    const { result } = renderHook(() => useCharity(SCOPE), { wrapper });
+    await waitFor(() => expect(result.current.isError).toBe(true));
+  });
+});
