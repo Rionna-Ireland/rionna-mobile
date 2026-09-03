@@ -51,4 +51,10 @@ describe('paddockHubView', () => {
     renderHub({ offersCount: 1 });
     expect(screen.getByText('1 offer')).toBeOnTheScreen();
   });
+
+  it('falls back to the static subtitle when there are no offers', () => {
+    renderHub({ offersCount: 0 });
+    expect(screen.getByText('Restaurant, hotel and lifestyle partners')).toBeOnTheScreen();
+    expect(screen.queryByText('0 offers')).not.toBeOnTheScreen();
+  });
 });

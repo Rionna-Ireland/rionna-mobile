@@ -57,7 +57,7 @@ type PaddockHubViewProps = {
 };
 
 export function offersSubtitle(count: number | null) {
-  if (count === null)
+  if (count === null || count === 0)
     return 'Restaurant, hotel and lifestyle partners';
   return `${count} ${count === 1 ? 'offer' : 'offers'}`;
 }
