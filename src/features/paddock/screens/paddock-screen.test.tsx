@@ -1,37 +1,54 @@
-import { render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import * as React from 'react';
 
-import { PaddockScreen } from '@/features/paddock/screens/paddock-screen';
+import { PaddockHubView } from '@/features/paddock/screens/paddock-screen';
 
 jest.mock('@/components/ui', () => {
   const actual = jest.requireActual('@/components/ui');
   return { ...actual, FocusAwareStatusBar: () => null };
 });
+jest.mock('@/components/ui/screen-layout', () => ({ useScreenTopPadding: () => 70 }));
+jest.mock('@/components/ui/tab-bar-layout', () => ({ useTabBarContentPadding: () => 120 }));
 
-jest.mock('@/components/ui/screen-layout', () => ({
-  useScreenTopPadding: () => 70,
-}));
+function renderHub(overrides: Partial<React.ComponentProps<typeof PaddockHubView>> = {}) {
+  const props = {
+    offersCount: 3,
+    charitySummary: '€24,500 raised for Irish Injured Jockeys',
+    onOpenBenefits: jest.fn(),
+    onOpenCharity: jest.fn(),
+    ...overrides,
+  };
+  render(<PaddockHubView {...props} />);
+  return props;
+}
 
-jest.mock('@/components/ui/tab-bar-layout', () => ({
-  useTabBarContentPadding: () => 120,
-}));
-
-describe('paddockScreen', () => {
-  it('renders the phase-1 hub rows only', () => {
-    render(<PaddockScreen />);
-
-    for (const title of ['My Rionna journey', 'Member benefits', 'Charity impact']) {
-      expect(screen.getByText(title)).toBeOnTheScreen();
-    }
-    // Phase 2 with the client — must not render yet.
-    for (const title of ['Merchandise', 'Partner offers', 'Competitions']) {
-      expect(screen.queryByText(title)).toBeNull();
-    }
+describe('paddockHubView', () => {
+  it('renders live rows with summaries and navigates on press', () => {
+    const { onOpenBenefits, onOpenCharity } = renderHub();
+    expect(screen.getByText('3 offers')).toBeOnTheScreen();
+    expect(screen.getByText('€24,500 raised for Irish Injured Jockeys')).toBeOnTheScreen();
+    fireEvent.press(screen.getByTestId('paddock-row-Member benefits'));
+    fireEvent.press(screen.getByTestId('paddock-row-Charity impact'));
+    expect(onOpenBenefits).toHaveBeenCalledTimes(1);
+    expect(onOpenCharity).toHaveBeenCalledTimes(1);
   });
 
-  it('labels every row coming soon', () => {
-    render(<PaddockScreen />);
+  it('falls back to static subtitles while summaries are unknown', () => {
+    renderHub({ offersCount: null, charitySummary: null });
+    expect(screen.getByText('Restaurant, hotel and lifestyle partners')).toBeOnTheScreen();
+    expect(screen.getByText('Total donated, voting and impact stories')).toBeOnTheScreen();
+  });
 
+  it('keeps the deferred rows labelled coming soon', () => {
+    renderHub();
+    for (const title of ['My Rionna journey', 'Merchandise', 'Competitions']) {
+      expect(screen.getByText(title)).toBeOnTheScreen();
+    }
     expect(screen.getAllByText('Coming soon')).toHaveLength(3);
+  });
+
+  it('pluralises a single offer', () => {
+    renderHub({ offersCount: 1 });
+    expect(screen.getByText('1 offer')).toBeOnTheScreen();
   });
 });

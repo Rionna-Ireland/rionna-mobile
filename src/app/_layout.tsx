@@ -180,74 +180,78 @@ export default function RootLayout() {
     <Providers>
       <Stack>
         <Stack.Screen name="(app)" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="community-view"
-          options={{ headerShown: false }}
-        />
-        <Stack.Screen
-          name="stables/[horse-id]"
-          options={{
-            title: '',
-            headerBackTitle: 'Stables',
-            headerTransparent: true,
-          }}
-        />
-        <Stack.Screen
-          name="post/[space-id]/[post-id]"
-          options={{
-            title: '',
-            headerBackTitle: 'Community',
-            headerShadowVisible: false,
-            headerStyle: { backgroundColor: '#F5F5F5' },
-          }}
-        />
-        <Stack.Screen
-          name="space-feed/[space-id]"
-          options={{
-            title: '',
-            headerBackTitle: 'Back',
-            headerShadowVisible: false,
-            headerStyle: { backgroundColor: '#F5F5F5' },
-          }}
-        />
-        <Stack.Screen
-          name="event/[event-id]"
-          options={{
-            title: '',
-            headerBackTitle: 'Events',
-            headerShadowVisible: false,
-            headerStyle: { backgroundColor: '#F5F5F5' },
-          }}
-        />
-        <Stack.Screen
-          name="news/[news-post-id]"
-          options={{
-            title: '',
-            headerBackTitle: 'Pulse',
-          }}
-        />
-        <Stack.Screen
-          name="profile"
-          options={{ title: 'Profile', headerBackTitle: 'Back' }}
-        />
-        <Stack.Screen
-          name="settings/notifications"
-          options={{ title: 'Notifications', headerBackTitle: 'Profile' }}
-        />
-        <Stack.Screen
-          name="settings/change-password"
-          options={{ title: 'Password', headerBackTitle: 'Profile' }}
-        />
-        <Stack.Screen
-          name="settings/delete-account"
-          options={{ title: 'Delete Account', headerBackTitle: 'Profile' }}
-        />
+        {MODAL_STACK_SCREENS.map(({ name, options }) => (
+          <Stack.Screen key={name} name={name} options={options} />
+        ))}
         <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
       </Stack>
     </Providers>
   );
 }
+
+const MODAL_STACK_SCREENS: {
+  name: string;
+  options: React.ComponentProps<typeof Stack.Screen>['options'];
+}[] = [
+  { name: 'community-view', options: { headerShown: false } },
+  {
+    name: 'stables/[horse-id]',
+    options: { title: '', headerBackTitle: 'Stables', headerTransparent: true },
+  },
+  {
+    name: 'post/[space-id]/[post-id]',
+    options: {
+      title: '',
+      headerBackTitle: 'Community',
+      headerShadowVisible: false,
+      headerStyle: { backgroundColor: '#F5F5F5' },
+    },
+  },
+  {
+    name: 'space-feed/[space-id]',
+    options: {
+      title: '',
+      headerBackTitle: 'Back',
+      headerShadowVisible: false,
+      headerStyle: { backgroundColor: '#F5F5F5' },
+    },
+  },
+  {
+    name: 'event/[event-id]',
+    options: {
+      title: '',
+      headerBackTitle: 'Events',
+      headerShadowVisible: false,
+      headerStyle: { backgroundColor: '#F5F5F5' },
+    },
+  },
+  {
+    name: 'news/[news-post-id]',
+    options: { title: '', headerBackTitle: 'Pulse' },
+  },
+  {
+    name: 'paddock/benefits',
+    options: { title: 'Member benefits', headerBackTitle: 'The Paddock' },
+  },
+  {
+    name: 'paddock/charity',
+    options: { title: 'Charity impact', headerBackTitle: 'The Paddock' },
+  },
+  { name: 'profile', options: { title: 'Profile', headerBackTitle: 'Back' } },
+  {
+    name: 'settings/notifications',
+    options: { title: 'Notifications', headerBackTitle: 'Profile' },
+  },
+  {
+    name: 'settings/change-password',
+    options: { title: 'Password', headerBackTitle: 'Profile' },
+  },
+  {
+    name: 'settings/delete-account',
+    options: { title: 'Delete Account', headerBackTitle: 'Profile' },
+  },
+];
 
 function Providers({ children }: { children: React.ReactNode }) {
   const theme = useThemeConfig();
