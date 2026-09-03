@@ -61,6 +61,12 @@ jest.mock('@/features/events/api/use-events', () => ({
 jest.mock('@/features/polls/api/use-active-polls', () => ({
   useActivePolls: () => mockEmptyQuery,
 }));
+jest.mock('@/features/paddock/api/use-charity', () => ({
+  useCharity: () => mockEmptyQuery,
+}));
+jest.mock('@/features/paddock/api/use-offers', () => ({
+  useOffers: () => mockEmptyQuery,
+}));
 jest.mock('@/features/polls/api/use-poll-vote', () => ({
   usePollVote: () => ({ vote: jest.fn(), pendingPollIds: [] }),
 }));

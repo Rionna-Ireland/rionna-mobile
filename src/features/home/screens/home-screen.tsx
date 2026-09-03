@@ -13,25 +13,20 @@ import {
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { useAuthStore } from '@/features/auth/use-auth-store';
-import { useEvents } from '@/features/events/api/use-events';
+import { CharitySnapshotTile } from '@/features/home/components/charity-snapshot-tile';
 import { ClubVoteTile } from '@/features/home/components/club-vote-tile';
 import { HeadlineCard } from '@/features/home/components/headline-card';
 import { InsideTrackTile } from '@/features/home/components/inside-track-tile';
 import { NextEventTile } from '@/features/home/components/next-event-tile';
+import { PaddockPreviewTile } from '@/features/home/components/paddock-preview-tile';
 import { selectHeadline } from '@/features/home/lib/select-headline';
-import { useInsideTrack } from '@/features/member-content/api/use-inside-track';
-import { useActivePolls } from '@/features/polls/api/use-active-polls';
+import { useHomeQueries } from '@/features/home/lib/use-home-queries';
 import { usePollVote } from '@/features/polls/api/use-poll-vote';
-import { useLatestNews } from '@/features/pulse/api/use-latest-news';
-import { useLatestResults } from '@/features/pulse/api/use-latest-results';
-import { useNextRun } from '@/features/pulse/api/use-next-run';
-import { useTrainerUpdates } from '@/features/pulse/api/use-trainer-updates';
 import { LatestNewsTile } from '@/features/pulse/components/latest-news-tile';
 import { LatestResultsTile } from '@/features/pulse/components/latest-results-tile';
 import { MyHorsesTile } from '@/features/pulse/components/my-horses-tile';
 import { NextRunTile } from '@/features/pulse/components/next-run-tile';
 import { TrainerUpdatesTile } from '@/features/pulse/components/trainer-updates-tile';
-import { useFollowedHorses } from '@/features/stables/api/use-followed-horses';
 
 export function HomeScreen() {
   const router = useRouter();
@@ -44,44 +39,17 @@ export function HomeScreen() {
     [user?.id],
   );
 
-  const nextRun = useNextRun();
-  const results = useLatestResults();
-  const news = useLatestNews();
-  const trainerUpdates = useTrainerUpdates();
-  const followedHorses = useFollowedHorses();
-  const insideTrack = useInsideTrack(scope);
-  const upcomingEvents = useEvents(scope, 'upcoming');
-  const activePolls = useActivePolls(scope);
+  const q = useHomeQueries(scope);
   const { vote, pendingPollIds } = usePollVote(scope);
 
   const headline = selectHeadline(
     {
-      nextRun: nextRun.data,
-      latestResult: results.data?.[0] ?? null,
-      latestNews: news.data?.[0] ?? null,
+      nextRun: q.nextRun.data,
+      latestResult: q.results.data?.[0] ?? null,
+      latestNews: q.news.data?.[0] ?? null,
     },
     new Date(),
   );
-
-  const isRefetching
-    = nextRun.isRefetching
-      || results.isRefetching
-      || news.isRefetching
-      || trainerUpdates.isRefetching
-      || followedHorses.isRefetching
-      || insideTrack.isRefetching
-      || upcomingEvents.isRefetching
-      || activePolls.isRefetching;
-  const onRefresh = () => {
-    void nextRun.refetch();
-    void results.refetch();
-    void news.refetch();
-    void trainerUpdates.refetch();
-    void followedHorses.refetch();
-    void insideTrack.refetch();
-    void upcomingEvents.refetch();
-    void activePolls.refetch();
-  };
 
   const displayName = user?.name?.trim() || 'Rionna member';
 
@@ -95,7 +63,7 @@ export function HomeScreen() {
           paddingTop: contentPaddingTop,
           paddingBottom: contentPaddingBottom,
         }}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={q.refetchAll} />}
       >
         <View className="mb-6 flex-row items-center justify-between">
           <View className="flex-1 pr-4">
@@ -120,18 +88,20 @@ export function HomeScreen() {
         <View className="gap-6">
           <HeadlineCard headline={headline} />
           <ClubVoteTile
-            data={activePolls.data}
-            isLoading={activePolls.isLoading}
+            data={q.activePolls.data}
+            isLoading={q.activePolls.isLoading}
             onVote={(pollId, optionId) => vote({ pollId, optionId })}
             pendingPollIds={pendingPollIds}
           />
-          <NextRunTile data={nextRun.data} isLoading={nextRun.isLoading} />
-          <MyHorsesTile data={followedHorses.data} isLoading={followedHorses.isLoading} />
-          <LatestResultsTile data={results.data} isLoading={results.isLoading} />
-          <TrainerUpdatesTile data={trainerUpdates.data} isLoading={trainerUpdates.isLoading} />
-          <LatestNewsTile data={news.data} isLoading={news.isLoading} />
-          <InsideTrackTile data={insideTrack.data} isLoading={insideTrack.isLoading} />
-          <NextEventTile data={upcomingEvents.data} isLoading={upcomingEvents.isLoading} />
+          <CharitySnapshotTile data={q.charity.data} isLoading={q.charity.isLoading} />
+          <PaddockPreviewTile data={q.offers.data} isLoading={q.offers.isLoading} />
+          <NextRunTile data={q.nextRun.data} isLoading={q.nextRun.isLoading} />
+          <MyHorsesTile data={q.followedHorses.data} isLoading={q.followedHorses.isLoading} />
+          <LatestResultsTile data={q.results.data} isLoading={q.results.isLoading} />
+          <TrainerUpdatesTile data={q.trainerUpdates.data} isLoading={q.trainerUpdates.isLoading} />
+          <LatestNewsTile data={q.news.data} isLoading={q.news.isLoading} />
+          <InsideTrackTile data={q.insideTrack.data} isLoading={q.insideTrack.isLoading} />
+          <NextEventTile data={q.upcomingEvents.data} isLoading={q.upcomingEvents.isLoading} />
         </View>
       </ScrollView>
     </>
