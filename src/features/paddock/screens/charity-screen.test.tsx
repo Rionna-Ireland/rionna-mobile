@@ -46,7 +46,7 @@ const base = {
   onOpenStory: jest.fn(),
   onOpenWebsite: jest.fn(),
   onVote: jest.fn(),
-  pendingPollId: null,
+  pendingPollIds: [],
 };
 
 describe('charityView', () => {
@@ -81,5 +81,10 @@ describe('charityView', () => {
   it('shows the not-yet state when no charity is configured', () => {
     render(<CharityView {...base} charity={null} poll={undefined} />);
     expect(screen.getByTestId('charity-empty')).toBeOnTheScreen();
+  });
+
+  it('disables the poll options while the vote is pending', () => {
+    render(<CharityView {...base} charity={CHARITY} poll={POLL} pendingPollIds={['p1']} />);
+    expect(screen.getByTestId('poll-option-a')).toHaveProp('accessibilityState', expect.objectContaining({ disabled: true }));
   });
 });

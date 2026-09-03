@@ -26,7 +26,7 @@ type CharityViewProps = {
   onOpenStory: (slug: string) => void;
   onOpenWebsite: (url: string) => void;
   onVote: (pollId: string, optionId: string) => void;
-  pendingPollId: string | null;
+  pendingPollIds: string[];
 };
 
 function SectionTitle({ children }: { children: string }) {
@@ -54,7 +54,7 @@ function CharityCard({ charity, onOpenWebsite }: { charity: Charity; onOpenWebsi
   );
 }
 
-function CharityBody({ charity, poll, onOpenStory, onOpenWebsite, onVote, pendingPollId }: Omit<CharityViewProps, 'isLoading' | 'isError' | 'isRefetching' | 'onRefresh'> & { charity: Charity }) {
+function CharityBody({ charity, poll, onOpenStory, onOpenWebsite, onVote, pendingPollIds }: Omit<CharityViewProps, 'isLoading' | 'isError' | 'isRefetching' | 'onRefresh'> & { charity: Charity }) {
   return (
     <View className="gap-6">
       <CharityHeader charity={charity} />
@@ -74,7 +74,7 @@ function CharityBody({ charity, poll, onOpenStory, onOpenWebsite, onVote, pendin
         ? (
             <View className="gap-3">
               <SectionTitle>Member vote</SectionTitle>
-              <PollCard poll={poll} onVote={onVote} pending={pendingPollId === poll.id} variant="card" />
+              <PollCard poll={poll} onVote={onVote} pending={pendingPollIds.includes(poll.id)} variant="card" />
             </View>
           )
         : null}
@@ -128,7 +128,7 @@ export function CharityScreen() {
   );
   const charity = useCharity(scope);
   const polls = useActivePolls(scope);
-  const { vote, pendingPollId } = usePollVote(scope);
+  const { vote, pendingPollIds } = usePollVote(scope);
   const pollId = charity.data?.charity?.pollId ?? null;
   const poll = pollId ? polls.data?.polls.find(p => p.id === pollId) : undefined;
 
@@ -146,7 +146,7 @@ export function CharityScreen() {
       onOpenStory={slug => router.push(`/news/${slug}`)}
       onOpenWebsite={openExternalLink}
       onVote={(id, optionId) => vote({ pollId: id, optionId })}
-      pendingPollId={pendingPollId}
+      pendingPollIds={pendingPollIds}
     />
   );
 }
