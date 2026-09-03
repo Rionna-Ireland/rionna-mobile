@@ -208,19 +208,29 @@ describe('member content cache — poll feed items (S12-01a)', () => {
     });
   });
 
-  it('rejects a cached kind:poll item whose poll payload is malformed', () => {
+  it.each([
+    ['missing scope', (poll: Record<string, unknown>) => { delete poll.scope; }],
+    ['invalid scope', (poll: Record<string, unknown>) => { poll.scope = 'invalid'; }],
+    ['non-string circleSpaceId', (poll: Record<string, unknown>) => { poll.circleSpaceId = 1; }],
+    ['missing closesAt', (poll: Record<string, unknown>) => { delete poll.closesAt; }],
+    ['option without sortOrder', (poll: Record<string, unknown>) => { delete (poll.options as Record<string, unknown>[])[0].sortOrder; }],
+    ['missing results.byOption', (poll: Record<string, unknown>) => { poll.results = { total: 1 }; }],
+    ['non-numeric results.byOption value', (poll: Record<string, unknown>) => { poll.results = { total: 1, byOption: { o1: 'one' } }; }],
+  ])('drops only a cached poll with %s', (_reason, corrupt) => {
     setCachedMemberFeed(SCOPE, [FEED_ITEM], NOW);
     const key = [...mockStore.keys()][0];
+    const invalidPoll = structuredClone(POLL_FEED_ITEM) as Record<string, unknown>;
+    corrupt(invalidPoll.poll as Record<string, unknown>);
     mockStore.set(key, {
       schemaVersion: 2,
       scope: SCOPE,
       feed: {
-        data: [{ ...POLL_FEED_ITEM, poll: {} }],
+        data: [FEED_ITEM, invalidPoll],
         fetchedAt: NOW,
       },
       posts: {},
     });
 
-    expect(getCachedMemberFeed(SCOPE, NOW + 1)).toBeNull();
+    expect(getCachedMemberFeed(SCOPE, NOW + 1)).toEqual({ data: [FEED_ITEM], fetchedAt: NOW });
   });
 });

@@ -3,7 +3,8 @@ import type { QueryClient } from '@tanstack/react-query';
 import type { MemberContentScope } from '@/features/member-content/types';
 import type { ActivePollsResult, Poll, PollVoteResult, PollVoteVariables } from '@/features/polls/types';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useMutationState, useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 
 import { MEMBER_CONTENT_QUERY_ROOT } from '@/features/member-content/types';
 import { applyVoteToFeedItems, applyVoteToPolls, reconcilePollInFeedItems, reconcilePollInPolls } from '@/features/polls/api/poll-cache';
@@ -62,6 +63,7 @@ function patchPollCaches(
 export function usePollVote(scope: MemberContentScope) {
   const queryClient = useQueryClient();
   const mutation = useMutation({
+    mutationKey: [POLLS_QUERY_ROOT, 'vote'],
     mutationFn: (variables: PollVoteVariables) => sendVote(scope, variables),
     onMutate: async ({ pollId, optionId }) => {
       await Promise.all([
@@ -89,10 +91,20 @@ export function usePollVote(scope: MemberContentScope) {
       );
     },
   });
+  const pendingIds = useMutationState({
+    filters: { mutationKey: [POLLS_QUERY_ROOT, 'vote'], status: 'pending' },
+    select: activeMutation => (activeMutation.state.variables as PollVoteVariables | undefined)?.pollId ?? null,
+  });
+  const pendingPollIds = pendingIds.filter((pollId): pollId is string => pollId !== null);
+  const vote = useCallback((variables: PollVoteVariables) => {
+    if (pendingIds.includes(variables.pollId))
+      return;
+    mutation.mutate(variables);
+  }, [mutation, pendingIds]);
 
   return {
     ...mutation,
-    vote: mutation.mutate,
-    pendingPollId: mutation.isPending ? (mutation.variables?.pollId ?? null) : null,
+    vote,
+    pendingPollIds,
   };
 }

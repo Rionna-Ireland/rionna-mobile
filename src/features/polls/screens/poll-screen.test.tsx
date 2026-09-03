@@ -27,18 +27,18 @@ const poll = {
 describe('pollScreenView', () => {
   it('renders the poll card and forwards votes', () => {
     const onVote = jest.fn();
-    render(<PollScreenView poll={poll} isLoading={false} onVote={onVote} pendingPollId={null} />);
+    render(<PollScreenView poll={poll} isLoading={false} onVote={onVote} pendingPollIds={[]} />);
     fireEvent.press(screen.getByTestId('poll-option-o1'));
     expect(onVote).toHaveBeenCalledWith('p1', 'o1');
   });
 
   it('shows an ended state when the poll is no longer available', () => {
-    render(<PollScreenView poll={undefined} isLoading={false} onVote={jest.fn()} pendingPollId={null} />);
+    render(<PollScreenView poll={undefined} isLoading={false} onVote={jest.fn()} pendingPollIds={[]} />);
     expect(screen.getByText('This vote has ended')).toBeOnTheScreen();
   });
 
   it('shows a loading state instead of the ended message while still loading', () => {
-    render(<PollScreenView poll={undefined} isLoading onVote={jest.fn()} pendingPollId={null} />);
+    render(<PollScreenView poll={undefined} isLoading onVote={jest.fn()} pendingPollIds={[]} />);
     expect(screen.queryByText('This vote has ended')).not.toBeOnTheScreen();
   });
 });

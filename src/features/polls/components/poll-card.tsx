@@ -2,6 +2,7 @@ import type { Poll } from '@/features/polls/types';
 
 import { Pressable, Text, View } from '@/components/ui';
 import { PollResultBar } from '@/features/polls/components/poll-result-bar';
+import { percentagesFor } from '@/features/polls/lib/percentages';
 
 type PollCardProps = {
   poll: Poll;
@@ -9,10 +10,6 @@ type PollCardProps = {
   pending: boolean;
   variant: 'card' | 'tile';
 };
-
-function percentFor(count: number, total: number) {
-  return total === 0 ? 0 : Math.round((count / total) * 100);
-}
 
 function formatVotes(total: number) {
   return `${total} ${total === 1 ? 'vote' : 'votes'}`;
@@ -24,6 +21,7 @@ export function PollCard({ poll, onVote, pending, variant }: PollCardProps) {
   const canVote = !closed && !pending;
   const eyebrowText = closed ? 'Closed' : poll.scope === 'space' ? 'Stable vote' : 'Club vote';
   const showEyebrow = variant === 'card' || closed;
+  const percents = showResults && poll.results ? percentagesFor(poll.options, poll.results) : null;
 
   return (
     <View
@@ -53,7 +51,7 @@ export function PollCard({ poll, onVote, pending, variant }: PollCardProps) {
               >
                 <PollResultBar
                   label={option.label}
-                  percent={percentFor(poll.results.byOption[option.id] ?? 0, poll.results.total)}
+                  percent={percents?.[option.id] ?? 0}
                   mine={mine}
                   optionId={option.id}
                 />

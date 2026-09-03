@@ -121,3 +121,24 @@ describe('pollCard', () => {
     expect(screen.getByText('Closed')).toBeOnTheScreen();
   });
 });
+
+describe('pollCard result percentages', () => {
+  it('allocates result-bar percentages to exactly 100', () => {
+    render(
+      <PollCard
+        poll={poll({
+          options: [
+            { id: 'o1', label: 'One', sortOrder: 0 },
+            { id: 'o2', label: 'Two', sortOrder: 1 },
+            { id: 'o3', label: 'Three', sortOrder: 2 },
+          ],
+          results: { total: 3, byOption: { o1: 1, o2: 1, o3: 1 } },
+        })}
+        onVote={jest.fn()}
+        pending={false}
+        variant="card"
+      />,
+    );
+    expect(screen.getAllByText(/%$/).map(node => Number(node.props.children.replace('%', '')))).toEqual([34, 33, 33]);
+  });
+});

@@ -23,7 +23,7 @@ function poll(overrides: Partial<Poll> = {}): Poll {
 describe('clubVoteTile', () => {
   it('renders nothing when there is no open club poll', () => {
     const data: ActivePollsResult = { ok: true, polls: [poll({ status: 'closed', results: { total: 0, byOption: {} } })] };
-    const { toJSON } = render(<ClubVoteTile data={data} isLoading={false} onVote={jest.fn()} pendingPollId={null} />);
+    const { toJSON } = render(<ClubVoteTile data={data} isLoading={false} onVote={jest.fn()} pendingPollIds={[]} />);
     expect(toJSON()).toBeNull();
   });
 
@@ -33,7 +33,7 @@ describe('clubVoteTile', () => {
       ok: true,
       polls: [poll({ id: 'p2', publishedAt: '2026-09-02T09:00:00.000Z' }), poll()],
     };
-    render(<ClubVoteTile data={data} isLoading={false} onVote={onVote} pendingPollId={null} />);
+    render(<ClubVoteTile data={data} isLoading={false} onVote={onVote} pendingPollIds={[]} />);
     // The card's own "Club vote" eyebrow is suppressed in tile variant so it
     // isn't duplicated alongside the TileWrapper heading.
     expect(screen.getAllByText('Club vote').length).toBe(1);

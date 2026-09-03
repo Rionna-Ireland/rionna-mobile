@@ -33,7 +33,7 @@ type CommunityFeedViewProps = {
   onToggleLike?: (postId: string, liked: boolean) => void;
   pendingLikePostId?: string | null;
   onVote: (pollId: string, optionId: string) => void;
-  pendingVotePollId: string | null;
+  pendingVotePollIds: string[];
 };
 
 function EmptyState({
@@ -65,7 +65,7 @@ export function CommunityFeedView({
   onToggleLike,
   pendingLikePostId,
   onVote,
-  pendingVotePollId,
+  pendingVotePollIds,
 }: CommunityFeedViewProps) {
   const contentPaddingBottom = useTabBarContentPadding(24);
   const contentPaddingTop = useScreenTopPadding();
@@ -147,7 +147,7 @@ export function CommunityFeedView({
             onToggleLike={onToggleLike}
             likePending={pendingLikePostId === item.id}
             onVote={onVote}
-            votePending={item.poll?.id === pendingVotePollId}
+            votePending={item.poll ? pendingVotePollIds.includes(item.poll.id) : false}
           />
         ))}
       </View>
@@ -180,7 +180,7 @@ function SignedInCommunityFeed({ member }: { member: AuthUser }) {
       onToggleLike={(postId, liked) => like.toggleLike({ postId, liked })}
       pendingLikePostId={like.pendingPostId}
       onVote={(pollId, optionId) => poll.vote({ pollId, optionId })}
-      pendingVotePollId={poll.pendingPollId}
+      pendingVotePollIds={poll.pendingPollIds}
     />
   );
 }

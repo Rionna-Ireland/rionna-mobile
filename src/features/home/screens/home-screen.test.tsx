@@ -62,7 +62,7 @@ jest.mock('@/features/polls/api/use-active-polls', () => ({
   useActivePolls: () => mockEmptyQuery,
 }));
 jest.mock('@/features/polls/api/use-poll-vote', () => ({
-  usePollVote: () => ({ vote: jest.fn(), pendingPollId: null }),
+  usePollVote: () => ({ vote: jest.fn(), pendingPollIds: [] }),
 }));
 
 describe('homeScreen', () => {

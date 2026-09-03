@@ -7,10 +7,10 @@ type ClubVoteTileProps = {
   data: ActivePollsResult | undefined;
   isLoading: boolean;
   onVote: (pollId: string, optionId: string) => void;
-  pendingPollId: string | null;
+  pendingPollIds: string[];
 };
 
-export function ClubVoteTile({ data, isLoading, onVote, pendingPollId }: ClubVoteTileProps) {
+export function ClubVoteTile({ data, isLoading, onVote, pendingPollIds }: ClubVoteTileProps) {
   // Newest open club-scope poll; the API already sorts by publishedAt desc.
   const current = data?.polls.find(p => p.status === 'open' && p.scope === 'club');
 
@@ -21,7 +21,7 @@ export function ClubVoteTile({ data, isLoading, onVote, pendingPollId }: ClubVot
   return (
     <TileWrapper title="Club vote" isLoading={isLoading}>
       {current
-        ? <PollCard poll={current} onVote={onVote} pending={pendingPollId === current.id} variant="tile" />
+        ? <PollCard poll={current} onVote={onVote} pending={pendingPollIds.includes(current.id)} variant="tile" />
         : null}
     </TileWrapper>
   );

@@ -15,10 +15,10 @@ type PollScreenViewProps = {
   poll: Poll | undefined;
   isLoading: boolean;
   onVote: (pollId: string, optionId: string) => void;
-  pendingPollId: string | null;
+  pendingPollIds: string[];
 };
 
-export function PollScreenView({ poll, isLoading, onVote, pendingPollId }: PollScreenViewProps) {
+export function PollScreenView({ poll, isLoading, onVote, pendingPollIds }: PollScreenViewProps) {
   const contentPaddingTop = useScreenTopPadding();
   return (
     <>
@@ -40,7 +40,7 @@ export function PollScreenView({ poll, isLoading, onVote, pendingPollId }: PollS
                 </View>
               )
             : null}
-          {poll ? <PollCard poll={poll} onVote={onVote} pending={pendingPollId === poll.id} variant="card" /> : null}
+          {poll ? <PollCard poll={poll} onVote={onVote} pending={pendingPollIds.includes(poll.id)} variant="card" /> : null}
         </View>
       </ScrollView>
     </>
@@ -55,7 +55,7 @@ export function PollScreen() {
     [user?.id],
   );
   const polls = useActivePolls(scope);
-  const { vote, pendingPollId } = usePollVote(scope);
+  const { vote, pendingPollIds } = usePollVote(scope);
   const poll = polls.data?.polls.find(p => p.id === pollId);
 
   return (
@@ -63,7 +63,7 @@ export function PollScreen() {
       poll={poll}
       isLoading={polls.isLoading}
       onVote={(id, optionId) => vote({ pollId: id, optionId })}
-      pendingPollId={pendingPollId}
+      pendingPollIds={pendingPollIds}
     />
   );
 }
