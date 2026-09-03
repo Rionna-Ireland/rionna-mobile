@@ -69,6 +69,9 @@ jest.mock('expo-localization', () => ({
   ]),
 }));
 
+// Mock expo-clipboard
+jest.mock('expo-clipboard', () => ({ setStringAsync: jest.fn(() => Promise.resolve(true)) }));
+
 // Mock react-native-mmkv
 jest.mock('react-native-mmkv', () => ({
   MMKV: jest.fn(() => ({
