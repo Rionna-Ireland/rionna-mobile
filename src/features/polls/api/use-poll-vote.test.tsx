@@ -102,9 +102,10 @@ describe('usePollVote', () => {
     const utils = renderHook(() => usePollVote(SCOPE), { wrapper });
 
     view.result.current.vote({ pollId: 'p1', optionId: 'o1' });
-    await waitFor(() => expect(utils.result.current.pendingPollIds).toEqual(['p1']));
     utils.result.current.vote({ pollId: 'p1', optionId: 'o2' });
-    expect(mockPost).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(mockPost).toHaveBeenCalledTimes(1));
+
+    await waitFor(() => expect(utils.result.current.pendingPollIds).toEqual(['p1']));
 
     utils.result.current.vote({ pollId: 'p2', optionId: 'o1' });
     await waitFor(() => expect(mockPost).toHaveBeenCalledTimes(2));
