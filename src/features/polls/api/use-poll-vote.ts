@@ -97,14 +97,21 @@ export function usePollVote(scope: MemberContentScope) {
   });
   const pendingPollIds = pendingIds.filter((pollId): pollId is string => pollId !== null);
   const vote = useCallback((variables: PollVoteVariables) => {
-    if (pendingIds.includes(variables.pollId))
+    const pendingVoteForPoll = queryClient
+      .getMutationCache()
+      .findAll({ mutationKey: [POLLS_QUERY_ROOT, 'vote'], status: 'pending' })
+      .some(activeMutation => (
+        (activeMutation.state.variables as PollVoteVariables | undefined)?.pollId === variables.pollId
+      ));
+    if (pendingVoteForPoll)
       return;
     mutation.mutate(variables);
-  }, [mutation, pendingIds]);
+  }, [mutation, queryClient]);
 
   return {
     ...mutation,
     vote,
+    pendingPollId: pendingPollIds[0] ?? null,
     pendingPollIds,
   };
 }
