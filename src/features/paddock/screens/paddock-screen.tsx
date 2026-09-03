@@ -19,30 +19,20 @@ import { formatEuro } from '@/features/paddock/lib/format-euro';
 type HubRow = {
   title: string;
   subtitle: string;
-  onPress?: () => void;
+  onPress: () => void;
 };
 
-function ComingSoonPill() {
-  return (
-    <Text className="rounded-full bg-neutral-100 px-3 py-1 font-mono text-[10px] tracking-wider text-neutral-600 uppercase">
-      Coming soon
-    </Text>
-  );
-}
-
 function PaddockRow({ row }: { row: HubRow }) {
-  const live = !!row.onPress;
   return (
     <Pressable
       testID={`paddock-row-${row.title}`}
-      accessibilityRole={live ? 'button' : undefined}
-      disabled={!live}
+      accessibilityRole="button"
       onPress={row.onPress}
-      className={`rounded-2xl bg-white p-5 ${live ? 'border border-neutral-300' : 'border border-dashed border-neutral-400'}`}
+      className="rounded-2xl border border-neutral-300 bg-white p-5"
     >
       <View className="flex-row items-center justify-between">
         <Text className="font-sans text-base font-semibold text-ink">{row.title}</Text>
-        {live ? <Text className="font-sans text-lg text-violet-700">›</Text> : <ComingSoonPill />}
+        <Text className="font-sans text-lg text-violet-700">›</Text>
       </View>
       <Text className="mt-1 font-sans text-sm/5 text-neutral-600">{row.subtitle}</Text>
     </Pressable>
@@ -66,13 +56,9 @@ export function PaddockHubView({ offersCount, charitySummary, onOpenBenefits, on
   const contentPaddingBottom = useTabBarContentPadding(24);
   const contentPaddingTop = useScreenTopPadding();
 
-  // Journey / Merchandise / Competitions stay deferred (D32) — placeholders only.
   const rows: HubRow[] = [
-    { title: 'My Rionna journey', subtitle: 'Member, attendance and charity champion badges' },
     { title: 'Member benefits', subtitle: offersSubtitle(offersCount), onPress: onOpenBenefits },
-    { title: 'Merchandise', subtitle: 'Caps, jackets, polos and accessories' },
     { title: 'Charity impact', subtitle: charitySummary ?? 'Total donated, voting and impact stories', onPress: onOpenCharity },
-    { title: 'Competitions', subtitle: 'Final Fence, Last Woman Standing and quizzes' },
   ];
 
   return (
