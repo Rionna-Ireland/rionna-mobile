@@ -36,10 +36,14 @@ const mockUsePostableSpaces = jest.fn((): {
   data: { ok: boolean; spaces: typeof SPACES } | undefined;
   refetch: typeof mockRefetch;
   isError: boolean;
+  isPending: boolean;
+  isSuccess: boolean;
 } => ({
   data: { ok: true, spaces: SPACES },
   refetch: mockRefetch,
   isError: false,
+  isPending: false,
+  isSuccess: true,
 }));
 
 jest.mock('@/features/community-posting/api/use-postable-spaces', () => ({
@@ -87,7 +91,7 @@ describe('composePostScreen', () => {
     mockParams = {};
     mockFailure = null;
     mockUseAuthStoreUser.mockReturnValue(MEMBER);
-    mockUsePostableSpaces.mockReturnValue({ data: { ok: true, spaces: SPACES }, refetch: mockRefetch, isError: false });
+    mockUsePostableSpaces.mockReturnValue({ data: { ok: true, spaces: SPACES }, refetch: mockRefetch, isError: false, isPending: false, isSuccess: true });
     mockUseCreatePost.mockReturnValue({ create: mockCreate, isPending: false, failure: mockFailure });
   });
 
@@ -182,12 +186,12 @@ describe('composePostScreen spaces status', () => {
     mockParams = {};
     mockFailure = null;
     mockUseAuthStoreUser.mockReturnValue(MEMBER);
-    mockUsePostableSpaces.mockReturnValue({ data: { ok: true, spaces: SPACES }, refetch: mockRefetch, isError: false });
+    mockUsePostableSpaces.mockReturnValue({ data: { ok: true, spaces: SPACES }, refetch: mockRefetch, isError: false, isPending: false, isSuccess: true });
     mockUseCreatePost.mockReturnValue({ create: mockCreate, isPending: false, failure: mockFailure });
   });
 
   it('shows an empty-state message and no form when there are no postable spaces', () => {
-    mockUsePostableSpaces.mockReturnValue({ data: { ok: true, spaces: [] }, refetch: mockRefetch, isError: false });
+    mockUsePostableSpaces.mockReturnValue({ data: { ok: true, spaces: [] }, refetch: mockRefetch, isError: false, isPending: false, isSuccess: true });
     render(<ComposePostScreen />);
 
     expect(screen.getByText('You can\'t post in any spaces yet.')).toBeOnTheScreen();
@@ -198,7 +202,7 @@ describe('composePostScreen spaces status', () => {
   });
 
   it('shows a retry message and no form when the postable-spaces query errors', () => {
-    mockUsePostableSpaces.mockReturnValue({ data: undefined, refetch: mockRefetch, isError: true });
+    mockUsePostableSpaces.mockReturnValue({ data: undefined, refetch: mockRefetch, isError: true, isPending: false, isSuccess: false });
     render(<ComposePostScreen />);
 
     expect(screen.getByText('Couldn\'t load your spaces. Pull to retry.')).toBeOnTheScreen();
@@ -206,6 +210,18 @@ describe('composePostScreen spaces status', () => {
 
     fireEvent.press(screen.getByTestId('compose-post-spaces-retry'));
     expect(mockRefetch).toHaveBeenCalled();
+  });
+
+  it('shows neither empty-state nor error copy while the postable-spaces query is still pending', () => {
+    mockUsePostableSpaces.mockReturnValue({ data: undefined, refetch: mockRefetch, isError: false, isPending: true, isSuccess: false });
+    render(<ComposePostScreen />);
+
+    expect(screen.queryByText('You can\'t post in any spaces yet.')).toBeNull();
+    expect(screen.queryByText('Couldn\'t load your spaces. Pull to retry.')).toBeNull();
+    expect(screen.queryByTestId('compose-post-space-trigger')).toBeNull();
+    expect(screen.getByTestId('compose-post-submit').props.accessibilityState).toEqual(
+      expect.objectContaining({ disabled: true }),
+    );
   });
 });
 
@@ -215,7 +231,7 @@ describe('composePostScreen last-used space', () => {
     mockParams = {};
     mockFailure = null;
     mockUseAuthStoreUser.mockReturnValue(MEMBER);
-    mockUsePostableSpaces.mockReturnValue({ data: { ok: true, spaces: SPACES }, refetch: mockRefetch, isError: false });
+    mockUsePostableSpaces.mockReturnValue({ data: { ok: true, spaces: SPACES }, refetch: mockRefetch, isError: false, isPending: false, isSuccess: true });
     mockUseCreatePost.mockReturnValue({ create: mockCreate, isPending: false, failure: mockFailure });
   });
 

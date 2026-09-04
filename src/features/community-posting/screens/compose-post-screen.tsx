@@ -3,7 +3,7 @@ import type { CreatePostFailure, CreatePostInput, PostableSpace, PostImage } fro
 import Env from 'env';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
-import { Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
 import { useAuthStore } from '@/features/auth/use-auth-store';
@@ -242,33 +242,41 @@ export function ComposePostScreen() {
     return null;
   }
 
-  const spacesUnusable = spacesQuery.isError || spaces.length === 0;
+  const spacesEmpty = spacesQuery.isSuccess && spaces.length === 0;
+  const spacesUnusable = spacesQuery.isError || spacesEmpty;
+  const spacesLoading = !spacesQuery.isError && !spacesQuery.isSuccess;
 
   return (
     <KeyboardAvoidingView behavior="padding" className="flex-1 bg-neutral-100">
       <ScrollView className="flex-1" contentContainerStyle={{ padding: 20 }}>
-        {spacesUnusable
+        {spacesLoading
           ? (
-              <SpacesStatus
-                isError={spacesQuery.isError}
-                isEmpty={spaces.length === 0}
-                onRetry={() => void spacesQuery.refetch()}
-              />
+              <View className="mb-4 items-center justify-center py-6" testID="compose-post-spaces-loading">
+                <ActivityIndicator />
+              </View>
             )
-          : (
-              <>
-                <SpacePickerSheet spaces={spaces} selectedSpaceId={selectedSpaceId} onSelect={onSelectSpace} />
-                <ComposeFields title={title} onChangeTitle={setTitle} body={body} onChangeBody={setBody} />
-                <View className="mt-3">
-                  <ComposeImageRow
-                    image={image}
-                    imageError={imageError}
-                    onPickImage={() => void onPickImage()}
-                    onRemoveImage={onRemoveImage}
-                  />
-                </View>
-              </>
-            )}
+          : spacesUnusable
+            ? (
+                <SpacesStatus
+                  isError={spacesQuery.isError}
+                  isEmpty={spacesEmpty}
+                  onRetry={() => void spacesQuery.refetch()}
+                />
+              )
+            : (
+                <>
+                  <SpacePickerSheet spaces={spaces} selectedSpaceId={selectedSpaceId} onSelect={onSelectSpace} />
+                  <ComposeFields title={title} onChangeTitle={setTitle} body={body} onChangeBody={setBody} />
+                  <View className="mt-3">
+                    <ComposeImageRow
+                      image={image}
+                      imageError={imageError}
+                      onPickImage={() => void onPickImage()}
+                      onRemoveImage={onRemoveImage}
+                    />
+                  </View>
+                </>
+              )}
         <ComposeFooter
           errorMessage={failure ? FAILURE_COPY[failure] : null}
           isPending={isPending}
