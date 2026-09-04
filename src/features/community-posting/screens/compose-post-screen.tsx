@@ -182,11 +182,8 @@ export function ComposePostScreen() {
   const onSelectSpace = React.useCallback(
     (space: PostableSpace) => {
       setSelectedSpaceId(space.id);
-      if (member?.id) {
-        void setItem(lastSpaceKey(member.id), space.id);
-      }
     },
-    [member?.id, setSelectedSpaceId],
+    [setSelectedSpaceId],
   );
 
   const onSubmit = React.useCallback(async () => {
@@ -201,9 +198,12 @@ export function ComposePostScreen() {
     };
     const result = await create(input);
     if (result?.ok === true) {
+      if (member?.id) {
+        void setItem(lastSpaceKey(member.id), result.post.spaceId);
+      }
       router.replace(`/post/${result.post.spaceId}/${result.post.circlePostId}`);
     }
-  }, [selectedSpaceId, title, body, image, create, router]);
+  }, [selectedSpaceId, title, body, image, create, router, member?.id]);
 
   if (!member) {
     return null;

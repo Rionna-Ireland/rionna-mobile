@@ -53,9 +53,10 @@ jest.mock('@/features/community-posting/lib/pick-image', () => ({
   pickImage: jest.fn(),
 }));
 
+const mockSetItem = jest.fn();
 jest.mock('@/lib/storage', () => ({
   getItem: jest.fn(() => null),
-  setItem: jest.fn(),
+  setItem: (...args: unknown[]) => mockSetItem(...args),
 }));
 
 jest.mock('@/components/ui', () => {
@@ -167,5 +168,46 @@ describe('composePostScreen', () => {
     mockParams = { spaceId: 'space-2' };
     render(<ComposePostScreen />);
     expect(screen.getByTestId('compose-post-space-trigger')).toHaveTextContent(/Club News/);
+  });
+});
+
+describe('composePostScreen last-used space', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockParams = {};
+    mockFailure = null;
+    mockUseAuthStoreUser.mockReturnValue(MEMBER);
+    mockUsePostableSpaces.mockReturnValue({ data: { ok: true, spaces: SPACES }, refetch: mockRefetch });
+    mockUseCreatePost.mockReturnValue({ create: mockCreate, isPending: false, failure: mockFailure });
+  });
+
+  it('does not remember the space just from picking it', () => {
+    render(<ComposePostScreen />);
+    fireEvent.press(screen.getByTestId('compose-post-space-trigger'));
+    fireEvent.press(screen.getByTestId('compose-post-space-space-2'));
+    expect(mockSetItem).not.toHaveBeenCalled();
+  });
+
+  it('remembers the posted space only after a successful post', async () => {
+    mockCreate.mockResolvedValue({ ok: true, post: { circlePostId: 'post-9', spaceId: 'space-1' } });
+    render(<ComposePostScreen />);
+    typeEnoughBody();
+    fireEvent.press(screen.getByTestId('compose-post-submit'));
+
+    await screen.findByTestId('compose-post-submit');
+    expect(mockSetItem).toHaveBeenCalledWith('community-posting:last-space:member-1', 'space-1');
+  });
+
+  it('does not remember the space when the post is blocked', async () => {
+    mockFailure = 'blocked';
+    mockUseCreatePost.mockReturnValue({ create: mockCreate, isPending: false, failure: 'blocked' });
+    mockCreate.mockResolvedValue({ ok: false, reason: 'blocked' });
+
+    render(<ComposePostScreen />);
+    typeEnoughBody();
+    fireEvent.press(screen.getByTestId('compose-post-submit'));
+    await screen.findByText('That post can\'t be published.');
+
+    expect(mockSetItem).not.toHaveBeenCalled();
   });
 });
