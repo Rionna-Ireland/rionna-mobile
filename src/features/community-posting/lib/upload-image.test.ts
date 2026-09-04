@@ -1,4 +1,4 @@
-import { uploadImage } from '@/features/community-posting/lib/upload-image';
+import { ImageUploadError, uploadImage } from '@/features/community-posting/lib/upload-image';
 import { client } from '@/lib/api/client';
 
 jest.mock('@/lib/api/client', () => ({ client: { post: jest.fn() } }));
@@ -42,5 +42,26 @@ describe('uploadImage', () => {
       body: blob,
     });
     expect(result).toBe('orgs/org-1/posts/photo.jpg');
+  });
+
+  it('throws ImageUploadError when the PUT response is not ok', async () => {
+    mockPost.mockResolvedValue({
+      data: { signedUploadUrl: 'https://storage.example/upload?sig=abc', path: 'orgs/org-1/posts/photo.jpg' },
+    });
+    const blob = { size: 1234 };
+    (globalThis.fetch as jest.Mock)
+      .mockResolvedValueOnce({ blob: () => Promise.resolve(blob) })
+      .mockResolvedValueOnce({ ok: false, status: 403 });
+
+    let error: unknown;
+    try {
+      await uploadImage(SCOPE, IMAGE);
+    }
+    catch (caught) {
+      error = caught;
+    }
+
+    expect(error).toBeInstanceOf(ImageUploadError);
+    expect((error as ImageUploadError).status).toBe(403);
   });
 });

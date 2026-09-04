@@ -27,7 +27,7 @@ function wrapper(queryClient: QueryClient) {
   };
 }
 
-describe('useCreatePost', () => {
+describe('useCreatePost - success and validation', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('skips the upload and posts without imageKey when no image is given', async () => {
@@ -100,6 +100,26 @@ describe('useCreatePost', () => {
     });
 
     expect(mockUploadImage).not.toHaveBeenCalled();
+    expect(mockPost).not.toHaveBeenCalled();
+    expect(outcome).toEqual({ ok: false, reason: 'image_failed' });
+    expect(result.current.failure).toBe('image_failed');
+  });
+});
+
+describe('useCreatePost - failure mapping', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('maps an image upload failure to failure:"image_failed" without posting', async () => {
+    mockUploadImage.mockRejectedValue(new Error('Image upload failed (403)'));
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Number.POSITIVE_INFINITY } } });
+    const { result } = renderHook(() => useCreatePost(SCOPE), { wrapper: wrapper(queryClient) });
+
+    let outcome;
+    await act(async () => {
+      outcome = await result.current.create({ spaceId: 'space-1', body: 'hello', image: IMAGE });
+    });
+
+    expect(mockUploadImage).toHaveBeenCalledWith(SCOPE, IMAGE);
     expect(mockPost).not.toHaveBeenCalled();
     expect(outcome).toEqual({ ok: false, reason: 'image_failed' });
     expect(result.current.failure).toBe('image_failed');

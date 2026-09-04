@@ -33,7 +33,16 @@ export function useCreatePost(scope: MemberContentScope) {
           return { ok: false, reason: 'image_failed' };
         }
 
-        const imageKey = input.image ? await uploadImage(scope, input.image) : undefined;
+        let imageKey: string | undefined;
+        if (input.image) {
+          try {
+            imageKey = await uploadImage(scope, input.image);
+          }
+          catch {
+            setFailure('image_failed');
+            return { ok: false, reason: 'image_failed' };
+          }
+        }
 
         const { data } = await client.post<CreatePostResult>('/api/community/posts', {
           organizationId: scope.organizationId,
