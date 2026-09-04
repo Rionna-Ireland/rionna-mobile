@@ -209,6 +209,10 @@ const MODAL_STACK_SCREENS: {
     },
   },
   {
+    name: 'post/new',
+    options: { title: 'New post', presentation: 'modal', headerBackTitle: 'Cancel' },
+  },
+  {
     name: 'space-feed/[space-id]',
     options: {
       title: '',

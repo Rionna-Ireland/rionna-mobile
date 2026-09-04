@@ -5,6 +5,7 @@ import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
 import {
   ActivityIndicator,
+  Pressable,
   RefreshControl,
   ScrollView,
   Text,
@@ -12,6 +13,7 @@ import {
 } from 'react-native';
 
 import { useAuthStore } from '@/features/auth/use-auth-store';
+import { usePostableSpaces } from '@/features/community-posting/api/use-postable-spaces';
 import { usePostLike } from '@/features/member-content/api/use-post-like';
 import { useSpaceFeed } from '@/features/member-content/api/use-space-feed';
 import { FeedItemRenderer } from '@/features/member-content/components/feed-item-renderer';
@@ -121,6 +123,20 @@ export function SpaceFeedView({
   );
 }
 
+function NewPostHeaderButton({ onPress }: { onPress: () => void }) {
+  return (
+    <Pressable
+      testID="space-feed-new-post"
+      accessibilityRole="button"
+      accessibilityLabel="New post"
+      onPress={onPress}
+      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+    >
+      <Text className="font-sans text-base font-medium text-violet-700">New post</Text>
+    </Pressable>
+  );
+}
+
 export function SpaceFeedScreen() {
   const params = useLocalSearchParams<{ 'space-id': string; 'name'?: string }>();
   const spaceId = params['space-id'] ?? '';
@@ -135,6 +151,8 @@ export function SpaceFeedScreen() {
   const feed = useSpaceFeed(scope, spaceId);
   const like = usePostLike(scope);
   const poll = usePollVote(scope);
+  const spacesQuery = usePostableSpaces(scope);
+  const isPostable = (spacesQuery.data?.spaces ?? []).some(space => space.id === spaceId);
 
   if (!member) {
     return null;
@@ -142,7 +160,18 @@ export function SpaceFeedScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ title }} />
+      <Stack.Screen
+        options={{
+          title,
+          headerRight: isPostable
+            ? () => (
+                <NewPostHeaderButton
+                  onPress={() => router.push(`/post/new?spaceId=${encodeURIComponent(spaceId)}`)}
+                />
+              )
+            : undefined,
+        }}
+      />
       <SpaceFeedView
         title={title}
         items={feed.data}

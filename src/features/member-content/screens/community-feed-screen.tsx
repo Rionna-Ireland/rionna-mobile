@@ -16,6 +16,7 @@ import {
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { useAuthStore } from '@/features/auth/use-auth-store';
+import { NewPostButton } from '@/features/community-posting/components/new-post-button';
 import { useMemberFeed } from '@/features/member-content/api/use-member-feed';
 import { usePostLike } from '@/features/member-content/api/use-post-like';
 import { FeedItemRenderer } from '@/features/member-content/components/feed-item-renderer';
@@ -166,22 +167,25 @@ function SignedInCommunityFeed({ member }: { member: AuthUser }) {
   const poll = usePollVote(scope);
 
   return (
-    <CommunityFeedView
-      member={member}
-      items={feed.data}
-      contentState={feed.contentState}
-      isLoading={feed.isLoading}
-      isRefetching={feed.isRefetching}
-      onRefresh={() => void feed.refetch()}
-      onOpenPost={(spaceId, postId) => router.push(
-        `/post/${encodeURIComponent(spaceId)}/${encodeURIComponent(postId)}`,
-      )}
-      onOpenProfile={() => router.push('/profile')}
-      onToggleLike={(postId, liked) => like.toggleLike({ postId, liked })}
-      pendingLikePostId={like.pendingPostId}
-      onVote={(pollId, optionId) => poll.vote({ pollId, optionId })}
-      pendingVotePollIds={poll.pendingPollIds}
-    />
+    <View className="flex-1">
+      <CommunityFeedView
+        member={member}
+        items={feed.data}
+        contentState={feed.contentState}
+        isLoading={feed.isLoading}
+        isRefetching={feed.isRefetching}
+        onRefresh={() => void feed.refetch()}
+        onOpenPost={(spaceId, postId) => router.push(
+          `/post/${encodeURIComponent(spaceId)}/${encodeURIComponent(postId)}`,
+        )}
+        onOpenProfile={() => router.push('/profile')}
+        onToggleLike={(postId, liked) => like.toggleLike({ postId, liked })}
+        pendingLikePostId={like.pendingPostId}
+        onVote={(pollId, optionId) => poll.vote({ pollId, optionId })}
+        pendingVotePollIds={poll.pendingPollIds}
+      />
+      <NewPostButton scope={scope} />
+    </View>
   );
 }
 
