@@ -1,0 +1,106 @@
+import type { PostableSpace } from '@/features/community-posting/types';
+
+import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
+import * as React from 'react';
+import { Pressable, Text } from 'react-native';
+
+import { Modal, useModal } from '@/components/ui/modal';
+
+type SpacePickerSheetProps = {
+  spaces: PostableSpace[];
+  selectedSpaceId: string | null;
+  onSelect: (space: PostableSpace) => void;
+};
+
+/**
+ * Space selector for the composer: a trigger showing the currently chosen
+ * space, opening a `@gorhom/bottom-sheet` list of every postable space.
+ */
+export function SpacePickerSheet({ spaces, selectedSpaceId, onSelect }: SpacePickerSheetProps) {
+  const modal = useModal();
+  const selected = spaces.find(space => space.id === selectedSpaceId) ?? null;
+
+  const onSelectSpace = React.useCallback(
+    (space: PostableSpace) => {
+      onSelect(space);
+      modal.dismiss();
+    },
+    [onSelect, modal],
+  );
+
+  return (
+    <>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Choose space"
+        onPress={modal.present}
+        testID="compose-post-space-trigger"
+        className="mb-4 flex-row items-center justify-between rounded-2xl border border-neutral-300 bg-white px-4 py-3"
+      >
+        <Text className="font-sans text-base font-medium text-neutral-950">
+          {selected ? `${selected.emoji ?? ''} ${selected.name}`.trim() : 'Choose a space'}
+        </Text>
+        <Text className="font-sans text-sm text-violet-700">Change</Text>
+      </Pressable>
+      <SpacePickerOptions
+        ref={modal.ref}
+        spaces={spaces}
+        selectedSpaceId={selectedSpaceId}
+        onSelect={onSelectSpace}
+      />
+    </>
+  );
+}
+
+function keyExtractor(space: PostableSpace) {
+  return space.id;
+}
+
+function SpacePickerOptions({
+  ref,
+  spaces,
+  selectedSpaceId,
+  onSelect,
+}: SpacePickerSheetProps & { ref: React.ComponentProps<typeof Modal>['ref'] }) {
+  const height = spaces.length * 60 + 140;
+  const snapPoints = React.useMemo(() => [height], [height]);
+
+  const renderItem = React.useCallback(
+    ({ item }: { item: PostableSpace }) => (
+      <SpaceOption space={item} selected={item.id === selectedSpaceId} onPress={() => onSelect(item)} />
+    ),
+    [selectedSpaceId, onSelect],
+  );
+
+  return (
+    <Modal ref={ref} title="Choose a space" index={0} snapPoints={snapPoints}>
+      <BottomSheetFlatList data={spaces} keyExtractor={keyExtractor} renderItem={renderItem} />
+    </Modal>
+  );
+}
+
+function SpaceOption({
+  space,
+  selected,
+  onPress,
+}: {
+  space: PostableSpace;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={space.name}
+      onPress={onPress}
+      testID={`compose-post-space-${space.id}`}
+      className="flex-row items-center border-b border-neutral-200 px-4 py-3"
+    >
+      <Text className="flex-1 font-sans text-base text-neutral-950">
+        {space.emoji ? `${space.emoji} ` : ''}
+        {space.name}
+      </Text>
+      {selected ? <Text className="font-sans text-sm text-violet-700">Selected</Text> : null}
+    </Pressable>
+  );
+}

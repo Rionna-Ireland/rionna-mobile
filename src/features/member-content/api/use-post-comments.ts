@@ -9,6 +9,7 @@ import type {
 } from '@/features/member-content/types';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 
 import { MEMBER_CONTENT_QUERY_ROOT } from '@/features/member-content/types';
 import { client } from '@/lib/api/client';
@@ -36,15 +37,26 @@ export async function fetchPostComments(
   return data;
 }
 
+/** Thrown by `sendPostComment` when the word gate blocked the comment, so callers can tell it apart from a plain failure. */
+export class CommentBlockedError extends Error {
+  constructor() {
+    super('blocked');
+    this.name = 'CommentBlockedError';
+  }
+}
+
 export async function sendPostComment(
   scope: MemberContentScope,
   { postId, body }: { postId: string; body: string },
 ): Promise<PostComment | null> {
-  const { data } = await client.post<{ ok: boolean; comment: PostComment | null }>(
+  const { data } = await client.post<{ ok: boolean; blocked?: boolean; comment: PostComment | null }>(
     '/api/circle/post-comment',
     { organizationId: scope.organizationId, postId, body },
   );
   if (data.ok !== true) {
+    if (data.blocked === true) {
+      throw new CommentBlockedError();
+    }
     throw new Error('Comment failed');
   }
   return data.comment;
@@ -155,10 +167,12 @@ export function usePostComments(scope: MemberContentScope, postId: string) {
  */
 export function useAddComment(scope: MemberContentScope, authorName: string | null) {
   const queryClient = useQueryClient();
+  const [lastError, setLastError] = useState<'blocked' | 'failed' | null>(null);
   const mutation = useMutation({
     mutationFn: ({ postId, body }: { postId: string; body: string }) =>
       sendPostComment(scope, { postId, body }),
     onMutate: async ({ postId, body }) => {
+      setLastError(null);
       const queryKey = commentsQueryKey(scope, postId);
       await queryClient.cancelQueries({ queryKey });
       const tempId = `temp-${Date.now()}`;
@@ -195,7 +209,8 @@ export function useAddComment(scope: MemberContentScope, authorName: string | nu
         void queryClient.invalidateQueries({ queryKey });
       }
     },
-    onError: (_error, { postId }, context) => {
+    onError: (error, { postId }, context) => {
+      setLastError(error instanceof CommentBlockedError ? 'blocked' : 'failed');
       if (!context) {
         return;
       }
@@ -211,6 +226,7 @@ export function useAddComment(scope: MemberContentScope, authorName: string | nu
   return {
     ...mutation,
     addComment: mutation.mutate,
+    lastError,
   };
 }
 

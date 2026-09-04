@@ -28,6 +28,7 @@ const appIconBadgeConfig: AppIconBadgeConfig = {
 
 const CALENDAR_PERMISSION = 'Allow Rionna to add club events to your calendar.';
 const REMINDERS_PERMISSION = 'Allow Rionna to access reminders when adding club events.';
+const PHOTOS_PERMISSION = 'Rionna uses your photos so you can attach one to a post.';
 
 const plugins: ExpoConfig['plugins'] = [
   [
@@ -92,6 +93,12 @@ const plugins: ExpoConfig['plugins'] = [
     {
       calendarPermission: CALENDAR_PERMISSION,
       remindersPermission: REMINDERS_PERMISSION,
+    },
+  ],
+  [
+    'expo-image-picker',
+    {
+      photosPermission: PHOTOS_PERMISSION,
     },
   ],
   ['app-icon-badge', appIconBadgeConfig],
