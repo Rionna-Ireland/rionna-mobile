@@ -33,6 +33,7 @@ export function PostOverflowMenu({ scope, postId, spaceId, isOwn, onReportPost, 
 
   const runDelete = React.useCallback(async () => {
     if (!spaceId) {
+      Alert.alert('Couldn\'t delete that post. Try again.');
       return;
     }
     const ok = await remove({ spaceId, postId });

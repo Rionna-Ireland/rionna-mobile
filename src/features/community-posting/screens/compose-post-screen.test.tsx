@@ -32,9 +32,14 @@ const SPACES = [
 ];
 
 const mockRefetch = jest.fn();
-const mockUsePostableSpaces = jest.fn(() => ({
+const mockUsePostableSpaces = jest.fn((): {
+  data: { ok: boolean; spaces: typeof SPACES } | undefined;
+  refetch: typeof mockRefetch;
+  isError: boolean;
+} => ({
   data: { ok: true, spaces: SPACES },
   refetch: mockRefetch,
+  isError: false,
 }));
 
 jest.mock('@/features/community-posting/api/use-postable-spaces', () => ({
@@ -82,7 +87,7 @@ describe('composePostScreen', () => {
     mockParams = {};
     mockFailure = null;
     mockUseAuthStoreUser.mockReturnValue(MEMBER);
-    mockUsePostableSpaces.mockReturnValue({ data: { ok: true, spaces: SPACES }, refetch: mockRefetch });
+    mockUsePostableSpaces.mockReturnValue({ data: { ok: true, spaces: SPACES }, refetch: mockRefetch, isError: false });
     mockUseCreatePost.mockReturnValue({ create: mockCreate, isPending: false, failure: mockFailure });
   });
 
@@ -171,13 +176,46 @@ describe('composePostScreen', () => {
   });
 });
 
+describe('composePostScreen spaces status', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockParams = {};
+    mockFailure = null;
+    mockUseAuthStoreUser.mockReturnValue(MEMBER);
+    mockUsePostableSpaces.mockReturnValue({ data: { ok: true, spaces: SPACES }, refetch: mockRefetch, isError: false });
+    mockUseCreatePost.mockReturnValue({ create: mockCreate, isPending: false, failure: mockFailure });
+  });
+
+  it('shows an empty-state message and no form when there are no postable spaces', () => {
+    mockUsePostableSpaces.mockReturnValue({ data: { ok: true, spaces: [] }, refetch: mockRefetch, isError: false });
+    render(<ComposePostScreen />);
+
+    expect(screen.getByText('You can\'t post in any spaces yet.')).toBeOnTheScreen();
+    expect(screen.queryByTestId('compose-post-space-trigger')).toBeNull();
+    expect(screen.getByTestId('compose-post-submit').props.accessibilityState).toEqual(
+      expect.objectContaining({ disabled: true }),
+    );
+  });
+
+  it('shows a retry message and no form when the postable-spaces query errors', () => {
+    mockUsePostableSpaces.mockReturnValue({ data: undefined, refetch: mockRefetch, isError: true });
+    render(<ComposePostScreen />);
+
+    expect(screen.getByText('Couldn\'t load your spaces. Pull to retry.')).toBeOnTheScreen();
+    expect(screen.queryByTestId('compose-post-space-trigger')).toBeNull();
+
+    fireEvent.press(screen.getByTestId('compose-post-spaces-retry'));
+    expect(mockRefetch).toHaveBeenCalled();
+  });
+});
+
 describe('composePostScreen last-used space', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockParams = {};
     mockFailure = null;
     mockUseAuthStoreUser.mockReturnValue(MEMBER);
-    mockUsePostableSpaces.mockReturnValue({ data: { ok: true, spaces: SPACES }, refetch: mockRefetch });
+    mockUsePostableSpaces.mockReturnValue({ data: { ok: true, spaces: SPACES }, refetch: mockRefetch, isError: false });
     mockUseCreatePost.mockReturnValue({ create: mockCreate, isPending: false, failure: mockFailure });
   });
 
