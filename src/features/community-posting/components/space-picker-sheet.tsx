@@ -2,7 +2,7 @@ import type { PostableSpace } from '@/features/community-posting/types';
 
 import { BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import * as React from 'react';
-import { Pressable, Text } from 'react-native';
+import { Pressable, Text, useWindowDimensions } from 'react-native';
 
 import { Modal, useModal } from '@/components/ui/modal';
 
@@ -62,7 +62,10 @@ function SpacePickerOptions({
   selectedSpaceId,
   onSelect,
 }: SpacePickerSheetProps & { ref: React.ComponentProps<typeof Modal>['ref'] }) {
-  const height = spaces.length * 60 + 140;
+  const { height: windowHeight } = useWindowDimensions();
+  // Header + rows, clamped so a long space list scrolls inside the sheet
+  // instead of pushing the top row off screen.
+  const height = Math.min(spaces.length * 60 + 160, Math.round(windowHeight * 0.75));
   const snapPoints = React.useMemo(() => [height], [height]);
 
   const renderItem = React.useCallback(

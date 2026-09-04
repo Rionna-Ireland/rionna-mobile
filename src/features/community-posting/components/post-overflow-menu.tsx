@@ -68,7 +68,7 @@ export function PostOverflowMenu({ scope, postId, spaceId, isOwn, onReportPost, 
       >
         <Text className="px-2 font-sans text-xl font-semibold text-neutral-800">···</Text>
       </Pressable>
-      <Modal ref={modal.ref} snapPoints={[isOwn ? 190 : 130]}>
+      <Modal ref={modal.ref} snapPoints={[isOwn ? '36%' : '28%']}>
         <View className="px-4 pb-6">
           <Pressable
             accessibilityRole="button"

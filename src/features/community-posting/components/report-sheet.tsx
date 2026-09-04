@@ -99,7 +99,7 @@ export function ReportSheet({ scope, target, onClose }: ReportSheetProps) {
   }, [target, report, reason, note, closeSheet]);
 
   return (
-    <Modal ref={modal.ref} title="Report" onDismiss={onClose} snapPoints={[reason === 'other' ? 460 : 340]}>
+    <Modal ref={modal.ref} title="Report" onDismiss={onClose} snapPoints={[reason === 'other' ? '78%' : '62%']}>
       <View className="px-4 pb-6">
         {REASONS.map(item => (
           <ReportReasonOption key={item.value} reason={item} selected={reason === item.value} onSelect={setReason} />
