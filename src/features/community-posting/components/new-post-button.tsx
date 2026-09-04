@@ -2,7 +2,8 @@ import type { MemberContentScope } from '@/features/member-content/types';
 
 import { useRouter } from 'expo-router';
 import * as React from 'react';
-import { Pressable, Text } from 'react-native';
+import { Pressable } from 'react-native';
+import { Path, Svg } from 'react-native-svg';
 
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { usePostableSpaces } from '@/features/community-posting/api/use-postable-spaces';
@@ -35,7 +36,9 @@ export function NewPostButton({ scope }: NewPostButtonProps) {
       style={{ bottom: bottomOffset }}
       className="absolute right-6 size-14 items-center justify-center rounded-full bg-violet-700 shadow-lg"
     >
-      <Text className="font-sans text-2xl font-semibold text-white">+</Text>
+      <Svg width={26} height={26} viewBox="0 0 24 24" accessibilityElementsHidden>
+        <Path d="M12 5v14M5 12h14" stroke="#FFFFFF" strokeWidth={2.5} strokeLinecap="round" />
+      </Svg>
     </Pressable>
   );
 }
