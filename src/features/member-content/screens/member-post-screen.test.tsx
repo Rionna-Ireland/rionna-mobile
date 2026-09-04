@@ -3,8 +3,10 @@ import type { MemberPostDetail, PostComment } from '@/features/member-content/ty
 import { HeaderHeightContext } from '@react-navigation/elements';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import * as React from 'react';
+import { Alert } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
+import { PostOverflowMenu } from '@/features/community-posting/components/post-overflow-menu';
 import { MemberPostView } from '@/features/member-content/screens/member-post-screen';
 
 jest.mock('@/components/ui', () => ({
@@ -19,6 +21,23 @@ jest.mock('@/components/ui/screen-layout', () => ({
 jest.mock('react-native-webview', () => ({
   WebView: 'WebView',
 }));
+
+jest.mock('@/components/ui/modal', () => {
+  const RN = jest.requireActual('react-native');
+  return {
+    Modal: ({ children }: { children: React.ReactNode }) => <RN.View>{children}</RN.View>,
+    useModal: () => ({ ref: { current: null }, present: jest.fn(), dismiss: jest.fn() }),
+  };
+});
+
+const mockRemove = jest.fn();
+let mockDeletePending = false;
+
+jest.mock('@/features/community-posting/api/use-delete-post', () => ({
+  useDeletePost: () => ({ remove: (...args: unknown[]) => mockRemove(...args), isPending: mockDeletePending }),
+}));
+
+const SCOPE = { organizationId: 'org-1', memberId: 'member-1' };
 
 const POST: MemberPostDetail = {
   id: 'post-1',
@@ -248,5 +267,162 @@ describe('memberPostView keyboard avoidance', () => {
 
     const avoidingView = screen.UNSAFE_getByType(KeyboardAvoidingView);
     expect(avoidingView.props.keyboardVerticalOffset).toBe(0);
+  });
+});
+
+describe('memberPostView blocked comments', () => {
+  it('shows the blocked copy and keeps the composer text instead of clearing it', () => {
+    const onSubmitComment = jest.fn();
+    const { rerender } = render(
+      <MemberPostView
+        post={POST}
+        contentState="fresh"
+        comments={[]}
+        onSubmitComment={onSubmitComment}
+        commentError={null}
+      />,
+    );
+
+    fireEvent.changeText(screen.getByLabelText('Write a comment'), 'Bad words here');
+    fireEvent.press(screen.getByLabelText('Send comment'));
+    expect(onSubmitComment).toHaveBeenCalledWith('post-1', 'Bad words here');
+
+    rerender(
+      <MemberPostView
+        post={POST}
+        contentState="fresh"
+        comments={[]}
+        onSubmitComment={onSubmitComment}
+        commentError="blocked"
+      />,
+    );
+
+    expect(screen.getByText('That comment can\'t be posted.')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Write a comment').props.value).toBe('Bad words here');
+  });
+
+  it('shows no inline copy for a plain failure', () => {
+    render(
+      <MemberPostView
+        post={POST}
+        contentState="fresh"
+        comments={[]}
+        onSubmitComment={jest.fn()}
+        commentError="failed"
+      />,
+    );
+    expect(screen.queryByText('That comment can\'t be posted.')).not.toBeOnTheScreen();
+  });
+});
+
+describe('memberPostView comment long-press', () => {
+  it('reports the pressed comment via the long-press handler', () => {
+    const onLongPressComment = jest.fn();
+    render(
+      <MemberPostView
+        post={POST}
+        contentState="fresh"
+        comments={[comment()]}
+        onLongPressComment={onLongPressComment}
+      />,
+    );
+
+    fireEvent(screen.getByLabelText('Comment by Jane Member'), 'longPress');
+    expect(onLongPressComment).toHaveBeenCalledWith('post-1', expect.objectContaining({ id: 'c-1' }));
+  });
+});
+
+describe('postOverflowMenu', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockDeletePending = false;
+    jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+  });
+
+  it('offers Delete post only when the member owns the post', () => {
+    render(
+      <PostOverflowMenu
+        scope={SCOPE}
+        postId="post-1"
+        spaceId="space-1"
+        isOwn={false}
+        onReportPost={jest.fn()}
+        onDeleted={jest.fn()}
+      />,
+    );
+    expect(screen.getByLabelText('Report post')).toBeOnTheScreen();
+    expect(screen.queryByLabelText('Delete post')).not.toBeOnTheScreen();
+  });
+
+  it('shows Delete post for the member own post and calls onReportPost for Report post', () => {
+    const onReportPost = jest.fn();
+    render(
+      <PostOverflowMenu
+        scope={SCOPE}
+        postId="post-1"
+        spaceId="space-1"
+        isOwn
+        onReportPost={onReportPost}
+        onDeleted={jest.fn()}
+      />,
+    );
+    expect(screen.getByLabelText('Delete post')).toBeOnTheScreen();
+
+    fireEvent.press(screen.getByLabelText('Report post'));
+    expect(onReportPost).toHaveBeenCalledTimes(1);
+  });
+
+  it('confirms before deleting, then removes the post and calls onDeleted on success', () => {
+    mockRemove.mockResolvedValue(true);
+    const onDeleted = jest.fn();
+    render(
+      <PostOverflowMenu
+        scope={SCOPE}
+        postId="post-1"
+        spaceId="space-1"
+        isOwn
+        onReportPost={jest.fn()}
+        onDeleted={onDeleted}
+      />,
+    );
+
+    fireEvent.press(screen.getByLabelText('Delete post'));
+    expect(Alert.alert).toHaveBeenCalledWith(
+      'Delete this post?',
+      expect.any(String),
+      expect.arrayContaining([
+        expect.objectContaining({ text: 'Cancel' }),
+        expect.objectContaining({ text: 'Delete', style: 'destructive' }),
+      ]),
+    );
+
+    const [, , buttons] = (Alert.alert as jest.Mock).mock.calls[0];
+    const deleteButton = buttons.find((button: { text: string }) => button.text === 'Delete');
+    deleteButton.onPress();
+
+    expect(mockRemove).toHaveBeenCalledWith({ spaceId: 'space-1', postId: 'post-1' });
+  });
+
+  it('shows a failure alert when the delete does not succeed', async () => {
+    mockRemove.mockResolvedValue(false);
+    const onDeleted = jest.fn();
+    render(
+      <PostOverflowMenu
+        scope={SCOPE}
+        postId="post-1"
+        spaceId="space-1"
+        isOwn
+        onReportPost={jest.fn()}
+        onDeleted={onDeleted}
+      />,
+    );
+
+    fireEvent.press(screen.getByLabelText('Delete post'));
+    const [, , buttons] = (Alert.alert as jest.Mock).mock.calls[0];
+    const deleteButton = buttons.find((button: { text: string }) => button.text === 'Delete');
+    await deleteButton.onPress();
+
+    expect(onDeleted).not.toHaveBeenCalled();
+    expect(Alert.alert).toHaveBeenCalledWith('Couldn\'t delete that post. Try again.');
   });
 });

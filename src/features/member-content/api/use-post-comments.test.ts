@@ -8,6 +8,7 @@ import { QueryClient } from '@tanstack/react-query';
 
 import {
   applyCommentCountDelta,
+  CommentBlockedError,
   fetchPostComments,
   removeCommentById,
   replaceCommentById,
@@ -85,6 +86,13 @@ describe('sendPostComment', () => {
     mockPost.mockResolvedValue({ data: { ok: false, comment: null } });
     await expect(sendPostComment(SCOPE, { postId: 'post-1', body: 'Hi' })).rejects.toThrow(
       'Comment failed',
+    );
+  });
+
+  it('rejects with CommentBlockedError when the word gate blocked the comment', async () => {
+    mockPost.mockResolvedValue({ data: { ok: false, blocked: true, comment: null } });
+    await expect(sendPostComment(SCOPE, { postId: 'post-1', body: 'Hi' })).rejects.toBeInstanceOf(
+      CommentBlockedError,
     );
   });
 });

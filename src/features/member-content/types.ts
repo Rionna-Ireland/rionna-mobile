@@ -62,6 +62,8 @@ export type MemberPostDetail = {
   likeCount: number;
   isLiked: boolean;
   url: string | null;
+  /** Whether the signed-in member authored this post. Absent on older cached posts — treat as false. */
+  isOwn?: boolean;
 };
 
 export type PostComment = {

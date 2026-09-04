@@ -60,3 +60,13 @@ export type ReportInput = {
 export type ReportContentResult = {
   ok: boolean;
 };
+
+/** What's being reported — everything the report sheet needs except the reason/note the member picks. */
+export type ReportTarget = {
+  surface: 'post' | 'comment';
+  postId: string;
+  commentId?: string;
+  spaceId?: string;
+  excerpt: string;
+  authorName?: string;
+};
