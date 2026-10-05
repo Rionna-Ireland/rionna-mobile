@@ -8,7 +8,7 @@ import { LoginMedia } from '@/features/arrival/login-media';
 import { Caption, Section } from './section';
 
 /** Public sample clip for the expo-video smoke test (S14-01). Dev-only. */
-const SAMPLE_CLIP = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
+const SAMPLE_CLIP = 'https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4';
 
 const POSTER = require('../../../assets/login-poster.jpg');
 
