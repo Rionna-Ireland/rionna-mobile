@@ -15,11 +15,9 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
  * cached payloads may not have them.
  */
 export type HeroRunInput = NextRunEntry & { timeformComment?: string | null };
-export type HeroResultInput = LatestResult & { replayUrl?: string | null };
+export type HeroResultInput = LatestResult;
 
-export type HeroSlideCta
-  = | { label: string; kind: 'route'; href: Href }
-    | { label: string; kind: 'external'; url: string };
+export type HeroSlideCta = { label: string; kind: 'route'; href: Href };
 
 export type HeroSlide = {
   key: string;
@@ -106,9 +104,8 @@ function resultSlide(result: HeroResultInput): HeroSlide {
   const title = pos
     ? `${result.horse.name} finishes ${ordinal(pos)} at ${course}`
     : `${result.horse.name} ran at ${course}`;
-  const cta: HeroSlideCta = result.replayUrl
-    ? { label: 'Watch replay', kind: 'external', url: result.replayUrl }
-    : { label: 'See the result', kind: 'route', href: `/stables/${result.horse.id}` };
+  // Replays are hidden for v1 (S13-16): the result slide always opens the horse.
+  const cta: HeroSlideCta = { label: 'See the result', kind: 'route', href: `/stables/${result.horse.id}` };
   return {
     key: `result-${result.id}`,
     kind: 'result',

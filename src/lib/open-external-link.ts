@@ -18,7 +18,7 @@ catch {
  * Opens an external URL in the app's in-app browser (expo-web-browser),
  * falling back to the system browser (Linking) if the native module isn't
  * available. Shared by any surface that opens a link outside the app --
- * settings legal links, replay links, etc.
+ * settings legal links, etc.
  */
 export function openExternalLink(url: string) {
   if (WebBrowser) {

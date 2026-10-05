@@ -1,16 +1,9 @@
 import type { Entry } from '@/features/stables/types';
 
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { render, screen } from '@testing-library/react-native';
 import * as React from 'react';
 
 import { ResultRow } from '@/features/stables/components/result-row';
-import { openExternalLink } from '@/lib/open-external-link';
-
-jest.mock('@/lib/open-external-link', () => ({
-  openExternalLink: jest.fn(),
-}));
-
-const mockOpenExternalLink = openExternalLink as jest.MockedFunction<typeof openExternalLink>;
 
 const BASE_ENTRY: Entry = {
   id: 'entry-1',
@@ -59,18 +52,10 @@ describe('resultRow', () => {
     expect(screen.getByText('21 June · 6/1')).toBeOnTheScreen();
   });
 
-  it('does not render a replay affordance when replayUrl is absent', () => {
-    render(<ResultRow entry={BASE_ENTRY} />);
-
-    expect(screen.queryByText('Watch Replay')).toBeNull();
-  });
-
-  it('opens the replay url via the shared external-link helper when tapped', () => {
+  it('never renders a replay affordance, even when replayUrl is set (S13-16)', () => {
     const entry: Entry = { ...BASE_ENTRY, replayUrl: 'https://video.example/race-1' };
     render(<ResultRow entry={entry} />);
 
-    fireEvent.press(screen.getByText('Watch Replay'));
-
-    expect(mockOpenExternalLink).toHaveBeenCalledWith('https://video.example/race-1');
+    expect(screen.queryByText(/replay/i)).toBeNull();
   });
 });
