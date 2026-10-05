@@ -20,6 +20,16 @@ jest.mock('@/components/ui', () => {
   return { ...actual, FocusAwareStatusBar: () => null };
 });
 
+jest.mock('@/features/arrival/welcome-loader', () => {
+  const React = require('react');
+  return {
+    WelcomeLoader: ({ onReady }: { name?: string; onReady: () => void }) => {
+      React.useEffect(() => onReady(), [onReady]);
+      return null;
+    },
+  };
+});
+
 jest.mock('@/lib/auth/mobile-org-bootstrap', () => ({
   bootstrapMobileOrganization: (...args: unknown[]) => mockBootstrap(...args),
 }));
@@ -57,7 +67,7 @@ jest.mock('./components/login-form', () => {
   };
 });
 
-describe('LoginScreen', () => {
+describe('loginScreen', () => {
   beforeEach(() => {
     mockReplace.mockReset();
     mockSignIn.mockReset();

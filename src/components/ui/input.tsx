@@ -1,4 +1,3 @@
-/* eslint-disable better-tailwindcss/no-unknown-classes */
 import type { TextInputProps } from 'react-native';
 import * as React from 'react';
 import { I18nManager, TextInput as NTextInput, StyleSheet, View } from 'react-native';
@@ -7,47 +6,68 @@ import { tv } from 'tailwind-variants';
 import colors from './colors';
 import { Text } from './text';
 
+/**
+ * Design V2 form field (S13-01 §7, Figma "Form Fields").
+ * - `light` (default): in-app forms. White fill, hairline border, navy focus border.
+ * - `dark`: on navy (login). White @8% fill, white @18% border, lilac when focused.
+ * r8, 16pt padding. `FormField` is the same component under its V2 name.
+ */
 const inputTv = tv({
   slots: {
     container: 'mb-2',
-    label: 'text-grey-100 mb-1 text-lg dark:text-neutral-100',
-    input:
-      'mt-0 rounded-xl border-[0.5px] border-neutral-300 bg-neutral-100 px-4 py-3 font-sans text-base/5 font-medium dark:border-neutral-700 dark:bg-neutral-800 dark:text-white',
+    label: 'mb-1.5 font-sans-medium text-xs/4',
+    input: 'mt-0 rounded-lg border p-4 font-sans-medium text-sm/5',
   },
 
   variants: {
-    focused: {
-      true: {
-        input: 'border-neutral-400 dark:border-neutral-300',
+    tone: {
+      light: {
+        label: 'text-ink-variant',
+        input: 'border-outline-variant bg-white text-ink',
       },
+      dark: {
+        label: 'text-on-primary-container',
+        input: 'border-white/18 bg-white/8 text-white',
+      },
+    },
+    focused: {
+      true: {},
     },
     error: {
       true: {
-        input: 'border-danger-600',
-        label: 'text-danger-600 dark:text-danger-600',
+        input: 'border-danger-500',
+        label: 'text-danger-700',
       },
     },
     disabled: {
       true: {
-        input: 'bg-neutral-200',
+        input: 'opacity-50',
       },
     },
   },
+  compoundVariants: [
+    { tone: 'light', focused: true, error: false, class: { input: 'border-primary' } },
+    { tone: 'dark', focused: true, error: false, class: { input: 'border-on-primary-container' } },
+  ],
   defaultVariants: {
+    tone: 'light',
     focused: false,
     error: false,
     disabled: false,
   },
 });
 
+export type InputTone = 'light' | 'dark';
+
 export type NInputProps = {
   label?: string;
   disabled?: boolean;
   error?: string;
+  tone?: InputTone;
 } & TextInputProps;
 
 export function Input({ ref, ...props }: NInputProps & { ref?: React.Ref<NTextInput | null> }) {
-  const { label, error, testID, onBlur: onBlurProp, onFocus: onFocusProp, ...inputProps } = props;
+  const { label, error, tone = 'light', testID, className, onBlur: onBlurProp, onFocus: onFocusProp, ...inputProps } = props;
   const [isFocussed, setIsFocussed] = React.useState(false);
 
   const onBlur = React.useCallback(
@@ -67,6 +87,7 @@ export function Input({ ref, ...props }: NInputProps & { ref?: React.Ref<NTextIn
   );
 
   const styles = inputTv({
+    tone,
     error: Boolean(error),
     focused: isFocussed,
     disabled: Boolean(props.disabled),
@@ -85,8 +106,11 @@ export function Input({ ref, ...props }: NInputProps & { ref?: React.Ref<NTextIn
       <NTextInput
         testID={testID}
         ref={ref}
-        placeholderTextColor={colors.neutral[400]}
-        className={styles.input()}
+        placeholderTextColor={tone === 'dark' ? colors.primaryFixed : colors.inkMuted}
+        editable={!props.disabled}
+        accessibilityLabel={label}
+        accessibilityState={{ disabled: Boolean(props.disabled) }}
+        className={styles.input({ class: className })}
         onBlur={onBlur}
         onFocus={onFocus}
         {...inputProps}
@@ -99,7 +123,7 @@ export function Input({ ref, ...props }: NInputProps & { ref?: React.Ref<NTextIn
       {error && (
         <Text
           testID={testID ? `${testID}-error` : undefined}
-          className="text-danger-400 dark:text-danger-600 text-sm"
+          className={tone === 'dark' ? 'mt-1 text-xs text-danger-300' : 'mt-1 text-xs text-danger-700'}
         >
           {error}
         </Text>
@@ -107,3 +131,6 @@ export function Input({ ref, ...props }: NInputProps & { ref?: React.Ref<NTextIn
     </View>
   );
 }
+
+/** Design V2 name for the form field. Same component and props as `Input`. */
+export const FormField = Input;

@@ -3,18 +3,19 @@ import type { MemberContentState, MemberFeedItem } from '@/features/member-conte
 import Env from 'env';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
+import { RefreshControl, ScrollView, View } from 'react-native';
+
 import {
   ActivityIndicator,
-  Pressable,
-  RefreshControl,
-  ScrollView,
+  EmptyState,
+  ErrorState,
+  IconButton,
+  ScreenHeader,
   Text,
-  View,
-} from 'react-native';
-import { Path, Svg } from 'react-native-svg';
-
+} from '@/components/ui';
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { usePostableSpaces } from '@/features/community-posting/api/use-postable-spaces';
+import { PlusGlyph } from '@/features/community-posting/components/plus-glyph';
 import { usePostLike } from '@/features/member-content/api/use-post-like';
 import { useSpaceFeed } from '@/features/member-content/api/use-space-feed';
 import { FeedItemRenderer } from '@/features/member-content/components/feed-item-renderer';
@@ -32,28 +33,14 @@ type SpaceFeedViewProps = {
   pendingLikePostId?: string | null;
   onVote: (pollId: string, optionId: string) => void;
   pendingVotePollIds: string[];
+  onBack?: () => void;
+  /** Header "+" (new post) — only passed when the space is postable. */
+  onNewPost?: () => void;
 };
 
 // Stories are merged into the Community feed only, never per-space feeds, so
 // FeedItemRenderer's onOpenStory is wired to a no-op here.
 function noOpOpenStory() {}
-
-function EmptyState({
-  testID,
-  title,
-  message,
-}: {
-  testID: string;
-  title: string;
-  message: string;
-}) {
-  return (
-    <View testID={testID} className="rounded-2xl border border-neutral-300 bg-white p-6">
-      <Text className="font-sans text-lg font-semibold text-neutral-950">{title}</Text>
-      <Text className="mt-2 font-sans text-sm/5 text-neutral-600">{message}</Text>
-    </View>
-  );
-}
 
 export function SpaceFeedView({
   title,
@@ -67,30 +54,43 @@ export function SpaceFeedView({
   pendingLikePostId,
   onVote,
   pendingVotePollIds,
+  onBack,
+  onNewPost,
 }: SpaceFeedViewProps) {
   return (
     <ScrollView
-      className="flex-1 bg-neutral-100"
-      contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 48 }}
+      className="flex-1 bg-surface"
+      contentContainerStyle={{ paddingBottom: 48 }}
       refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />}
     >
-      <View className="mb-6">
-        <Text className="font-mono text-[10px] tracking-widest text-violet-700 uppercase">
-          Discussion
-        </Text>
-        <Text className="mt-2 font-sans text-3xl font-semibold text-neutral-950">
-          {title}
-        </Text>
-      </View>
+      <ScreenHeader
+        kicker="Discussion"
+        title={title}
+        onBack={onBack}
+        right={onNewPost
+          ? (
+              <IconButton
+                testID="space-feed-new-post"
+                variant="square-accent"
+                accessibilityLabel="New post"
+                onPress={onNewPost}
+                // The header's right slot pulls 12pt outward for bare icons;
+                // a filled button must sit on the 16pt gutter like the cards.
+                className="mr-3 size-11"
+              >
+                <PlusGlyph size={20} />
+              </IconButton>
+            )
+          : undefined}
+        className="pb-6"
+      />
 
-      <View className="gap-4">
+      <View className="gap-3 px-4">
         {isLoading && !items
           ? (
               <View testID="space-feed-loading" className="items-center py-16">
-                <ActivityIndicator color="#6D28D9" />
-                <Text className="mt-3 font-sans text-sm text-neutral-600">
-                  Loading the discussion…
-                </Text>
+                <ActivityIndicator />
+                <Text variant="body" className="mt-3 text-ink-variant">Loading the discussion…</Text>
               </View>
             )
           : null}
@@ -99,16 +99,17 @@ export function SpaceFeedView({
               <EmptyState
                 testID="space-feed-empty"
                 title="No posts yet"
-                message="Updates and discussion for this horse will appear here."
+                body="Updates and discussion for this horse will appear here."
               />
             )
           : null}
         {!isLoading && contentState === 'unavailable'
           ? (
-              <EmptyState
+              <ErrorState
                 testID="space-feed-unavailable"
                 title="Discussion unavailable"
-                message="Check your connection and pull down to try again."
+                body="Check your connection and try again."
+                onRetry={onRefresh}
               />
             )
           : null}
@@ -126,25 +127,6 @@ export function SpaceFeedView({
         ))}
       </View>
     </ScrollView>
-  );
-}
-
-function NewPostHeaderButton({ onPress }: { onPress: () => void }) {
-  // Native stack header-right slot is narrow (back title + screen title
-  // compete for width), so use a compact icon rather than a text label.
-  return (
-    <Pressable
-      testID="space-feed-new-post"
-      accessibilityRole="button"
-      accessibilityLabel="New post"
-      onPress={onPress}
-      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-      className="size-9 items-center justify-center rounded-full bg-violet-700"
-    >
-      <Svg width={18} height={18} viewBox="0 0 24 24" accessibilityElementsHidden>
-        <Path d="M12 5v14M5 12h14" stroke="#FFFFFF" strokeWidth={2.5} strokeLinecap="round" />
-      </Svg>
-    </Pressable>
   );
 }
 
@@ -171,18 +153,7 @@ export function SpaceFeedScreen() {
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          title,
-          headerRight: isPostable
-            ? () => (
-                <NewPostHeaderButton
-                  onPress={() => router.push(`/post/new?spaceId=${encodeURIComponent(spaceId)}`)}
-                />
-              )
-            : undefined,
-        }}
-      />
+      <Stack.Screen options={{ headerShown: false }} />
       <SpaceFeedView
         title={title}
         items={feed.data}
@@ -197,6 +168,10 @@ export function SpaceFeedScreen() {
         pendingLikePostId={like.pendingPostId}
         onVote={(pollId, optionId) => poll.vote({ pollId, optionId })}
         pendingVotePollIds={poll.pendingPollIds}
+        onBack={() => router.back()}
+        onNewPost={isPostable
+          ? () => router.push(`/post/new?spaceId=${encodeURIComponent(spaceId)}`)
+          : undefined}
       />
     </>
   );

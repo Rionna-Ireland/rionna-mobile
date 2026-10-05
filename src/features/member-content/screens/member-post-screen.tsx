@@ -9,19 +9,21 @@ import { HeaderHeightContext } from '@react-navigation/elements';
 import Env from 'env';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
+import { Linking, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
+import { Path, Svg } from 'react-native-svg';
+
 import {
   ActivityIndicator,
-  Linking,
-  Pressable,
-  ScrollView,
+  Button,
+  Card,
+  IconButton,
+  Image,
+  MonoLabel,
+  ScreenHeader,
   Text,
-  TextInput,
-  View,
-} from 'react-native';
-import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
-
-import { Image } from '@/components/ui';
-import { Heart } from '@/components/ui/icons';
+} from '@/components/ui';
+import colors from '@/components/ui/colors';
 import { useScreenBottomPadding } from '@/components/ui/screen-layout';
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { PostOverflowMenu } from '@/features/community-posting/components/post-overflow-menu';
@@ -34,7 +36,8 @@ import {
 } from '@/features/member-content/api/use-post-comments';
 import { usePostLike } from '@/features/member-content/api/use-post-like';
 import { CircleTiptapRenderer } from '@/features/member-content/components/circle-tiptap-renderer';
-import { formatCount, formatMemberContentDate } from '@/features/member-content/lib/content-format';
+import { ActivityRow, AuthorHeader } from '@/features/member-content/components/post-parts';
+import { formatRelativeTime } from '@/features/member-content/lib/space-tag';
 import { hydrateCircleDoc } from '@/features/member-content/tiptap/hydrate';
 import { circleDocHasContent } from '@/features/member-content/tiptap/native-support';
 
@@ -46,12 +49,18 @@ type MemberPostViewProps = {
   isLoading?: boolean;
   onOpenUrl?: (url: string) => void;
   onRetry?: () => void;
+  /** Back action for the kicker header. */
+  onBack?: () => void;
+  /** Right slot of the kicker header (the post overflow menu). */
+  headerRight?: React.ReactNode;
   /** Wire to flip the like; omitted → read-only count. */
   onToggleLike?: (postId: string, liked: boolean) => void;
   /** Disables the heart while the like mutation is in flight. */
   likePending?: boolean;
   /** The post's comments; undefined hides the whole comments section. */
   comments?: PostComment[];
+  /** Server total for the "Replies (N)" label; falls back to the loaded count. */
+  commentsTotal?: number | null;
   /** Comments failed to load (post itself may still be fine). */
   commentsUnavailable?: boolean;
   /** Wire to enable the composer; omitted → read-only comments. */
@@ -68,113 +77,29 @@ type MemberPostViewProps = {
   onLongPressComment?: (postId: string, comment: PostComment) => void;
 };
 
-function PostUnavailable({ onRetry }: { onRetry?: () => void }) {
+function PostUnavailable({ onRetry, onBack }: { onRetry?: () => void; onBack?: () => void }) {
   return (
-    <View testID="member-post-unavailable" className="flex-1 items-center justify-center bg-neutral-100 px-8">
-      <Text className="font-sans text-xl font-semibold text-neutral-950">Post unavailable</Text>
-      <Text className="mt-2 text-center font-sans text-sm/5 text-neutral-600">
-        Check your connection and try again.
-      </Text>
-      {onRetry
-        ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Retry post"
-              className="mt-5 h-11 items-center justify-center rounded-xl border border-violet-700 bg-white px-6"
-              onPress={onRetry}
-            >
-              <Text className="font-sans text-sm font-semibold text-violet-800">Try again</Text>
-            </Pressable>
-          )
-        : null}
-    </View>
-  );
-}
-
-function PostAuthor({ post }: { post: MemberPostDetail }) {
-  const authorName = post.authorName?.trim() || 'Rionna member';
-  return (
-    <View className="mt-5 flex-row items-center gap-3">
-      {post.authorAvatarUrl
-        ? (
-            <Image
-              source={{ uri: post.authorAvatarUrl }}
-              className="size-10 rounded-full bg-neutral-200"
-              contentFit="cover"
-              cachePolicy="memory-disk"
-              accessibilityLabel={`${authorName} avatar`}
-            />
-          )
-        : (
-            <View className="size-10 items-center justify-center rounded-full border border-neutral-300 bg-neutral-100">
-              <Text className="font-sans text-sm font-semibold text-neutral-800">
-                {authorName.slice(0, 1).toUpperCase()}
-              </Text>
-            </View>
-          )}
-      <Text className="font-sans text-sm font-medium text-neutral-800">{authorName}</Text>
-    </View>
-  );
-}
-
-function PostLikeControl({
-  post,
-  onToggleLike,
-  likePending = false,
-}: {
-  post: MemberPostDetail;
-  onToggleLike?: (postId: string, liked: boolean) => void;
-  likePending?: boolean;
-}) {
-  const countLabel = formatCount(post.likeCount, 'like', 'likes');
-  if (!onToggleLike) {
-    return <Text className="font-sans text-xs text-neutral-500">{countLabel}</Text>;
-  }
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={post.isLiked ? 'Unlike post' : 'Like post'}
-      disabled={likePending}
-      hitSlop={8}
-      onPress={() => onToggleLike(post.id, !post.isLiked)}
-      className="flex-row items-center gap-1.5"
-    >
-      <Heart
-        width={16}
-        height={16}
-        filled={post.isLiked}
-        color={post.isLiked ? '#BE123C' : '#737373'}
-      />
-      <Text
-        className={
-          post.isLiked
-            ? 'font-sans text-xs font-medium text-rose-700'
-            : 'font-sans text-xs text-neutral-500'
-        }
-      >
-        {countLabel}
-      </Text>
-    </Pressable>
-  );
-}
-
-function CommentAvatar({ name, avatarUrl }: { name: string; avatarUrl: string | null }) {
-  if (avatarUrl) {
-    return (
-      <Image
-        source={{ uri: avatarUrl }}
-        className="size-8 rounded-full bg-neutral-200"
-        contentFit="cover"
-        cachePolicy="memory-disk"
-        accessibilityLabel={`${name} avatar`}
-      />
-    );
-  }
-  return (
-    <View className="size-8 items-center justify-center rounded-full border border-neutral-300 bg-neutral-100">
-      <Text className="font-sans text-xs font-semibold text-neutral-800">
-        {name.slice(0, 1).toUpperCase()}
-      </Text>
+    <View testID="member-post-unavailable" className="flex-1 bg-surface">
+      <ScreenHeader kicker="Community" onBack={onBack} />
+      <View className="flex-1 items-center justify-center px-8">
+        <Text variant="display-sm">Post unavailable</Text>
+        <Text variant="body" className="mt-2 text-center text-ink-variant">
+          Check your connection and try again.
+        </Text>
+        {onRetry
+          ? (
+              <Button
+                variant="secondary"
+                size="md"
+                fullWidth={false}
+                className="mt-5"
+                label="Try again"
+                accessibilityLabel="Retry post"
+                onPress={onRetry}
+              />
+            )
+          : null}
+      </View>
     </View>
   );
 }
@@ -196,46 +121,45 @@ function CommentRow({
 }) {
   const authorName = comment.authorName?.trim() || 'Rionna member';
   const deleting = pendingDeleteCommentId === comment.id;
+  // A staff/trainer answer is highlighted lilac (frame 11); hidden until S13-11 sends authorRole.
+  const highlighted = Boolean(comment.authorRole);
   return (
-    <Pressable
-      accessibilityLabel={`Comment by ${authorName}`}
-      onLongPress={onLongPressComment ? () => onLongPressComment(postId, comment) : undefined}
-      className={isReply ? 'mt-3 ml-10' : 'mt-4'}
-      style={deleting ? { opacity: 0.4 } : null}
-    >
-      <View className="flex-row items-center gap-2.5">
-        <CommentAvatar name={authorName} avatarUrl={comment.authorAvatarUrl} />
-        <View className="flex-1 flex-row items-center gap-2">
-          <Text className="font-sans text-xs font-semibold text-neutral-800">{authorName}</Text>
-          {comment.createdAt
+    <View className={isReply ? 'ml-6 gap-3' : 'gap-3'}>
+      <Pressable
+        accessibilityLabel={`Comment by ${authorName}`}
+        onLongPress={onLongPressComment ? () => onLongPressComment(postId, comment) : undefined}
+        style={deleting ? { opacity: 0.4 } : null}
+      >
+        <Card
+          variant="white"
+          className={highlighted ? 'gap-3 border border-outline-variant bg-primary-fixed' : 'gap-3'}
+        >
+          <AuthorHeader
+            name={authorName}
+            avatarUrl={comment.authorAvatarUrl}
+            time={formatRelativeTime(comment.createdAt)}
+            role={comment.authorRole}
+            showSpaceTag={false}
+          />
+          {comment.bodyText
+            ? <Text variant="body-lg" className="text-ink-variant">{comment.bodyText}</Text>
+            : null}
+          {comment.canDelete && onDeleteComment
             ? (
-                <Text className="font-sans text-[10px] text-neutral-500">
-                  {formatMemberContentDate(comment.createdAt)}
-                </Text>
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel="Delete comment"
+                  disabled={deleting}
+                  hitSlop={8}
+                  className="self-start"
+                  onPress={() => onDeleteComment(postId, comment.id)}
+                >
+                  <Text variant="body-sm" className="text-ink-muted">Delete</Text>
+                </Pressable>
               )
             : null}
-        </View>
-        {comment.canDelete && onDeleteComment
-          ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Delete comment"
-                disabled={deleting}
-                hitSlop={8}
-                onPress={() => onDeleteComment(postId, comment.id)}
-              >
-                <Text className="font-sans text-xs text-neutral-500">Delete</Text>
-              </Pressable>
-            )
-          : null}
-      </View>
-      {comment.bodyText
-        ? (
-            <Text className="mt-1.5 ml-[42px] font-sans text-sm/5 text-neutral-900">
-              {comment.bodyText}
-            </Text>
-          )
-        : null}
+        </Card>
+      </Pressable>
       {comment.replies.map(reply => (
         <CommentRow
           key={reply.id}
@@ -247,7 +171,7 @@ function CommentRow({
           isReply
         />
       ))}
-    </Pressable>
+    </View>
   );
 }
 
@@ -283,49 +207,58 @@ function CommentComposer({
   };
 
   return (
-    <View
-      className="gap-2 border-t border-neutral-200 bg-white px-4 pt-3"
-      style={{ paddingBottom: bottomPadding + 12 }}
-    >
+    <View className="gap-2 bg-surface px-4 pt-2" style={{ paddingBottom: bottomPadding + 8 }}>
       {commentError === 'blocked'
         ? (
-            <Text className="font-sans text-xs text-red-600">
+            <Text variant="body-sm" className="text-plum">
               Our auto-moderation held back this comment. Please edit it and try again.
             </Text>
           )
         : null}
-      <View className="flex-row items-end gap-2">
+      <View className="flex-row items-end gap-3 rounded-xl border border-outline-variant bg-white p-3">
         <TextInput
           accessibilityLabel="Write a comment"
-          placeholder="Write a comment…"
-          placeholderTextColor="#737373"
+          placeholder="Write a reply…"
+          placeholderTextColor={colors.inkMuted}
           value={text}
           onChangeText={setText}
           editable={!commentSubmitting}
           multiline
-          className="max-h-28 flex-1 rounded-2xl border border-neutral-300 bg-neutral-50 px-4 py-2.5 font-sans text-sm text-neutral-900"
+          className="max-h-28 min-h-[46px] flex-1 font-sans-medium text-sm/5 text-ink"
+          textAlignVertical="center"
         />
-        <Pressable
-          accessibilityRole="button"
+        <IconButton
+          variant="square-accent"
           accessibilityLabel="Send comment"
           disabled={commentSubmitting || trimmed.length === 0}
           onPress={submit}
-          className={
-            trimmed.length > 0 && !commentSubmitting
-              ? 'h-10 items-center justify-center rounded-full bg-violet-700 px-5'
-              : 'h-10 items-center justify-center rounded-full bg-neutral-300 px-5'
-          }
         >
-          <Text className="font-sans text-sm font-semibold text-white">Send</Text>
-        </Pressable>
+          <SendArrow />
+        </IconButton>
       </View>
     </View>
+  );
+}
+
+function SendArrow() {
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24" accessibilityElementsHidden>
+      <Path
+        d="M12 19V5M5.5 11.5L12 5l6.5 6.5"
+        stroke={colors.plum}
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+    </Svg>
   );
 }
 
 function CommentsSection({
   postId,
   comments,
+  total,
   commentsUnavailable = false,
   onDeleteComment,
   pendingDeleteCommentId,
@@ -333,20 +266,19 @@ function CommentsSection({
 }: {
   postId: string;
   comments?: PostComment[];
+  total: number;
   commentsUnavailable?: boolean;
   onDeleteComment?: (postId: string, commentId: string) => void;
   pendingDeleteCommentId?: string | null;
   onLongPressComment?: (postId: string, comment: PostComment) => void;
 }) {
   return (
-    <View className="mt-4 rounded-2xl border border-neutral-300 bg-white p-5">
-      <Text className="font-mono text-[10px] tracking-widest text-neutral-500 uppercase">
-        Comments
-      </Text>
+    <View className="mt-4 gap-3">
+      <MonoLabel>{`Replies (${total})`}</MonoLabel>
       {commentsUnavailable
         ? (
-            <View testID="post-comments-unavailable" className="mt-3">
-              <Text className="font-sans text-sm text-neutral-600">
+            <View testID="post-comments-unavailable">
+              <Text variant="body" className="text-ink-variant">
                 Comments couldn’t load. Pull down to try again.
               </Text>
             </View>
@@ -354,12 +286,12 @@ function CommentsSection({
         : null}
       {!commentsUnavailable && comments && comments.length === 0
         ? (
-            <View className="mt-3">
-              <Text className="font-sans text-sm font-medium text-neutral-800">No comments yet</Text>
-              <Text className="mt-1 font-sans text-xs text-neutral-500">
+            <Card>
+              <Text variant="title">No comments yet</Text>
+              <Text variant="body-sm" className="mt-1 text-ink-muted">
                 Be the first to join the conversation.
               </Text>
-            </View>
+            </Card>
           )
         : null}
       {comments?.map(comment => (
@@ -378,61 +310,54 @@ function CommentsSection({
 
 function PostCard({
   post,
-  meta,
   hydratedDoc,
   onOpenUrl,
   onToggleLike,
   likePending,
 }: {
   post: MemberPostDetail;
-  meta: string;
   hydratedDoc: ReturnType<typeof hydrateCircleDoc>;
   onOpenUrl?: (url: string) => void;
   onToggleLike?: (postId: string, liked: boolean) => void;
   likePending?: boolean;
 }) {
   return (
-    <View className="overflow-hidden rounded-2xl border border-neutral-300 bg-white">
+    <Card className="gap-4 border border-on-primary-container">
+      <AuthorHeader
+        name={post.authorName}
+        avatarUrl={post.authorAvatarUrl}
+        time={formatRelativeTime(post.createdAt)}
+        spaceName={post.spaceName}
+        spaceId={post.spaceId}
+        role={post.authorRole}
+      />
+      {post.title ? <Text variant="display-sm">{post.title}</Text> : null}
       {post.imageUrl
         ? (
             <Image
               source={{ uri: post.imageUrl }}
-              className="aspect-video w-full bg-neutral-200"
+              className="aspect-video w-full rounded-md bg-secondary-container"
               contentFit="cover"
               cachePolicy="memory-disk"
               accessibilityLabel={post.title}
             />
           )
         : null}
-      <View className="p-5">
-        {meta
-          ? (
-              <Text className="font-mono text-[10px] tracking-wider text-neutral-500 uppercase">
-                {meta}
-              </Text>
-            )
-          : null}
-        <Text className="mt-3 font-sans text-3xl/9 font-semibold text-neutral-950">
-          {post.title}
-        </Text>
-        <PostAuthor post={post} />
-        <View className="mt-4 flex-row items-center gap-4 border-b border-neutral-200 pb-5">
-          <PostLikeControl post={post} onToggleLike={onToggleLike} likePending={likePending} />
-          <Text className="font-sans text-xs text-neutral-500">
-            {formatCount(post.commentCount, 'comment', 'comments')}
-          </Text>
-        </View>
-        <View className="mt-5">
-          {circleDocHasContent(hydratedDoc)
-            ? <CircleTiptapRenderer doc={hydratedDoc} onOpenUrl={onOpenUrl} />
-            : (
-                <Text className="font-sans text-base/6 text-neutral-900">
-                  {post.bodyText ?? 'This post has no readable content yet.'}
-                </Text>
-              )}
-        </View>
-      </View>
-    </View>
+      {circleDocHasContent(hydratedDoc)
+        ? <CircleTiptapRenderer doc={hydratedDoc} onOpenUrl={onOpenUrl} />
+        : (
+            <Text variant="body-lg" className="text-ink-variant">
+              {post.bodyText ?? 'This post has no readable content yet.'}
+            </Text>
+          )}
+      <ActivityRow
+        likeCount={post.likeCount}
+        commentCount={post.commentCount}
+        isLiked={post.isLiked}
+        likePending={likePending}
+        onToggleLike={onToggleLike ? () => onToggleLike(post.id, !post.isLiked) : undefined}
+      />
+    </Card>
   );
 }
 
@@ -442,9 +367,12 @@ export function MemberPostView({
   isLoading = false,
   onOpenUrl,
   onRetry,
+  onBack,
+  headerRight,
   onToggleLike,
   likePending,
   comments,
+  commentsTotal,
   commentsUnavailable = false,
   onSubmitComment,
   commentSubmitting,
@@ -453,24 +381,24 @@ export function MemberPostView({
   pendingDeleteCommentId,
   onLongPressComment,
 }: MemberPostViewProps) {
-  // The route renders under a native stack header, so the KeyboardAvoidingView's
-  // own frame (measured relative to its parent, not the screen) undercounts the
-  // space the header takes up. Without this offset the composer stays partly
-  // hidden behind the keyboard instead of being pushed fully above it.
-  // Falls back to 0 outside a navigator header context (e.g. unit tests).
+  // Offset for any native header above the screen (0 when the kicker header
+  // replaces it, and outside a navigator, e.g. unit tests).
   const headerHeight = React.use(HeaderHeightContext) ?? 0;
 
   if (isLoading && !post) {
     return (
-      <View testID="member-post-loading" className="flex-1 items-center justify-center bg-neutral-100">
-        <ActivityIndicator color="#6D28D9" />
-        <Text className="mt-3 font-sans text-sm text-neutral-600">Loading post…</Text>
+      <View testID="member-post-loading" className="flex-1 bg-surface">
+        <ScreenHeader kicker="Community" onBack={onBack} />
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator />
+          <Text variant="body" className="mt-3 text-ink-variant">Loading post…</Text>
+        </View>
       </View>
     );
   }
 
   if (!post) {
-    return <PostUnavailable onRetry={onRetry} />;
+    return <PostUnavailable onRetry={onRetry} onBack={onBack} />;
   }
 
   const hydratedDoc = hydrateCircleDoc({
@@ -478,34 +406,30 @@ export function MemberPostView({
     sgids_to_object_map: post.embeds,
     inline_attachments: post.inlineAttachments,
   });
-  const meta = [post.spaceName, formatMemberContentDate(post.createdAt)]
-    .filter(Boolean)
-    .join(' · ');
   const showComments = comments !== undefined || commentsUnavailable;
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
+      style={{ flex: 1, backgroundColor: colors.surface }}
       behavior="padding"
       keyboardVerticalOffset={headerHeight}
     >
+      <ScreenHeader kicker="Community" onBack={onBack} right={headerRight} className="pb-3" />
       <ScrollView
-        className="flex-1 bg-neutral-100"
-        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 24, paddingBottom: 48 }}
+        className="flex-1"
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24 }}
       >
         {contentState === 'saved'
           ? (
-              <View className="mb-4 rounded-xl border border-violet-300 bg-violet-50 px-4 py-3">
-                <Text className="font-sans text-sm font-medium text-violet-900">
-                  Showing saved content
-                </Text>
+              <View className="mb-3 rounded-lg bg-primary-fixed px-4 py-3">
+                <Text variant="body-sm" className="font-sans-medium">Showing saved content</Text>
               </View>
             )
           : null}
 
         <PostCard
           post={post}
-          meta={meta}
           hydratedDoc={hydratedDoc}
           onOpenUrl={onOpenUrl}
           onToggleLike={onToggleLike}
@@ -517,6 +441,7 @@ export function MemberPostView({
               <CommentsSection
                 postId={post.id}
                 comments={comments}
+                total={commentsTotal ?? comments?.length ?? 0}
                 commentsUnavailable={commentsUnavailable}
                 onDeleteComment={onDeleteComment}
                 pendingDeleteCommentId={pendingDeleteCommentId}
@@ -594,31 +519,30 @@ function SignedInMemberPost({
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          headerRight: postData
-            ? () => (
-                <PostOverflowMenu
-                  scope={scope}
-                  postId={postData.id}
-                  spaceId={postData.spaceId}
-                  isOwn={postData.isOwn ?? false}
-                  onReportPost={reportPost}
-                  onDeleted={() => router.back()}
-                />
-              )
-            : undefined,
-        }}
-      />
+      <Stack.Screen options={{ headerShown: false }} />
       <MemberPostView
         post={post.data}
         contentState={post.contentState}
         isLoading={post.isLoading}
         onOpenUrl={url => void Linking.openURL(url)}
         onRetry={() => void post.refetch()}
+        onBack={() => router.back()}
+        headerRight={postData
+          ? (
+              <PostOverflowMenu
+                scope={scope}
+                postId={postData.id}
+                spaceId={postData.spaceId}
+                isOwn={postData.isOwn ?? false}
+                onReportPost={reportPost}
+                onDeleted={() => router.back()}
+              />
+            )
+          : undefined}
         onToggleLike={(likedPostId, liked) => like.toggleLike({ postId: likedPostId, liked })}
         likePending={like.isPending}
         comments={comments.data?.comments}
+        commentsTotal={comments.data?.totalCount}
         commentsUnavailable={comments.isError}
         onSubmitComment={(commentPostId, body) => addComment.addComment({ postId: commentPostId, body })}
         commentSubmitting={addComment.isPending}

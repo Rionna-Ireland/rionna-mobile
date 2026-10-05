@@ -1,53 +1,29 @@
 import type { FeedChip } from '@/features/member-content/types';
 
 import * as React from 'react';
-import { Pressable, ScrollView, Text } from 'react-native';
+
+import { ChipRow } from '@/components/ui';
 
 type FeedChipRowProps = {
   chips: FeedChip[];
   selectedId: string;
   onSelect: (id: string) => void;
+  contentInset?: number;
 };
 
-export function FeedChipRow({ chips, selectedId, onSelect }: FeedChipRowProps) {
+/** S12-02b space filters, rendered with the V2 ChipRow (selected = lilac). */
+export function FeedChipRow({ chips, selectedId, onSelect, contentInset = 0 }: FeedChipRowProps) {
+  const items = React.useMemo(() => chips.map(chip => ({ key: chip.id, label: chip.label })), [chips]);
   if (chips.length === 0) {
     return null;
   }
-
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      className="-mx-1 mb-4"
-      contentContainerStyle={{ paddingHorizontal: 4, gap: 8 }}
-    >
-      {chips.map((chip) => {
-        const selected = chip.id === selectedId;
-        return (
-          <Pressable
-            key={chip.id}
-            accessibilityRole="button"
-            accessibilityState={{ selected }}
-            hitSlop={8}
-            onPress={() => onSelect(chip.id)}
-            className={
-              selected
-                ? 'rounded-full bg-neutral-950 px-4 py-2'
-                : 'rounded-full border border-neutral-300 bg-white px-4 py-2'
-            }
-          >
-            <Text
-              className={
-                selected
-                  ? 'font-sans text-sm font-medium text-white'
-                  : 'font-sans text-sm font-medium text-neutral-700'
-              }
-            >
-              {chip.label}
-            </Text>
-          </Pressable>
-        );
-      })}
-    </ScrollView>
+    <ChipRow
+      testID="feed-chip-row"
+      items={items}
+      selectedKey={selectedId}
+      onSelect={onSelect}
+      contentInset={contentInset}
+    />
   );
 }

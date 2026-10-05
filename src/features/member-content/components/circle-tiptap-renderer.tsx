@@ -4,6 +4,8 @@ import type { HydratedNode } from '@/features/member-content/tiptap/hydrate';
 import * as React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import colors from '@/components/ui/colors';
+import { FONT_FAMILY } from '@/components/ui/fonts';
 import { CircleEmbedBlock } from '@/features/member-content/components/circle-embed-block';
 import { CircleFileBlock } from '@/features/member-content/components/circle-file-block';
 import { CircleImageBlock } from '@/features/member-content/components/circle-image-block';
@@ -215,7 +217,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   paragraph: {
-    color: '#1A1A1A',
+    color: colors.ink,
     fontSize: 16,
     lineHeight: 24,
     marginBottom: 4,
@@ -224,7 +226,7 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   bold: {
-    fontWeight: '700',
+    fontFamily: FONT_FAMILY.bold,
   },
   italic: {
     fontStyle: 'italic',
@@ -236,11 +238,11 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
   },
   inlineCode: {
-    backgroundColor: '#F0F0F0',
+    backgroundColor: colors.surfaceContainer,
     fontFamily: 'monospace',
   },
   link: {
-    color: '#6D28D9',
+    color: colors.primary,
     textDecorationLine: 'underline',
   },
   list: {
@@ -251,7 +253,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   listMarker: {
-    color: '#555555',
+    color: colors.inkVariant,
     fontSize: 16,
     lineHeight: 24,
     width: 28,
@@ -261,35 +263,35 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   blockquote: {
-    borderLeftColor: '#C7C7C7',
+    borderLeftColor: colors.outline,
     borderLeftWidth: 3,
     paddingLeft: 12,
   },
   codeBlock: {
-    backgroundColor: '#F2F2F2',
-    borderColor: '#D9D9D9',
+    backgroundColor: colors.surfaceContainer,
+    borderColor: colors.outlineVariant,
     borderRadius: 6,
     borderWidth: StyleSheet.hairlineWidth,
-    color: '#1A1A1A',
+    color: colors.ink,
     fontFamily: 'monospace',
     fontSize: 14,
     lineHeight: 20,
     padding: 12,
   },
   horizontalRule: {
-    backgroundColor: '#D9D9D9',
+    backgroundColor: colors.outline,
     height: StyleSheet.hairlineWidth,
     width: '100%',
   },
   unsupportedInline: {
-    color: '#6B6B6B',
+    color: colors.inkVariant,
     fontStyle: 'italic',
   },
 });
 
 const headingStyles: Record<number, TextStyle> = {
-  1: { color: '#111111', fontSize: 28, fontWeight: '700', lineHeight: 34 },
-  2: { color: '#111111', fontSize: 24, fontWeight: '700', lineHeight: 30 },
-  3: { color: '#111111', fontSize: 20, fontWeight: '700', lineHeight: 26 },
-  4: { color: '#111111', fontSize: 18, fontWeight: '700', lineHeight: 24 },
+  1: { color: colors.ink, fontSize: 28, fontFamily: FONT_FAMILY.bold, lineHeight: 34 },
+  2: { color: colors.ink, fontSize: 24, fontFamily: FONT_FAMILY.bold, lineHeight: 30 },
+  3: { color: colors.ink, fontSize: 20, fontFamily: FONT_FAMILY.bold, lineHeight: 26 },
+  4: { color: colors.ink, fontSize: 18, fontFamily: FONT_FAMILY.bold, lineHeight: 24 },
 };
