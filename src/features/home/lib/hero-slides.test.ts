@@ -88,16 +88,9 @@ describe('buildHeroSlides', () => {
     expect(stale).toHaveLength(0);
   });
 
-  it('uses "Watch replay" when the result has a replay', () => {
-    const [slide] = buildHeroSlides(
-      { nextRun: null, news: [], results: [result(new Date(now.getTime() - DAY), { replayUrl: 'https://replay' })] },
-      now,
-    );
-    expect(slide.cta).toEqual({ label: 'Watch replay', kind: 'external', url: 'https://replay' });
-  });
-
-  it('falls back to "See the result" without a replay', () => {
-    const [slide] = buildHeroSlides({ nextRun: null, news: [], results: [result(new Date(now.getTime() - DAY))] }, now);
+  it('always uses "See the result" — replays are hidden for v1 (S13-16)', () => {
+    const withReplay = { ...result(new Date(now.getTime() - DAY)), replayUrl: 'https://replay' };
+    const [slide] = buildHeroSlides({ nextRun: null, news: [], results: [withReplay] }, now);
     expect(slide.cta).toEqual({ label: 'See the result', kind: 'route', href: '/stables/h2' });
   });
 

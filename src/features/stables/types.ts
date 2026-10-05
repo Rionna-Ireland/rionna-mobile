@@ -75,9 +75,8 @@ export type Entry = {
   timeformComment: string | null;
   performanceRating: number | null;
   starRating: number | null;
-  // Admin-set link to race footage (S8-01 §5/§6). Backend field has no
-  // select-narrowing so it's already on every entry response, but may be
-  // absent/undefined on older cached payloads -- treat as optional.
+  // Admin-set link to race footage (S8-01 §5/§6). Still returned by the API
+  // but not rendered in v1 (S13-16: replays hidden). Optional on older payloads.
   replayUrl?: string | null;
   // S13-10 (not yet shipped): runner count and starting price ("6/1",
   // "Evs", "11/4F"). Rendered only when present.

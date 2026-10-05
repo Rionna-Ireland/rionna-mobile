@@ -7,7 +7,6 @@ import { ScrollView, View } from 'react-native';
 
 import { Button, Card, Dots, Text } from '@/components/ui';
 import { splitHeadline } from '@/features/home/lib/split-headline';
-import { openExternalLink } from '@/lib/open-external-link';
 
 /** Figma "News" hero: 358×239 navy card. */
 const HERO_HEIGHT = 239;
@@ -24,12 +23,7 @@ function Headline({ title }: { title: string }) {
 
 function Slide({ slide, width, index }: { slide: HeroSlide; width: number; index: number }) {
   const router = useRouter();
-  const onPress = () => {
-    if (slide.cta.kind === 'external')
-      openExternalLink(slide.cta.url);
-    else
-      router.push(slide.cta.href);
-  };
+  const onPress = () => router.push(slide.cta.href);
   return (
     <Card
       variant="navy"

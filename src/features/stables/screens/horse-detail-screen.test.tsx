@@ -205,7 +205,8 @@ describe('horseDetailScreen', () => {
     expect(screen.getByText('Next — Leopardstown, 7f mdn')).toBeOnTheScreen();
     expect(screen.getByTestId('next-entry-declared')).toBeOnTheScreen();
     expect(screen.getByText('Leopardstown, 7f mdn — 3rd')).toBeOnTheScreen();
-    expect(screen.getByText('Watch Replay')).toBeOnTheScreen();
+    // Replays are hidden for v1 (S13-16) even though r1 has a replayUrl.
+    expect(screen.queryByText(/replay/i)).toBeNull();
     // Hero swaps the status pill for the Declared pill.
     expect(screen.getByTestId('declared-pill')).toBeOnTheScreen();
     expect(screen.getByTestId('horse-section-chips-racing')).toBeOnTheScreen();
