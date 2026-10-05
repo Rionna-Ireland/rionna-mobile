@@ -24,6 +24,7 @@ export * from './list-row';
 export * from './modal';
 export * from './mono-label';
 export * from './photo-fallback';
+export * from './pressable';
 export * from './progress-bar';
 export * from './screen-header';
 export * from './select';
