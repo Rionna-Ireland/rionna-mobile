@@ -38,6 +38,7 @@ import { APIProvider } from '@/lib/api';
 import { queryClient } from '@/lib/api/query-client';
 
 import { loadSelectedTheme } from '@/lib/hooks/use-selected-theme';
+import { MotionProvider } from '@/lib/motion';
 import '@/features/notifications/handler';
 // Import  global CSS file
 import '../global.css';
@@ -274,10 +275,12 @@ function Providers({ children }: { children: React.ReactNode }) {
       <KeyboardProvider>
         <ThemeProvider value={theme}>
           <APIProvider>
-            <BottomSheetModalProvider>
-              {children}
-              <FlashMessage position="top" />
-            </BottomSheetModalProvider>
+            <MotionProvider>
+              <BottomSheetModalProvider>
+                {children}
+                <FlashMessage position="top" />
+              </BottomSheetModalProvider>
+            </MotionProvider>
           </APIProvider>
         </ThemeProvider>
       </KeyboardProvider>
