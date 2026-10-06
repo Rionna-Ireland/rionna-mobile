@@ -344,6 +344,8 @@ function RsvpCta({ state, rsvpPending, onToggleRsvp }: {
       disabled={state === 'full'}
       haptic={going ? false : 'success'}
       loading={rsvpPending}
+      // The spinner is the pending state; only a full event dims (A-003).
+      dimDisabled={!rsvpPending}
       onPress={() => (going ? confirmCancelRsvp(() => onToggleRsvp?.(false)) : onToggleRsvp?.(true))}
     />
   );

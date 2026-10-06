@@ -130,6 +130,8 @@ export function EventCard({
                         : state === 'full' ? translate('events.full') : translate('events.rsvp')
                     }
                     disabled={state === 'full' || rsvpPending}
+                    // Optimistic RSVP: the label flips at once, so don't grey it for the round trip.
+                    dimDisabled={!rsvpPending}
                     haptic={state === 'going' ? false : 'success'}
                     onPress={() => onToggleRsvp?.(state !== 'going')}
                   />
