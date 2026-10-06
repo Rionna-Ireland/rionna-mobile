@@ -41,6 +41,8 @@ export const durations = {
   slow: 450,
   /** Stroke-draws (splash submark, charity progress). */
   draw: 900,
+  /** Indeterminate loaders: one full linear revolution of a ring spinner. */
+  spin: 900,
 } as const;
 
 export type DurationToken = keyof typeof durations;
@@ -60,6 +62,12 @@ export const timings = {
   exit: { duration: durations.quick, easing: easings.exit },
   /** Reduce Motion: every entrance degrades to this opacity fade. */
   reducedFade: { duration: durations.quick, easing: easings.enter },
+  /** Micro state flips (selected fills, checkmarks, count rolls). */
+  quick: { duration: durations.quick, easing: easings.enter },
+  /** Crossfades between two states of one control (Follow → Following). */
+  crossfade: { duration: durations.base, easing: easings.enter },
+  /** Indeterminate spinner revolution: constant speed, no easing. */
+  spin: { duration: durations.spin, easing: Easing.linear },
 };
 
 /** List entrance stagger: 40ms per item, capped so item 7+ arrives with item 6. */

@@ -1,6 +1,5 @@
 import * as React from 'react';
 import Animated, {
-  Easing,
   useAnimatedStyle,
   useSharedValue,
   withRepeat,
@@ -8,19 +7,23 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { colors, View } from '@/components/ui';
+import { timings } from '@/lib/motion';
 
 const SIZE = 48;
 
-/** 48pt ring spinner: plum-mid arc on a lilac track (Figma "Loading"). */
+/**
+ * 48pt ring spinner: plum-mid arc on a lilac track (Figma "Loading"). Keeps
+ * spinning under Reduce Motion: it's a functional loading indicator.
+ */
 export function WelcomeSpinner() {
   const rotation = useSharedValue(0);
 
   React.useEffect(() => {
-    rotation.value = withRepeat(withTiming(360, { duration: 900, easing: Easing.linear }), -1, false);
+    rotation.set(withRepeat(withTiming(360, timings.spin), -1, false));
   }, [rotation]);
 
   const style = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value}deg` }],
+    transform: [{ rotate: `${rotation.get()}deg` }],
   }));
 
   return (

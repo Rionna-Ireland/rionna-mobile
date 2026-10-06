@@ -20,19 +20,10 @@ const HAPTICS_OWNER = 'lib/motion/haptics.ts';
 const MOTION_OWNERS = ['lib/motion/', 'components/ui/pressable.tsx'];
 
 /**
- * Pre-S14 offenders, allowed until S14-02 moves them onto tokens. Remove each
- * entry as it's migrated; never add new ones.
+ * Pre-S14 offenders, allowed until moved onto tokens. S14-02 migrated the last
+ * four (welcome-spinner, progress-bar, modal, checkbox); never add new ones.
  */
-const RAW_MOTION_ALLOWLIST = new Set([
-  // migrate in S14-02: spinner rotation `withTiming(360, { duration: 900 })`
-  'features/arrival/welcome-spinner.tsx',
-  // migrate in S14-02: fill/thumb `TIMING = { duration: 250 }`
-  'components/ui/progress-bar.tsx',
-  // migrate in S14-02: backdrop `FadeIn.duration(50)` / `FadeOut.duration(20)`
-  'components/ui/modal.tsx',
-  // migrate in S14-02: Moti transitions `{ type: 'timing', duration: 100 }`
-  'components/ui/checkbox.tsx',
-]);
+const RAW_MOTION_ALLOWLIST = new Set<string>([]);
 
 function sourceFiles(dir: string, acc: string[] = []): string[] {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {

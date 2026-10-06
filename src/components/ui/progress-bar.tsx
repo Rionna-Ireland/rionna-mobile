@@ -2,10 +2,11 @@ import * as React from 'react';
 import { useImperativeHandle } from 'react';
 import { View } from 'react-native';
 import Animated, {
-  Easing,
   useAnimatedStyle,
   withTiming,
 } from 'react-native-reanimated';
+
+import { timings, useMotion } from '@/lib/motion';
 
 import colors from './colors';
 import { withAlpha } from './gradient-styles';
@@ -44,7 +45,6 @@ export type ProgressBarRef = {
 };
 
 const clamp = (v: number) => Math.min(100, Math.max(0, v));
-const TIMING = { duration: 250, easing: Easing.inOut(Easing.quad) };
 
 export function ProgressBar({
   ref,
@@ -66,13 +66,17 @@ export function ProgressBar({
   }), []);
 
   const { track, fill } = TONES[tone];
+  // Reduce Motion: the fill jumps to its value (no growth animation).
+  const { reduceMotion } = useMotion();
   const fillStyle = useAnimatedStyle(() => ({
-    width: withTiming(`${now}%`, TIMING),
+    width: reduceMotion ? `${now}%` : withTiming(`${now}%`, timings.enter),
     backgroundColor: fill,
     height,
     borderRadius: height / 2,
   }));
-  const thumbStyle = useAnimatedStyle(() => ({ left: withTiming(`${now}%`, TIMING) }));
+  const thumbStyle = useAnimatedStyle(() => ({
+    left: reduceMotion ? `${now}%` : withTiming(`${now}%`, timings.enter),
+  }));
 
   return (
     <View

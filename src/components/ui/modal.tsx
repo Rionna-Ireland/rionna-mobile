@@ -33,11 +33,13 @@ import type {
   BottomSheetBackdropProps,
   BottomSheetModalProps,
 } from '@gorhom/bottom-sheet';
-import { BottomSheetModal, useBottomSheet } from '@gorhom/bottom-sheet';
+import { BottomSheetModal, useBottomSheet, useBottomSheetSpringConfigs } from '@gorhom/bottom-sheet';
 import * as React from 'react';
 import { Pressable, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Path, Svg } from 'react-native-svg';
+
+import { durations, springs, useMotion } from '@/lib/motion';
 
 import colors from './colors';
 import { Text } from './text';
@@ -71,6 +73,8 @@ export function Modal({ ref, snapPoints: _snapPoints = ['60%'] as (string | numb
   );
   const modal = useModal();
   const snapPoints = React.useMemo(() => _snapPoints, [_snapPoints]);
+  // S14-02 §8: sheets settle on the `gentle` spring (Reanimated honours Reduce Motion).
+  const animationConfigs = useBottomSheetSpringConfigs(springs.gentle);
 
   React.useImperativeHandle(
     ref,
@@ -95,6 +99,7 @@ export function Modal({ ref, snapPoints: _snapPoints = ['60%'] as (string | numb
       index={0}
       snapPoints={snapPoints}
       backdropComponent={props.backdropComponent || renderBackdrop}
+      animationConfigs={props.animationConfigs ?? animationConfigs}
       enableDynamicSizing={false}
       handleComponent={renderHandleComponent}
       backgroundStyle={[SHEET_BACKGROUND, props.backgroundStyle]}
@@ -115,13 +120,16 @@ const SHEET_BACKGROUND = {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+/** Ink @ 40% (`colors.scrim`), fading in/out over `base` (`quick` under Reduce Motion). */
 function CustomBackdrop({ style }: BottomSheetBackdropProps) {
   const { close } = useBottomSheet();
+  const { reduceMotion } = useMotion();
+  const fade = reduceMotion ? durations.quick : durations.base;
   return (
     <AnimatedPressable
       onPress={() => close()}
-      entering={FadeIn.duration(50)}
-      exiting={FadeOut.duration(20)}
+      entering={FadeIn.duration(fade)}
+      exiting={FadeOut.duration(fade)}
       style={[style, { backgroundColor: colors.scrim }]}
     />
   );
