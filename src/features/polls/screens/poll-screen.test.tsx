@@ -42,4 +42,18 @@ describe('pollScreenView', () => {
     render(<PollScreenView poll={undefined} isLoading onVote={jest.fn()} pendingPollIds={[]} />);
     expect(screen.queryByText('This vote has ended')).not.toBeOnTheScreen();
   });
+
+  it('shows the poll skeleton while loading (A-015)', () => {
+    render(<PollScreenView poll={undefined} isLoading onVote={jest.fn()} pendingPollIds={[]} />);
+    expect(screen.getByTestId('poll-loading')).toBeOnTheScreen();
+  });
+
+  it('shows an error with retry, not "ended", when the polls fail to load (A-044)', () => {
+    const onRetry = jest.fn();
+    render(<PollScreenView poll={undefined} isLoading={false} isError onRetry={onRetry} onVote={jest.fn()} pendingPollIds={[]} />);
+    expect(screen.queryByText('This vote has ended')).not.toBeOnTheScreen();
+    expect(screen.getByTestId('poll-unavailable')).toBeOnTheScreen();
+    fireEvent.press(screen.getByText('Try again'));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
 });

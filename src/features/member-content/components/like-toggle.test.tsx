@@ -22,7 +22,7 @@ describe('likeToggle', () => {
   it('taps and pops the heart (popScale → 1 on snappy) when liking', async () => {
     const onToggle = jest.fn();
     const { user } = setup(<LikeToggle likeCount={3} isLiked={false} onToggle={onToggle} />);
-    await user.press(screen.getByLabelText('Like post'));
+    await user.press(screen.getByLabelText('Like'));
     expect(onToggle).toHaveBeenCalledTimes(1);
     expect(mockTap).toHaveBeenCalledTimes(1);
     expect(withSpring).toHaveBeenCalledWith(1, springs.snappy);
@@ -32,7 +32,7 @@ describe('likeToggle', () => {
   it('stays quiet when unliking', async () => {
     const onToggle = jest.fn();
     const { user } = setup(<LikeToggle likeCount={3} isLiked onToggle={onToggle} />);
-    await user.press(screen.getByLabelText('Unlike post'));
+    await user.press(screen.getByLabelText('Liked'));
     expect(onToggle).toHaveBeenCalledTimes(1);
     expect(mockTap).not.toHaveBeenCalled();
   });
@@ -40,7 +40,7 @@ describe('likeToggle', () => {
   it('keeps the haptic but drops the pop under Reduce Motion', async () => {
     jest.mocked(useReducedMotion).mockReturnValue(true);
     const { user } = setup(<LikeToggle likeCount={3} isLiked={false} onToggle={jest.fn()} />);
-    await user.press(screen.getByLabelText('Like post'));
+    await user.press(screen.getByLabelText('Like'));
     expect(mockTap).toHaveBeenCalledTimes(1);
     expect(withSpring).not.toHaveBeenCalled();
   });

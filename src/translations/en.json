@@ -1,4 +1,29 @@
 {
+  "auth": {
+    "errors": {
+      "changePasswordCredentials": "Your current password isn’t right. Try again.",
+      "deleteAccountCredentials": "That password isn’t right. Try again.",
+      "offline": "You’re offline. Check your connection and try again.",
+      "server": "Something went wrong on our side. Try again in a moment.",
+      "signInCredentials": "That email and password don’t match. Try again, or reset your password.",
+      "tooManyAttempts": "Too many attempts. Wait a minute and try again."
+    },
+    "login": {
+      "email": "Email",
+      "emailInvalid": "Invalid email format",
+      "emailRequired": "Email is required",
+      "forgotPassword": "Forgot password?",
+      "noAccount": "Don’t have an account? ",
+      "password": "Password",
+      "passwordRequired": "Password is required",
+      "passwordTooShort": "Password must be at least 6 characters",
+      "signUpLink": "Rionna.com",
+      "submit": "Sign In",
+      "titleLead": "Not ",
+      "titleRest": "just for the few.",
+      "welcome": "Welcome to Rionna, a new way into racing."
+    }
+  },
   "common": {
     "back": "Back",
     "close": "Close",
@@ -6,6 +31,141 @@
     "loading": "Loading",
     "selectPlaceholder": "Select…",
     "tryAgain": "Try again"
+  },
+  "community": {
+    "announcement": {
+      "kicker": "Announcement",
+      "read": "Read",
+      "readA11y": "Read {{title}}"
+    },
+    "comment": {
+      "delete": "Delete",
+      "deleteAction": "Delete comment",
+      "deleteCancel": "Cancel",
+      "deleteConfirm": "Delete",
+      "deleteConfirmBody": "This can’t be undone.",
+      "deleteConfirmTitle": "Delete this comment?",
+      "emptyBody": "Be the first to join the conversation.",
+      "emptyTitle": "No comments yet",
+      "repliesLabel": "Replies ({{count}})",
+      "reportAction": "Report comment",
+      "unavailable": "Comments couldn’t load."
+    },
+    "compose": {
+      "addPhoto": "Add photo",
+      "bodyA11y": "Post body",
+      "bodyPlaceholder": "What's on your mind?",
+      "cancel": "Cancel",
+      "failureBlocked": "Our auto-moderation held back this post. Please edit it to keep things friendly and respectful, then try again.",
+      "failureImage": "That photo couldn't be uploaded.",
+      "failureNotAllowed": "You can't post in that space.",
+      "failurePublish": "Couldn't publish right now. Try again.",
+      "failureRateLimited": "You've posted a lot today — try again later.",
+      "imageTooBig": "Choose a photo under 10 MB.",
+      "kicker": "New post",
+      "noSpaces": "You can't post in any spaces yet.",
+      "post": "Post",
+      "postIn": "Post in",
+      "posting": "Posting…",
+      "removePhoto": "Remove photo",
+      "spacesFailed": "Couldn't load your spaces.",
+      "titleA11y": "Post title",
+      "titlePlaceholder": "Title (optional)"
+    },
+    "composer": {
+      "blocked": "Our auto-moderation held back this comment. Please edit it and try again.",
+      "failed": "Couldn’t send your reply. Try again.",
+      "inputA11y": "Write a comment",
+      "placeholder": "Write a reply…",
+      "sendA11y": "Send comment"
+    },
+    "feed": {
+      "emptyBody": "New updates from your live circles will appear here.",
+      "emptyHorsesBody": "Follow a horse to see its space here.",
+      "emptyHorsesTitle": "Nothing from your horses yet",
+      "emptyPollsTitle": "No polls right now",
+      "emptySpaceBody": "Start the first post.",
+      "emptySpaceTitle": "Nothing in {{name}} yet",
+      "emptyStoriesTitle": "No stories yet",
+      "emptyTitle": "Nothing new yet",
+      "unavailableTitle": "Feed unavailable"
+    },
+    "insideTrack": {
+      "emptyBody": "Educational videos and articles will appear here soon.",
+      "emptyTitle": "Nothing here yet",
+      "kicker": "Club",
+      "latest": "Latest",
+      "startHere": "Start here",
+      "title": "Inside Track",
+      "unavailableTitle": "Inside Track unavailable"
+    },
+    "like": {
+      "countOne": "{{count}} like",
+      "countOther": "{{count}} likes",
+      "like": "Like",
+      "likeAction": "Like",
+      "liked": "Liked",
+      "unlikeAction": "Unlike"
+    },
+    "media": {
+      "downloadFile": "Download file",
+      "unavailable": "Media unavailable",
+      "unsupported": "Unsupported content: {{type}}",
+      "unsupportedA11y": "Unsupported Circle content: {{type}}",
+      "view": "View media"
+    },
+    "post": {
+      "anonymousAuthor": "Rionna member",
+      "commentCountOne": "{{count}} comment",
+      "commentCountOther": "{{count}} comments",
+      "kicker": "Community",
+      "noContent": "This post has no readable content yet.",
+      "openHint": "Opens the post",
+      "retryA11y": "Retry post",
+      "unavailableBody": "Check your connection and try again.",
+      "unavailableTitle": "Post unavailable"
+    },
+    "postMenu": {
+      "delete": "Delete post",
+      "deleteConfirmTitle": "Delete this post?",
+      "deleteFailed": "Couldn't delete that post. Try again.",
+      "optionsA11y": "Post options",
+      "report": "Report post"
+    },
+    "report": {
+      "abusive": "Abusive",
+      "failed": "Couldn't send that report. Try again.",
+      "noteA11y": "Report note",
+      "notePlaceholder": "Tell us more (optional)",
+      "offTopic": "Off topic",
+      "other": "Other",
+      "selected": "Selected",
+      "send": "Send",
+      "sendA11y": "Send report",
+      "sending": "Sending…",
+      "sent": "Thanks — the club has been notified.",
+      "spam": "Spam",
+      "title": "Report"
+    },
+    "role": {
+      "staff": "Staff",
+      "trainer": "Trainer"
+    },
+    "savedContent": "Showing saved content",
+    "space": {
+      "emptyBody": "Updates and discussion for this horse will appear here.",
+      "emptyTitle": "No posts yet",
+      "kicker": "Discussion",
+      "newPostA11y": "New post",
+      "unavailableTitle": "Discussion unavailable"
+    },
+    "time": {
+      "daysAgo": "{{count}}d ago",
+      "hoursAgo": "{{count}}h ago",
+      "justNow": "Just now",
+      "minutesAgo": "{{count}}m ago"
+    },
+    "title": "Community"
   },
   "events": {
     "all": "All",
@@ -64,6 +224,24 @@
     "profile": "Profile",
     "pulse": "Pulse",
     "stables": "Stables"
+  },
+  "news": {
+    "byline": "By {{name}}",
+    "kicker": "News",
+    "notFoundBody": "It may have been removed, or your connection dropped.",
+    "notFoundTitle": "Article not found"
+  },
+  "polls": {
+    "closed": "Closed",
+    "clubVote": "Club vote",
+    "endedBody": "Results stay in the Community feed for a week after closing.",
+    "endedTitle": "This vote has ended",
+    "hint": "Tap an option to vote. You can change your mind while the vote is open.",
+    "saving": "Saving your vote…",
+    "stableVote": "Stable vote",
+    "unavailableTitle": "Vote unavailable",
+    "votesOne": "{{count}} vote",
+    "votesOther": "{{count}} votes"
   },
   "settings": {
     "about": "About",

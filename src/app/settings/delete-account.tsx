@@ -1,3 +1,4 @@
+import type { TextInput } from 'react-native';
 import { useForm } from '@tanstack/react-form';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
@@ -13,6 +14,7 @@ import {
   View,
 } from '@/components/ui';
 import { getFieldError } from '@/components/ui/form-utils';
+import { describeAuthError } from '@/features/auth/lib/auth-error';
 import { signOut } from '@/features/auth/use-auth-store';
 import { PageHeader } from '@/features/settings/components/page-header';
 import { client } from '@/lib/api/client';
@@ -28,6 +30,7 @@ const schema = z.object({
 export default function DeleteAccountScreen() {
   const router = useRouter();
   const [error, setError] = React.useState<string | null>(null);
+  const confirmRef = React.useRef<TextInput>(null);
 
   const form = useForm({
     defaultValues: { password: '', confirmText: '' },
@@ -41,12 +44,8 @@ export default function DeleteAccountScreen() {
         signOut();
         router.replace('/login');
       }
-      catch (e: any) {
-        const message
-          = e.response?.data?.message
-            ?? e.response?.data?.error
-            ?? 'Account deletion failed.';
-        setError(message);
+      catch (e) {
+        setError(describeAuthError(e, 'deleteAccount'));
       }
     },
   });
@@ -78,6 +77,11 @@ export default function DeleteAccountScreen() {
                     <Input
                       label={translate('settings.deleteAccount.password')}
                       secureTextEntry
+                      autoComplete="current-password"
+                      textContentType="password"
+                      returnKeyType="next"
+                      submitBehavior="submit"
+                      onSubmitEditing={() => confirmRef.current?.focus()}
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChangeText={field.handleChange}
@@ -89,8 +93,12 @@ export default function DeleteAccountScreen() {
                   name="confirmText"
                   children={field => (
                     <Input
+                      ref={confirmRef}
                       label={translate('settings.deleteAccount.confirmPrompt')}
                       autoCapitalize="characters"
+                      autoCorrect={false}
+                      returnKeyType="go"
+                      onSubmitEditing={() => void form.handleSubmit()}
                       value={field.state.value}
                       onBlur={field.handleBlur}
                       onChangeText={field.handleChange}

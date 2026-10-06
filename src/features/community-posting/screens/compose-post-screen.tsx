@@ -12,6 +12,7 @@ import { useCreatePost } from '@/features/community-posting/api/use-create-post'
 import { usePostableSpaces } from '@/features/community-posting/api/use-postable-spaces';
 import { ComposeImageRow } from '@/features/community-posting/components/compose-image-row';
 import { pickImage } from '@/features/community-posting/lib/pick-image';
+import { translate } from '@/lib/i18n';
 import { getItem, setItem } from '@/lib/storage';
 
 const TITLE_MAX = 120;
@@ -19,15 +20,14 @@ const BODY_MAX = 2000;
 const MIN_BODY_LENGTH = 10;
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
-const FAILURE_COPY: Record<CreatePostFailure | 'network', string> = {
-  blocked:
-    'Our auto-moderation held back this post. Please edit it to keep things friendly and respectful, then try again.',
-  rate_limited: 'You\'ve posted a lot today — try again later.',
-  not_allowed: 'You can\'t post in that space.',
-  image_failed: 'That photo couldn\'t be uploaded.',
-  circle_failed: 'Couldn\'t publish right now. Try again.',
-  network: 'Couldn\'t publish right now. Try again.',
-};
+const FAILURE_KEY = {
+  blocked: 'community.compose.failureBlocked',
+  rate_limited: 'community.compose.failureRateLimited',
+  not_allowed: 'community.compose.failureNotAllowed',
+  image_failed: 'community.compose.failureImage',
+  circle_failed: 'community.compose.failurePublish',
+  network: 'community.compose.failurePublish',
+} as const satisfies Record<CreatePostFailure | 'network', string>;
 
 function lastSpaceKey(memberId: string) {
   return `community-posting:last-space:${memberId}`;
@@ -74,15 +74,15 @@ function ComposeFields({ title, onChangeTitle, body, onChangeBody }: ComposeFiel
   return (
     <View>
       <FormField
-        accessibilityLabel="Post title"
-        placeholder="Title (optional)"
+        accessibilityLabel={translate('community.compose.titleA11y')}
+        placeholder={translate('community.compose.titlePlaceholder')}
         value={title}
         onChangeText={onChangeTitle}
         maxLength={TITLE_MAX}
       />
       <FormField
-        accessibilityLabel="Post body"
-        placeholder="What's on your mind?"
+        accessibilityLabel={translate('community.compose.bodyA11y')}
+        placeholder={translate('community.compose.bodyPlaceholder')}
         value={body}
         onChangeText={onChangeBody}
         maxLength={BODY_MAX}
@@ -109,7 +109,7 @@ function SpaceChips({
   );
   return (
     <View className="mb-4 gap-2">
-      <MonoLabel>Post in</MonoLabel>
+      <MonoLabel>{translate('community.compose.postIn')}</MonoLabel>
       <View className="-mx-4">
         <ChipRow
           testID="compose-post-space"
@@ -139,13 +139,13 @@ function SpacesStatus({ isError, isEmpty, onRetry }: SpacesStatusProps) {
   if (isError) {
     return (
       <View className="mb-4 gap-3 rounded-lg bg-white p-4">
-        <Text variant="body" className="text-ink-variant">Couldn&apos;t load your spaces. Pull to retry.</Text>
+        <Text variant="body" className="text-ink-variant">{translate('community.compose.spacesFailed')}</Text>
         <Button
           testID="compose-post-spaces-retry"
           variant="secondary"
           size="md"
           fullWidth={false}
-          label="Retry"
+          label={translate('common.tryAgain')}
           onPress={onRetry}
         />
       </View>
@@ -154,7 +154,7 @@ function SpacesStatus({ isError, isEmpty, onRetry }: SpacesStatusProps) {
   if (isEmpty) {
     return (
       <View className="mb-4 rounded-lg bg-white p-4">
-        <Text variant="body" className="text-ink-variant">You can&apos;t post in any spaces yet.</Text>
+        <Text variant="body" className="text-ink-variant">{translate('community.compose.noSpaces')}</Text>
       </View>
     );
   }
@@ -177,8 +177,8 @@ function ComposeFooter({ errorMessage, isPending, canSubmit, onSubmit }: Compose
       <Button
         testID="compose-post-submit"
         size="lg"
-        label={isPending ? 'Posting…' : 'Post'}
-        accessibilityLabel="Post"
+        label={translate(isPending ? 'community.compose.posting' : 'community.compose.post')}
+        accessibilityLabel={translate('community.compose.post')}
         disabled={!canSubmit || isPending}
         onPress={onSubmit}
       />
@@ -196,7 +196,7 @@ function useComposeImageState() {
       return;
     }
     if (picked.fileSize > MAX_IMAGE_BYTES) {
-      setImageError('Choose a photo under 10 MB.');
+      setImageError(translate('community.compose.imageTooBig'));
       return;
     }
     setImageError(null);
@@ -217,9 +217,9 @@ function ComposeHeader({ onCancel }: { onCancel: () => void }) {
   const isSheet = Platform.OS === 'ios';
   return (
     <ScreenHeader
-      kicker="New post"
+      kicker={translate('community.compose.kicker')}
       onBack={onCancel}
-      backLabel="Cancel"
+      backLabel={translate('community.compose.cancel')}
       safeArea={!isSheet}
       className={isSheet ? 'pt-3 pb-4' : 'pb-4'}
     />
@@ -325,7 +325,7 @@ export function ComposePostScreen() {
                 </>
               )}
         <ComposeFooter
-          errorMessage={failure ? FAILURE_COPY[failure] : null}
+          errorMessage={failure ? translate(FAILURE_KEY[failure]) : null}
           isPending={isPending}
           canSubmit={canSubmitPost(title, body) && Boolean(selectedSpaceId)}
           onSubmit={() => void onSubmit()}

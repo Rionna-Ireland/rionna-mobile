@@ -1,4 +1,5 @@
 import type { ReportTarget } from '@/features/community-posting/types';
+import type { CommentHandlers } from '@/features/member-content/components/thread-comments';
 import type {
   MemberContentState,
   MemberPostDetail,
@@ -9,22 +10,21 @@ import { HeaderHeightContext } from '@react-navigation/elements';
 import Env from 'env';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
-import { Linking, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
-import { Path, Svg } from 'react-native-svg';
 
 import {
-  ActivityIndicator,
+  BrandedRefreshControl,
   Button,
   Card,
-  IconButton,
   Image,
-  MonoLabel,
+  RefreshIndicator,
   ScreenHeader,
   Text,
+  usePullToRefresh,
 } from '@/components/ui';
 import colors from '@/components/ui/colors';
-import { useScreenBottomPadding } from '@/components/ui/screen-layout';
+import { AnimatedScrollView, useScrollHeader } from '@/components/ui/scroll-header';
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { PostOverflowMenu } from '@/features/community-posting/components/post-overflow-menu';
 import { ReportSheet } from '@/features/community-posting/components/report-sheet';
@@ -37,18 +37,26 @@ import {
 import { usePostLike } from '@/features/member-content/api/use-post-like';
 import { CircleTiptapRenderer } from '@/features/member-content/components/circle-tiptap-renderer';
 import { ActivityRow, AuthorHeader } from '@/features/member-content/components/post-parts';
+import { CommentComposer, CommentsSection } from '@/features/member-content/components/thread-comments';
+import { ThreadSkeleton } from '@/features/member-content/components/thread-skeleton';
 import { formatRelativeTime } from '@/features/member-content/lib/space-tag';
 import { hydrateCircleDoc } from '@/features/member-content/tiptap/hydrate';
 import { circleDocHasContent } from '@/features/member-content/tiptap/native-support';
+import { translate } from '@/lib/i18n';
+import { SkeletonSwap } from '@/lib/motion';
 
 const REPORT_EXCERPT_MAX = 200;
 
-type MemberPostViewProps = {
+type MemberPostViewProps = CommentHandlers & {
   post: MemberPostDetail | undefined;
   contentState: MemberContentState;
   isLoading?: boolean;
   onOpenUrl?: (url: string) => void;
   onRetry?: () => void;
+  /** Pull-to-refresh: reloads the post and its comments. Omitted → no pull. */
+  onRefresh?: () => unknown;
+  /** Reloads the comments alone (their failed state's Try again). */
+  onRetryComments?: () => void;
   /** Back action for the kicker header. */
   onBack?: () => void;
   /** Right slot of the kicker header (the post overflow menu). */
@@ -67,24 +75,18 @@ type MemberPostViewProps = {
   onSubmitComment?: (postId: string, body: string) => void;
   /** Disables the composer while a comment is in flight. */
   commentSubmitting?: boolean;
-  /** Set after a failed submit — 'blocked' shows inline copy and keeps the composer text; 'failed' matches the prior silent-clear behaviour. */
+  /** Set after a failed submit: 'blocked' (auto-moderation) or 'failed'; the composer keeps the text. */
   commentError?: 'blocked' | 'failed' | null;
-  /** Wire to enable delete on the member's own comments. */
-  onDeleteComment?: (postId: string, commentId: string) => void;
-  /** Dims the comment being deleted. */
-  pendingDeleteCommentId?: string | null;
-  /** Wire to open the report sheet for a long-pressed comment. */
-  onLongPressComment?: (postId: string, comment: PostComment) => void;
 };
 
 function PostUnavailable({ onRetry, onBack }: { onRetry?: () => void; onBack?: () => void }) {
   return (
     <View testID="member-post-unavailable" className="flex-1 bg-surface">
-      <ScreenHeader kicker="Community" onBack={onBack} />
+      <ScreenHeader kicker={translate('community.post.kicker')} onBack={onBack} />
       <View className="flex-1 items-center justify-center px-8">
-        <Text variant="display-sm">Post unavailable</Text>
+        <Text variant="display-sm">{translate('community.post.unavailableTitle')}</Text>
         <Text variant="body" className="mt-2 text-center text-ink-variant">
-          Check your connection and try again.
+          {translate('community.post.unavailableBody')}
         </Text>
         {onRetry
           ? (
@@ -93,217 +95,13 @@ function PostUnavailable({ onRetry, onBack }: { onRetry?: () => void; onBack?: (
                 size="md"
                 fullWidth={false}
                 className="mt-5"
-                label="Try again"
-                accessibilityLabel="Retry post"
+                label={translate('common.tryAgain')}
+                accessibilityLabel={translate('community.post.retryA11y')}
                 onPress={onRetry}
               />
             )
           : null}
       </View>
-    </View>
-  );
-}
-
-function CommentRow({
-  postId,
-  comment,
-  onDeleteComment,
-  pendingDeleteCommentId,
-  onLongPressComment,
-  isReply = false,
-}: {
-  postId: string;
-  comment: PostComment;
-  onDeleteComment?: (postId: string, commentId: string) => void;
-  pendingDeleteCommentId?: string | null;
-  onLongPressComment?: (postId: string, comment: PostComment) => void;
-  isReply?: boolean;
-}) {
-  const authorName = comment.authorName?.trim() || 'Rionna member';
-  const deleting = pendingDeleteCommentId === comment.id;
-  // A staff/trainer answer is highlighted lilac (frame 11); hidden until S13-11 sends authorRole.
-  const highlighted = Boolean(comment.authorRole);
-  return (
-    <View className={isReply ? 'ml-6 gap-3' : 'gap-3'}>
-      <Pressable
-        accessibilityLabel={`Comment by ${authorName}`}
-        onLongPress={onLongPressComment ? () => onLongPressComment(postId, comment) : undefined}
-        style={deleting ? { opacity: 0.4 } : null}
-      >
-        <Card
-          variant="white"
-          className={highlighted ? 'gap-3 border border-outline-variant bg-primary-fixed' : 'gap-3'}
-        >
-          <AuthorHeader
-            name={authorName}
-            avatarUrl={comment.authorAvatarUrl}
-            time={formatRelativeTime(comment.createdAt)}
-            role={comment.authorRole}
-            showSpaceTag={false}
-          />
-          {comment.bodyText
-            ? <Text variant="body-lg" className="text-ink-variant">{comment.bodyText}</Text>
-            : null}
-          {comment.canDelete && onDeleteComment
-            ? (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel="Delete comment"
-                  disabled={deleting}
-                  hitSlop={8}
-                  className="self-start"
-                  onPress={() => onDeleteComment(postId, comment.id)}
-                >
-                  <Text variant="body-sm" className="text-ink-muted">Delete</Text>
-                </Pressable>
-              )
-            : null}
-        </Card>
-      </Pressable>
-      {comment.replies.map(reply => (
-        <CommentRow
-          key={reply.id}
-          postId={postId}
-          comment={reply}
-          onDeleteComment={onDeleteComment}
-          pendingDeleteCommentId={pendingDeleteCommentId}
-          onLongPressComment={onLongPressComment}
-          isReply
-        />
-      ))}
-    </View>
-  );
-}
-
-function CommentComposer({
-  postId,
-  onSubmitComment,
-  commentSubmitting = false,
-  commentError = null,
-}: {
-  postId: string;
-  onSubmitComment: (postId: string, body: string) => void;
-  commentSubmitting?: boolean;
-  commentError?: 'blocked' | 'failed' | null;
-}) {
-  const [text, setText] = React.useState('');
-  const bottomPadding = useScreenBottomPadding();
-  const lastSubmittedRef = React.useRef('');
-  const trimmed = text.trim();
-
-  React.useEffect(() => {
-    if (commentError === 'blocked' && lastSubmittedRef.current) {
-      setText(lastSubmittedRef.current);
-    }
-  }, [commentError]);
-
-  const submit = () => {
-    if (!trimmed || commentSubmitting) {
-      return;
-    }
-    lastSubmittedRef.current = trimmed;
-    onSubmitComment(postId, trimmed);
-    setText('');
-  };
-
-  return (
-    <View className="gap-2 bg-surface px-4 pt-2" style={{ paddingBottom: bottomPadding + 8 }}>
-      {commentError === 'blocked'
-        ? (
-            <Text variant="body-sm" className="text-plum">
-              Our auto-moderation held back this comment. Please edit it and try again.
-            </Text>
-          )
-        : null}
-      <View className="flex-row items-end gap-3 rounded-xl border border-outline-variant bg-white p-3">
-        <TextInput
-          accessibilityLabel="Write a comment"
-          placeholder="Write a reply…"
-          placeholderTextColor={colors.inkMuted}
-          value={text}
-          onChangeText={setText}
-          editable={!commentSubmitting}
-          multiline
-          className="max-h-28 min-h-[46px] flex-1 font-sans-medium text-sm/5 text-ink"
-          textAlignVertical="center"
-        />
-        <IconButton
-          variant="square-accent"
-          accessibilityLabel="Send comment"
-          disabled={commentSubmitting || trimmed.length === 0}
-          onPress={submit}
-        >
-          <SendArrow />
-        </IconButton>
-      </View>
-    </View>
-  );
-}
-
-function SendArrow() {
-  return (
-    <Svg width={20} height={20} viewBox="0 0 24 24" accessibilityElementsHidden>
-      <Path
-        d="M12 19V5M5.5 11.5L12 5l6.5 6.5"
-        stroke={colors.plum}
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      />
-    </Svg>
-  );
-}
-
-function CommentsSection({
-  postId,
-  comments,
-  total,
-  commentsUnavailable = false,
-  onDeleteComment,
-  pendingDeleteCommentId,
-  onLongPressComment,
-}: {
-  postId: string;
-  comments?: PostComment[];
-  total: number;
-  commentsUnavailable?: boolean;
-  onDeleteComment?: (postId: string, commentId: string) => void;
-  pendingDeleteCommentId?: string | null;
-  onLongPressComment?: (postId: string, comment: PostComment) => void;
-}) {
-  return (
-    <View className="mt-4 gap-3">
-      <MonoLabel>{`Replies (${total})`}</MonoLabel>
-      {commentsUnavailable
-        ? (
-            <View testID="post-comments-unavailable">
-              <Text variant="body" className="text-ink-variant">
-                Comments couldn’t load. Pull down to try again.
-              </Text>
-            </View>
-          )
-        : null}
-      {!commentsUnavailable && comments && comments.length === 0
-        ? (
-            <Card>
-              <Text variant="title">No comments yet</Text>
-              <Text variant="body-sm" className="mt-1 text-ink-muted">
-                Be the first to join the conversation.
-              </Text>
-            </Card>
-          )
-        : null}
-      {comments?.map(comment => (
-        <CommentRow
-          key={comment.id}
-          postId={postId}
-          comment={comment}
-          onDeleteComment={onDeleteComment}
-          pendingDeleteCommentId={pendingDeleteCommentId}
-          onLongPressComment={onLongPressComment}
-        />
-      ))}
     </View>
   );
 }
@@ -347,7 +145,7 @@ function PostCard({
         ? <CircleTiptapRenderer doc={hydratedDoc} onOpenUrl={onOpenUrl} />
         : (
             <Text variant="body-lg" className="text-ink-variant">
-              {post.bodyText ?? 'This post has no readable content yet.'}
+              {post.bodyText ?? translate('community.post.noContent')}
             </Text>
           )}
       <ActivityRow
@@ -361,14 +159,17 @@ function PostCard({
   );
 }
 
-export function MemberPostView({
+type ThreadBodyProps = Omit<MemberPostViewProps, 'post' | 'isLoading' | 'onRetry' | 'onBack' | 'headerRight'> & {
+  post: MemberPostDetail;
+};
+
+/** The loaded thread: post, comments (pull to refresh, S14-03 refresher) and the reply composer. */
+function ThreadBody({
   post,
   contentState,
-  isLoading = false,
   onOpenUrl,
-  onRetry,
-  onBack,
-  headerRight,
+  onRefresh,
+  onRetryComments,
   onToggleLike,
   likePending,
   comments,
@@ -377,30 +178,10 @@ export function MemberPostView({
   onSubmitComment,
   commentSubmitting,
   commentError,
-  onDeleteComment,
-  pendingDeleteCommentId,
-  onLongPressComment,
-}: MemberPostViewProps) {
-  // Offset for any native header above the screen (0 when the kicker header
-  // replaces it, and outside a navigator, e.g. unit tests).
-  const headerHeight = React.use(HeaderHeightContext) ?? 0;
-
-  if (isLoading && !post) {
-    return (
-      <View testID="member-post-loading" className="flex-1 bg-surface">
-        <ScreenHeader kicker="Community" onBack={onBack} />
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator />
-          <Text variant="body" className="mt-3 text-ink-variant">Loading post…</Text>
-        </View>
-      </View>
-    );
-  }
-
-  if (!post) {
-    return <PostUnavailable onRetry={onRetry} onBack={onBack} />;
-  }
-
+  ...handlers
+}: ThreadBodyProps) {
+  const { scrollY, onScroll } = useScrollHeader();
+  const pull = usePullToRefresh(onRefresh ?? noop);
   const hydratedDoc = hydrateCircleDoc({
     body: post.tiptapDoc,
     sgids_to_object_map: post.embeds,
@@ -409,47 +190,39 @@ export function MemberPostView({
   const showComments = comments !== undefined || commentsUnavailable;
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: colors.surface }}
-      behavior="padding"
-      keyboardVerticalOffset={headerHeight}
-    >
-      <ScreenHeader kicker="Community" onBack={onBack} right={headerRight} className="pb-3" />
-      <ScrollView
-        className="flex-1"
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24 }}
-      >
-        {contentState === 'saved'
-          ? (
-              <View className="mb-3 rounded-lg bg-primary-fixed px-4 py-3">
-                <Text variant="body-sm" className="font-sans-medium">Showing saved content</Text>
-              </View>
-            )
-          : null}
-
-        <PostCard
-          post={post}
-          hydratedDoc={hydratedDoc}
-          onOpenUrl={onOpenUrl}
-          onToggleLike={onToggleLike}
-          likePending={likePending}
-        />
-
-        {showComments
-          ? (
-              <CommentsSection
-                postId={post.id}
-                comments={comments}
-                total={commentsTotal ?? comments?.length ?? 0}
-                commentsUnavailable={commentsUnavailable}
-                onDeleteComment={onDeleteComment}
-                pendingDeleteCommentId={pendingDeleteCommentId}
-                onLongPressComment={onLongPressComment}
-              />
-            )
-          : null}
-      </ScrollView>
+    <>
+      <View className="flex-1">
+        <AnimatedScrollView
+          className="flex-1"
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.content}
+          refreshControl={onRefresh ? <BrandedRefreshControl refreshing={pull.refreshing} onRefresh={pull.onRefresh} /> : undefined}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+        >
+          {contentState === 'saved'
+            ? (
+                <View className="mb-3 rounded-lg bg-primary-fixed px-4 py-3">
+                  <Text variant="body-sm" className="font-sans-medium">{translate('community.savedContent')}</Text>
+                </View>
+              )
+            : null}
+          <PostCard post={post} hydratedDoc={hydratedDoc} onOpenUrl={onOpenUrl} onToggleLike={onToggleLike} likePending={likePending} />
+          {showComments
+            ? (
+                <CommentsSection
+                  postId={post.id}
+                  comments={comments}
+                  total={commentsTotal ?? comments?.length ?? 0}
+                  commentsUnavailable={commentsUnavailable}
+                  onRetryComments={onRetryComments}
+                  {...handlers}
+                />
+              )
+            : null}
+        </AnimatedScrollView>
+        {onRefresh ? <RefreshIndicator scrollY={scrollY} refreshing={pull.refreshing} top={0} /> : null}
+      </View>
       {showComments && onSubmitComment
         ? (
             <CommentComposer
@@ -460,9 +233,41 @@ export function MemberPostView({
             />
           )
         : null}
+    </>
+  );
+}
+
+function noop() {}
+
+export function MemberPostView({ post, isLoading = false, onRetry, onBack, headerRight, ...rest }: MemberPostViewProps) {
+  // Offset for any native header above the screen (0 when the kicker header
+  // replaces it, and outside a navigator, e.g. unit tests).
+  const headerHeight = React.use(HeaderHeightContext) ?? 0;
+  const loading = isLoading && !post;
+
+  if (!loading && !post) {
+    return <PostUnavailable onRetry={onRetry} onBack={onBack} />;
+  }
+
+  return (
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: colors.surface }}
+      behavior="padding"
+      keyboardVerticalOffset={headerHeight}
+    >
+      <ScreenHeader kicker={translate('community.post.kicker')} onBack={onBack} right={post ? headerRight : undefined} className="pb-3" />
+      {/* First load: a skeleton of the thread, crossfading to it (S14-08 A-015). */}
+      <SkeletonSwap loading={loading} skeleton={<ThreadSkeleton />} style={styles.fill}>
+        {post ? <ThreadBody post={post} {...rest} /> : null}
+      </SkeletonSwap>
     </KeyboardAvoidingView>
   );
 }
+
+const styles = StyleSheet.create({
+  fill: { flex: 1 },
+  content: { paddingHorizontal: 16, paddingTop: 8, paddingBottom: 24 },
+});
 
 /** First `REPORT_EXCERPT_MAX` characters of the reported text, defaulting to an empty excerpt. */
 function reportExcerpt(text: string | null | undefined) {
@@ -526,6 +331,8 @@ function SignedInMemberPost({
         isLoading={post.isLoading}
         onOpenUrl={url => void Linking.openURL(url)}
         onRetry={() => void post.refetch()}
+        onRefresh={() => Promise.all([post.refetch(), comments.refetch()])}
+        onRetryComments={() => void comments.refetch()}
         onBack={() => router.back()}
         headerRight={postData
           ? (

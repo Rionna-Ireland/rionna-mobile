@@ -1,11 +1,13 @@
 import type { MemberFeedItem } from '@/features/member-content/types';
 
 import * as React from 'react';
-import { Pressable } from 'react-native';
 
 import { Card, Image, Text } from '@/components/ui';
+import { a11yCardProps } from '@/components/ui/a11y-card';
 import { ActivityRow, AuthorHeader } from '@/features/member-content/components/post-parts';
+import { feedCardSummary } from '@/features/member-content/lib/post-labels';
 import { formatRelativeTime } from '@/features/member-content/lib/space-tag';
+import { translate } from '@/lib/i18n';
 
 type MemberFeedCardProps = {
   item: MemberFeedItem;
@@ -16,11 +18,11 @@ type MemberFeedCardProps = {
   likePending?: boolean;
 };
 
-type CardBodyProps = Pick<MemberFeedCardProps, 'item' | 'onToggleLike' | 'likePending'>;
+type CardContentProps = Pick<MemberFeedCardProps, 'item' | 'onToggleLike' | 'likePending'>;
 
-function CardBody({ item, onToggleLike, likePending }: CardBodyProps) {
+function CardContent({ item, onToggleLike, likePending }: CardContentProps) {
   return (
-    <Card className="gap-3 border border-outline-variant">
+    <>
       <AuthorHeader
         name={item.authorName}
         avatarUrl={item.authorAvatarUrl}
@@ -51,22 +53,38 @@ function CardBody({ item, onToggleLike, likePending }: CardBodyProps) {
         likePending={likePending}
         onToggleLike={onToggleLike ? () => onToggleLike(item.id, !item.isLiked) : undefined}
       />
-    </Card>
+    </>
   );
 }
 
-export function MemberFeedCard({ item, onOpen, onToggleLike, likePending }: MemberFeedCardProps) {
-  if (!item.spaceId) {
-    return <CardBody item={item} onToggleLike={onToggleLike} likePending={likePending} />;
-  }
+const CARD_CLASS = 'gap-3 border border-outline-variant';
 
+/**
+ * Feed post card. With a space it's one tappable element (S14 press scale)
+ * that opens the thread; to a screen reader it's one summary with Like as a
+ * custom action, since the nested heart can't be reached inside it (A-004).
+ */
+export function MemberFeedCard({ item, onOpen, onToggleLike, likePending }: MemberFeedCardProps) {
+  const content = <CardContent item={item} onToggleLike={onToggleLike} likePending={likePending} />;
+  if (!item.spaceId) {
+    return <Card className={CARD_CLASS}>{content}</Card>;
+  }
+  const spaceId = item.spaceId;
+  const likeAction = onToggleLike && !likePending
+    ? {
+        name: 'like',
+        label: translate(item.isLiked ? 'community.like.unlikeAction' : 'community.like.likeAction'),
+        onAction: () => onToggleLike(item.id, !item.isLiked),
+      }
+    : null;
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={item.title}
-      onPress={() => onOpen(item.spaceId!, item.id)}
+    <Card
+      className={CARD_CLASS}
+      onPress={() => onOpen(spaceId, item.id)}
+      accessibilityHint={translate('community.post.openHint')}
+      {...a11yCardProps({ label: feedCardSummary(item), actions: [likeAction] })}
     >
-      <CardBody item={item} onToggleLike={onToggleLike} likePending={likePending} />
-    </Pressable>
+      {content}
+    </Card>
   );
 }

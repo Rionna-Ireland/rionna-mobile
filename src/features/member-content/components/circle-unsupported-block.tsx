@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import colors from '@/components/ui/colors';
+import { translate } from '@/lib/i18n';
 
 type CircleUnsupportedBlockProps = {
   type?: string;
@@ -15,10 +16,10 @@ export function CircleUnsupportedBlock({ type }: CircleUnsupportedBlockProps) {
   return (
     <View
       testID={`circle-unsupported-${testIdPart(label)}`}
-      accessibilityLabel={`Unsupported Circle content: ${label}`}
+      accessibilityLabel={translate('community.media.unsupportedA11y', { type: label })}
       style={styles.container}
     >
-      <Text style={styles.text}>{`Unsupported content: ${label}`}</Text>
+      <Text style={styles.text}>{translate('community.media.unsupported', { type: label })}</Text>
     </View>
   );
 }

@@ -3,7 +3,7 @@ import type { MemberFeedItem } from '@/features/member-content/types';
 import * as React from 'react';
 import { MemberFeedCard } from '@/features/member-content/components/member-feed-card';
 
-import { cleanup, render, screen, setup } from '@/lib/test-utils';
+import { cleanup, fireEvent, render, screen, setup } from '@/lib/test-utils';
 
 afterEach(cleanup);
 
@@ -55,7 +55,7 @@ describe('memberFeedCard', () => {
       <MemberFeedCard item={item} onOpen={jest.fn()} onToggleLike={onToggleLike} />,
     );
 
-    await user.press(screen.getByLabelText('Like post'));
+    await user.press(screen.getByLabelText('Like'));
     expect(onToggleLike).toHaveBeenCalledWith('post-42', true);
   });
 
@@ -69,7 +69,7 @@ describe('memberFeedCard', () => {
       />,
     );
 
-    await user.press(screen.getByLabelText('Unlike post'));
+    await user.press(screen.getByLabelText('Liked'));
     expect(onToggleLike).toHaveBeenCalledWith('post-42', false);
   });
 
@@ -84,13 +84,29 @@ describe('memberFeedCard', () => {
       />,
     );
 
-    await user.press(screen.getByLabelText('Like post'));
+    await user.press(screen.getByLabelText('Like'));
     expect(onToggleLike).not.toHaveBeenCalled();
   });
 
   it('shows a read-only like count when no like handler is wired', () => {
     render(<MemberFeedCard item={item} onOpen={jest.fn()} />);
-    expect(screen.queryByLabelText('Like post')).toBeNull();
+    expect(screen.queryByLabelText('Like')).toBeNull();
     expect(screen.getByLabelText('9 likes')).toBeOnTheScreen();
+  });
+
+  it('reads as one summary with Like as a screen-reader action (A-004)', () => {
+    const onToggleLike = jest.fn();
+    render(<MemberFeedCard item={item} onOpen={jest.fn()} onToggleLike={onToggleLike} />);
+    const card = screen.getByRole('button', { name: /^Jane Trainer, Stable Updates, .*Morning from the yard/ });
+    expect(card.props.accessibilityLabel).toMatch(/The horses have finished first lot\., 9 likes, 4 comments$/);
+    expect(card.props.accessibilityActions).toEqual([{ name: 'like', label: 'Like' }]);
+    fireEvent(card, 'accessibilityAction', { nativeEvent: { actionName: 'like' } });
+    expect(onToggleLike).toHaveBeenCalledWith('post-42', true);
+  });
+
+  it('offers no Like action while the like is in flight', () => {
+    render(<MemberFeedCard item={item} onOpen={jest.fn()} onToggleLike={jest.fn()} likePending />);
+    const card = screen.getByRole('button', { name: /Morning from the yard/ });
+    expect(card.props.accessibilityActions).toBeUndefined();
   });
 });

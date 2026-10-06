@@ -8,10 +8,9 @@ import { Avatar, MonoLabel, NumberRoll, Text } from '@/components/ui';
 import colors from '@/components/ui/colors';
 import { ChatV2 } from '@/components/ui/icons/v2';
 import { LikeToggle } from '@/features/member-content/components/like-toggle';
+import { authorDisplayName, commentCountLabel, roleLabel } from '@/features/member-content/lib/post-labels';
 import { SPACE_TAG_CLASS, spaceTagTone } from '@/features/member-content/lib/space-tag';
 import { useHorseSpaceIds } from '@/features/member-content/lib/use-horse-space-ids';
-
-const ROLE_LABEL: Record<AuthorRole, string> = { trainer: 'Trainer', staff: 'Staff' };
 
 /** Category-coloured space tag (horses sage, official navy, news ice, ...; see spaceTagTone). */
 export function SpaceTag({ name, spaceId }: { name: string | null | undefined; spaceId?: string | null }) {
@@ -38,7 +37,7 @@ export function RoleBadge({ role }: { role: AuthorRole | null | undefined }) {
   }
   return (
     <View testID="role-badge" className="rounded-[5px] bg-white px-2.5 py-1.5">
-      <MonoLabel>{ROLE_LABEL[role]}</MonoLabel>
+      <MonoLabel>{roleLabel(role)}</MonoLabel>
     </View>
   );
 }
@@ -60,7 +59,7 @@ export function AuthorHeader({
   role?: AuthorRole | null;
   showSpaceTag?: boolean;
 }) {
-  const displayName = name?.trim() || 'Rionna member';
+  const displayName = authorDisplayName(name);
   return (
     <View className="flex-row items-center gap-2">
       <Avatar uri={avatarUrl} name={displayName} size={41} ring />
@@ -103,7 +102,7 @@ export function ActivityRow({
       />
       <View
         accessible
-        accessibilityLabel={`${commentCount} ${commentCount === 1 ? 'comment' : 'comments'}`}
+        accessibilityLabel={commentCountLabel(commentCount)}
         className="flex-row items-center gap-0.5"
       >
         <ChatV2 size={20} color={colors.label} strokeWidth={1.2} />

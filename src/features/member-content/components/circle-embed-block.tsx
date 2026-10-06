@@ -1,11 +1,13 @@
 import type { HydratedNode } from '@/features/member-content/tiptap/hydrate';
 
 import * as React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import colors from '@/components/ui/colors';
+import { MotionPressable } from '@/components/ui/pressable';
 import { CircleMediaFrame } from '@/features/member-content/components/circle-media-frame';
 import { nonEmptyString, safeExternalUrl } from '@/features/member-content/lib/content-format';
+import { translate } from '@/lib/i18n';
 
 type CircleEmbedBlockProps = {
   node: HydratedNode;
@@ -41,20 +43,20 @@ export function CircleEmbedBlock({ node, onOpenUrl }: CircleEmbedBlockProps) {
 
   if (fallbackUrl) {
     return (
-      <Pressable
+      <MotionPressable
         accessibilityRole="link"
         disabled={!onOpenUrl}
         style={styles.fallback}
         onPress={() => onOpenUrl?.(fallbackUrl)}
       >
-        <Text style={styles.fallbackText}>View media</Text>
-      </Pressable>
+        <Text style={styles.fallbackText}>{translate('community.media.view')}</Text>
+      </MotionPressable>
     );
   }
 
   return (
     <View style={styles.fallback}>
-      <Text style={styles.unavailableText}>Media unavailable</Text>
+      <Text style={styles.unavailableText}>{translate('community.media.unavailable')}</Text>
     </View>
   );
 }
