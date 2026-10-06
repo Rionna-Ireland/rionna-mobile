@@ -27,6 +27,8 @@ type Props = {
 
 const LEGACY_BASE = 'font-sans text-base font-normal text-ink';
 
+const DISPLAY_BREAKS = { lineBreakStrategyIOS: 'push-out', textBreakStrategy: 'balanced' } as const;
+
 export function Text({
   className = '',
   style,
@@ -42,6 +44,10 @@ export function Text({
     () => twMerge(spec ? spec.className : LEGACY_BASE, className),
     [spec, className],
   );
+
+  // Display titles: no orphans (S14-08 A-020). iOS pushes a word down to fill
+  // the last line; Android balances the lines. A caller can still override.
+  const display = variant?.startsWith('display') ?? false;
 
   const nStyle = React.useMemo(
     () =>
@@ -64,6 +70,7 @@ export function Text({
         ?? spec?.maxFontSizeMultiplier
         ?? DEFAULT_MAX_FONT_SIZE_MULTIPLIER
       }
+      {...(display ? DISPLAY_BREAKS : null)}
       {...props}
     >
       {tx ? translate(tx) : children}
