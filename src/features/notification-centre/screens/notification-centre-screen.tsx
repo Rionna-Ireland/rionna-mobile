@@ -20,8 +20,12 @@ import { PreferencesCard } from '@/features/notification-centre/components/prefe
 import { groupInboxSections } from '@/features/notification-centre/lib/sections';
 import { isPushData, routeToTarget } from '@/features/notifications/deep-link';
 import { PageHeader } from '@/features/settings/components/page-header';
+import { EntranceItem, useFirstLoadEntrance } from '@/lib/motion';
 
 const AnimatedSectionList = Animated.createAnimatedComponent(SectionList<InboxItem>);
+
+// Rows sit on the 16pt gutter.
+const ROW_INSET = { paddingHorizontal: 16 };
 
 // ScreenHeader's kicker row is 44pt tall.
 const HEADER_ROW_HEIGHT = 44;
@@ -32,6 +36,19 @@ function SectionHeader({ title }: { title: string }) {
 
 function ItemGap() {
   return <View className="h-3" />;
+}
+
+/**
+ * First-load entrance keyed by row id, staggered across sections in display
+ * order. Rows from later pages, refreshes or scroll-in mounts enter instantly.
+ */
+function useRowEntrance(sections: { data: InboxItem[] }[]) {
+  const entering = useFirstLoadEntrance(sections.length > 0);
+  const rowIndex = React.useMemo(
+    () => new Map(sections.flatMap(section => section.data).map((item, i) => [item.id, i])),
+    [sections],
+  );
+  return (id: string) => entering(rowIndex.get(id) ?? -1);
 }
 
 export function NotificationCentreScreen() {
@@ -51,6 +68,7 @@ export function NotificationCentreScreen() {
 
   const items = React.useMemo(() => inbox.data?.pages.flatMap(page => page.items) ?? [], [inbox.data]);
   const sections = React.useMemo(() => groupInboxSections(items, new Date()), [items]);
+  const enteringFor = useRowEntrance(sections);
 
   const markSeenMutate = markSeen.mutate;
   useFocusEffect(React.useCallback(() => {
@@ -93,9 +111,9 @@ export function NotificationCentreScreen() {
         keyExtractor={item => item.id}
         renderSectionHeader={({ section }) => <SectionHeader title={section.title} />}
         renderItem={({ item }) => (
-          <View className="px-4">
+          <EntranceItem entering={enteringFor(item.id)} style={ROW_INSET}>
             <InboxRow item={item} onPress={handlePress} />
-          </View>
+          </EntranceItem>
         )}
         ItemSeparatorComponent={ItemGap}
         refreshControl={(
