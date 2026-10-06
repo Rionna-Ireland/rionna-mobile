@@ -46,9 +46,6 @@
     "unavailableBody": "Check your connection and try again shortly.",
     "unavailableTitle": "Events unavailable"
   },
-  "onboarding": {
-    "message": "Welcome to obytes app site"
-  },
   "settings": {
     "about": "About",
     "account": {
@@ -215,6 +212,5 @@
       "retired": "Retired",
       "sold": "Sold"
     }
-  },
-  "welcome": "Welcome to obytes app site"
+  }
 }

@@ -186,7 +186,6 @@ function AppStack() {
         {MODAL_STACK_SCREENS.map(({ name, options }) => (
           <Stack.Screen key={name} name={name} options={{ ...options, headerShown: false }} />
         ))}
-        <Stack.Screen name="onboarding" options={{ headerShown: false }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
       </Stack>
       <TermsGate />

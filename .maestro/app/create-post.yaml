@@ -8,7 +8,7 @@ env:
     \ to using"
 ---
 - launchApp
-- runFlow: ../utils/onboarding-and-login.yaml
+- runFlow: ../utils/ensure-logged-in.yaml
 - assertVisible: Feed
 - assertVisible: Create
 - tapOn: Create
