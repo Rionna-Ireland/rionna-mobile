@@ -1,6 +1,6 @@
 import type { Poll } from '@/features/polls/types';
 
-import { Card, MonoLabel, Pressable, Text, View } from '@/components/ui';
+import { Card, CheckSquare, MonoLabel, Pressable, Text, View } from '@/components/ui';
 import { PollResultBar } from '@/features/polls/components/poll-result-bar';
 import { percentagesFor } from '@/features/polls/lib/percentages';
 
@@ -68,11 +68,7 @@ export function PollCard({ poll, onVote, pending, variant }: PollCardProps) {
               onPress={() => onVote(poll.id, option.id)}
               className="flex-row items-center gap-3 rounded-lg border border-outline-variant bg-white p-3"
             >
-              <View
-                className={`size-5 items-center justify-center rounded-sm ${mine ? 'bg-primary' : 'bg-secondary-container'}`}
-              >
-                {mine ? <Text className="font-sans-bold text-[12px]/[14px] text-on-primary">✓</Text> : null}
-              </View>
+              <CheckSquare checked={mine} testID={`poll-option-${option.id}-check`} />
               <Text variant="body" className={mine ? 'font-sans-semibold' : ''}>{option.label}</Text>
             </Pressable>
           );

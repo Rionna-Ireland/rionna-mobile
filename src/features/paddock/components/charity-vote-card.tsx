@@ -1,11 +1,13 @@
 import type { TileSpec } from '@/components/brand/pattern';
 import type { Poll } from '@/features/polls/types';
 
-import { Card, MonoLabel, Pressable, Text, View } from '@/components/ui';
+import { Card, CheckSquare, colors, MonoLabel, Pressable, Text, View, withAlpha } from '@/components/ui';
 import { PollResultBar } from '@/features/polls/components/poll-result-bar';
 import { percentagesFor } from '@/features/polls/lib/percentages';
 
 const VOTE_PATTERN: TileSpec = { kind: 'harlequin', colourway: 'green', turn: 0 };
+/** Unchecked square: forest @ 15%. */
+const FOREST_TRACK = withAlpha(colors.forest, 0.15);
 
 type Props = {
   poll: Poll;
@@ -71,7 +73,7 @@ export function CharityVoteCard({ poll, pending, onVote }: Props) {
                     onPress={() => onVote(poll.id, option.id)}
                     className="min-w-[48%] flex-1 flex-row items-center gap-3 rounded-md bg-white py-2 pr-4 pl-2"
                   >
-                    <View className={`size-[15px] rounded-sm ${mine ? 'bg-forest' : 'bg-forest/15'}`} />
+                    <CheckSquare checked={mine} size={15} fill={colors.forest} track={FOREST_TRACK} />
                     <Text variant="body-sm" className="flex-1 font-sans-semibold" numberOfLines={2}>{option.label}</Text>
                   </Pressable>
                 );

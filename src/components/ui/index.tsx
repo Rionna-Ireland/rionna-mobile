@@ -6,6 +6,7 @@ export * from './activity-indicator';
 export * from './avatar';
 export * from './button';
 export * from './card';
+export * from './check-square';
 export * from './checkbox';
 export * from './chip';
 export { default as colors } from './colors';

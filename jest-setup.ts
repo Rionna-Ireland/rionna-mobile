@@ -30,6 +30,7 @@ jest.mock('react-native-reanimated', () => {
     }),
     useAnimatedStyle: jest.fn(fn => fn()),
     useAnimatedScrollHandler: jest.fn(() => jest.fn()),
+    useAnimatedProps: jest.fn(fn => fn()),
     useReducedMotion: jest.fn(() => false),
     withTiming: jest.fn(value => value),
     withSpring: jest.fn(value => value),
