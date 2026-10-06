@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import type { StyleProp, ViewStyle } from 'react-native';
+import type { StyleProp, ViewProps, ViewStyle } from 'react-native';
 import type { EntryExitAnimationFunction } from 'react-native-reanimated';
 import type { EntranceFn } from './entrance';
 import * as React from 'react';
@@ -87,6 +87,8 @@ type SkeletonSwapProps = {
   /** The content. `null` renders nothing (a card with nothing to show), the skeleton still fades out. */
   children: React.ReactNode;
   style?: StyleProp<ViewStyle>;
+  /** Layout of the content wrapper (offsets measured inside it are relative to it). */
+  onLayout?: ViewProps['onLayout'];
   testID?: string;
 };
 
@@ -95,7 +97,7 @@ type SkeletonSwapProps = {
  * same slot. Mount it inside a parent that stays mounted (the exiting fade
  * needs one). Content that never had a skeleton mounts without a wrapper fade.
  */
-export function SkeletonSwap({ loading, skeleton, children, style, testID }: SkeletonSwapProps) {
+export function SkeletonSwap({ loading, skeleton, children, style, onLayout, testID }: SkeletonSwapProps) {
   const { reduceMotion } = useMotion();
   const hadSkeleton = useSkeletonShown(loading);
   if (loading) {
@@ -108,7 +110,12 @@ export function SkeletonSwap({ loading, skeleton, children, style, testID }: Ske
   if (children === null || children === undefined || children === false)
     return null;
   return (
-    <Animated.View key="content" entering={hadSkeleton ? crossfadeInEntering(reduceMotion) : undefined} style={style}>
+    <Animated.View
+      key="content"
+      entering={hadSkeleton ? crossfadeInEntering(reduceMotion) : undefined}
+      style={style}
+      onLayout={onLayout}
+    >
       {children}
     </Animated.View>
   );
