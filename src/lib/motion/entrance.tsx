@@ -34,9 +34,13 @@ export const ENTRANCE_RISE = 12;
  */
 export const ENTRANCE_WINDOW_MS = staggerDelay(stagger.maxItems - 1) + durations.base;
 
-/** Fade-up `entering` for the item at `index` (callers cap the index). */
-export function fadeUpEntering(index: number): EntryExitAnimationFunction {
-  const delay = staggerDelay(index);
+/**
+ * Fade-up `entering` for the item at `index` (callers cap the index).
+ * `extraDelayMs` holds the whole batch back, e.g. Horse detail's content
+ * rising in behind the hero transition (S14-05 §3).
+ */
+export function fadeUpEntering(index: number, extraDelayMs = 0): EntryExitAnimationFunction {
+  const delay = staggerDelay(index) + extraDelayMs;
   const config = timings.enter;
   const rise = ENTRANCE_RISE;
   return () => {

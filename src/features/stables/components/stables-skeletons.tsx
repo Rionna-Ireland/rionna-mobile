@@ -1,7 +1,9 @@
 import type { StyleProp, ViewStyle } from 'react-native';
+import type { SharedValue } from 'react-native-reanimated';
 
 import * as React from 'react';
 import { useWindowDimensions, View } from 'react-native';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 
 import {
   Card,
@@ -81,28 +83,35 @@ function SectionSkeleton({ lines }: { lines: number }) {
  * name / fact lines / pill row as `HorseHero`), the section chips, then two
  * section cards.
  */
-export function HorseDetailSkeleton({ heroTopPadding }: { heroTopPadding: number }) {
+/**
+ * `heroOpacity`: while the hero transition's photo flies in (S14-05), the
+ * skeleton's navy hero block stays hidden so the photo lands on a clean page.
+ */
+export function HorseDetailSkeleton({ heroTopPadding, heroOpacity }: { heroTopPadding: number; heroOpacity?: SharedValue<number> }) {
   const { width } = useWindowDimensions();
+  const heroStyle = useAnimatedStyle(() => ({ opacity: heroOpacity ? heroOpacity.get() : 1 }));
   return (
     <SkeletonGroup testID="horse-detail-skeleton">
-      <View className="bg-primary" style={{ minHeight: width }}>
-        <SkeletonTone value="dark">
-          <View style={{ paddingTop: heroTopPadding, minHeight: width }} className="justify-between gap-8 px-4 pb-8">
-            <View className="h-11" />
-            <View className="gap-6">
-              <View className="gap-2">
-                <SkeletonText variant="display-lg" width="65%" />
-                <SkeletonText variant="body" width="80%" />
-                <SkeletonText variant="body" width="50%" />
-              </View>
-              <View className="flex-row gap-1">
-                <Skeleton height={30} radius={6} className="flex-1" />
-                <Skeleton height={30} radius={6} className="flex-1" />
+      <Animated.View style={heroStyle}>
+        <View className="bg-primary" style={{ minHeight: width }}>
+          <SkeletonTone value="dark">
+            <View style={{ paddingTop: heroTopPadding, minHeight: width }} className="justify-between gap-8 px-4 pb-8">
+              <View className="h-11" />
+              <View className="gap-6">
+                <View className="gap-2">
+                  <SkeletonText variant="display-lg" width="65%" />
+                  <SkeletonText variant="body" width="80%" />
+                  <SkeletonText variant="body" width="50%" />
+                </View>
+                <View className="flex-row gap-1">
+                  <Skeleton height={30} radius={6} className="flex-1" />
+                  <Skeleton height={30} radius={6} className="flex-1" />
+                </View>
               </View>
             </View>
-          </View>
-        </SkeletonTone>
-      </View>
+          </SkeletonTone>
+        </View>
+      </Animated.View>
       <View className="pt-5 pb-3">
         <SkeletonChipRow count={4} contentInset={16} />
       </View>
