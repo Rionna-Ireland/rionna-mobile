@@ -13,12 +13,12 @@ import {
   MonoLabel,
   Pressable,
   ScreenBackground,
-  ScrollView,
   Text,
   View,
 } from '@/components/ui';
 import { CaretRightV2 } from '@/components/ui/icons/v2';
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
+import { AnimatedScrollView, CollapsingTitle, CompactHeaderBar, useScrollHeader } from '@/components/ui/scroll-header';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { useCharity } from '@/features/paddock/api/use-charity';
@@ -97,13 +97,16 @@ type PaddockHubViewProps = {
 export function PaddockHubView({ offersCount, charitySummary, badges = [], onOpenBenefits, onOpenCharity }: PaddockHubViewProps) {
   const contentPaddingBottom = useTabBarContentPadding(24);
   const contentPaddingTop = useScreenTopPadding();
+  const { scrollY, onScroll } = useScrollHeader();
 
   return (
     <View className="flex-1 bg-background">
       <ScreenBackground />
       <FocusAwareStatusBar />
-      <ScrollView
+      <AnimatedScrollView
         className="flex-1"
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingTop: contentPaddingTop,
@@ -112,7 +115,9 @@ export function PaddockHubView({ offersCount, charitySummary, badges = [], onOpe
         }}
       >
         <View className="gap-2">
-          <Text variant="display-lg" accessibilityRole="header">Paddock</Text>
+          <CollapsingTitle scrollY={scrollY}>
+            <Text variant="display-lg" accessibilityRole="header">Paddock</Text>
+          </CollapsingTitle>
           <Text variant="body">
             {'Everything that comes with being '}
             <Text variant="body" className="text-plum-mid">one of us.</Text>
@@ -126,7 +131,8 @@ export function PaddockHubView({ offersCount, charitySummary, badges = [], onOpe
             <HubRow title="Charity Snapshot" subtitle={charitySummary} spec={TILE_GREEN} onPress={onOpenCharity} />
           </View>
         </View>
-      </ScrollView>
+      </AnimatedScrollView>
+      <CompactHeaderBar scrollY={scrollY} title="Paddock" testID="paddock-compact-header" />
     </View>
   );
 }

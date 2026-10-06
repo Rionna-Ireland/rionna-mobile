@@ -1,3 +1,4 @@
+import type { ScrollView } from 'react-native';
 import type { MonthRef } from '@/features/events/lib/calendar-grid';
 import type { ClubEvent } from '@/features/events/types';
 
@@ -13,12 +14,12 @@ import {
   FocusAwareStatusBar,
   MonoLabel,
   ScreenBackground,
-  ScrollView,
   Text,
   View,
 } from '@/components/ui';
 import colors from '@/components/ui/colors';
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
+import { AnimatedScrollView, CollapsingTitle, CompactHeaderBar, useScrollHeader } from '@/components/ui/scroll-header';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { showErrorMessage } from '@/components/ui/utils';
 import { useAuthStore } from '@/features/auth/use-auth-store';
@@ -214,7 +215,7 @@ function EventsBody({
 function useCalendarNavigation(events: ClubEvent[]) {
   const [month, setMonth] = React.useState(() => monthOf(new Date()));
   const [emptyDay, setEmptyDay] = React.useState<string | null>(null);
-  const scrollRef = React.useRef<React.ComponentRef<typeof ScrollView>>(null);
+  const scrollRef = React.useRef<ScrollView>(null);
   const listY = React.useRef(0);
   const cardY = React.useRef(new Map<string, number>());
 
@@ -252,6 +253,7 @@ export function EventsScreen() {
   const user = useAuthStore.use.user();
   const contentPaddingBottom = useTabBarContentPadding(24);
   const contentPaddingTop = useScreenTopPadding();
+  const { scrollY, onScroll } = useScrollHeader();
 
   const memberScope = React.useMemo(
     () => ({ organizationId: Env.EXPO_PUBLIC_CLUB_ID, memberId: user?.id ?? '' }),
@@ -293,8 +295,10 @@ export function EventsScreen() {
     <View className="flex-1 bg-background">
       <ScreenBackground />
       <FocusAwareStatusBar />
-      <ScrollView
+      <AnimatedScrollView
         ref={scrollRef}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingTop: contentPaddingTop,
@@ -302,7 +306,9 @@ export function EventsScreen() {
           gap: 16,
         }}
       >
-        <Text variant="display-lg" accessibilityRole="header">{translate('events.title')}</Text>
+        <CollapsingTitle scrollY={scrollY}>
+          <Text variant="display-lg" accessibilityRole="header">{translate('events.title')}</Text>
+        </CollapsingTitle>
 
         {typeChips.length > 0
           ? (
@@ -344,7 +350,8 @@ export function EventsScreen() {
             : null}
           {past.map(event => renderCard(event, true))}
         </EventsBody>
-      </ScrollView>
+      </AnimatedScrollView>
+      <CompactHeaderBar scrollY={scrollY} title={translate('events.title')} testID="events-compact-header" />
     </View>
   );
 }
