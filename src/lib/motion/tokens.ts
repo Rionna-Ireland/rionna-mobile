@@ -53,6 +53,8 @@ export const easings = {
   enter: Easing.bezier(0.2, 0, 0, 1),
   /** Accelerate out: things leaving the screen. */
   exit: Easing.bezier(0.3, 0, 1, 1),
+  /** Symmetric in-out: the Arrival mark's breathing loop. */
+  breathe: Easing.inOut(Easing.ease),
 };
 
 /** Ready-made `withTiming` configs pairing a duration with its easing. */
@@ -68,7 +70,52 @@ export const timings = {
   crossfade: { duration: durations.base, easing: easings.enter },
   /** Indeterminate spinner revolution: constant speed, no easing. */
   spin: { duration: durations.spin, easing: Easing.linear },
+  /** Stroke-draws: the Arrival submark outline, the charity progress line. */
+  draw: { duration: durations.draw, easing: easings.enter },
+  /** One half-cycle of the Arrival mark breathing while data is late (S14-04 §3). */
+  breathe: { duration: durations.draw, easing: easings.breathe },
 };
+
+/**
+ * Reanimated springs are at rest after about this multiple of their perceptual
+ * `duration`. Use it to know when a spring-driven hand-off has landed.
+ */
+export const SPRING_SETTLE_FACTOR = 1.5;
+
+/** Settle time (ms) of a spring token: when it's safe to swap the overlay out. */
+export function springSettleMs(spring: SpringToken): number {
+  return Math.round(springs[spring].duration * SPRING_SETTLE_FACTOR);
+}
+
+/**
+ * Arrival (S14-04, S14-00 decisions 14 and 17). Caps keep the splash honest:
+ * it never holds the app past `maxDataWaitMs` after the fill, whatever the
+ * network does; Home's skeletons take over from there.
+ */
+export const arrival = {
+  /** Signed-in cold launch: draw + fill must land inside this (ms). */
+  signedInCapMs: 1200,
+  /** Data later than this after the fill: the mark starts breathing. */
+  dataGraceMs: 300,
+  /** Never wait for data longer than this after the fill: hand off anyway. */
+  maxDataWaitMs: 1200,
+  /** Breathing dips the mark's opacity to this. */
+  breatheOpacity: 0.85,
+  /** Signed-out: the lockup holds this long before the light → navy crossfade. */
+  lockupHoldMs: 250,
+  /** First-login welcome is on screen at least this long. */
+  welcomeMinMs: 1600,
+  /** Repeat sign-ins (welcome already seen): the short welcome. */
+  welcomeRepeatMinMs: 600,
+  /** Welcome lines set this far apart. */
+  welcomeLineStepMs: 120,
+  /** Welcome lines rise this far (pt) as they fade in. */
+  welcomeRise: 8,
+  /** Pattern wave: per-diagonal delay, `(col + row) × waveStepMs`. */
+  waveStepMs: 90,
+  /** Pattern wave tiles fade up to this opacity. */
+  waveTileOpacity: 0.12,
+} as const;
 
 /** List entrance stagger: 40ms per item, capped so item 7+ arrives with item 6. */
 export const stagger = {
