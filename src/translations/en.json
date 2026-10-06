@@ -37,6 +37,15 @@
       "emptyTitle": "Nothing new yet",
       "unavailableTitle": "Feed unavailable"
     },
+    "insideTrack": {
+      "emptyBody": "Educational videos and articles will appear here soon.",
+      "emptyTitle": "Nothing here yet",
+      "kicker": "Club",
+      "latest": "Latest",
+      "startHere": "Start here",
+      "title": "Inside Track",
+      "unavailableTitle": "Inside Track unavailable"
+    },
     "like": {
       "countOne": "{{count}} like",
       "countOther": "{{count}} likes",
@@ -61,6 +70,13 @@
       "trainer": "Trainer"
     },
     "savedContent": "Showing saved content",
+    "space": {
+      "emptyBody": "Updates and discussion for this horse will appear here.",
+      "emptyTitle": "No posts yet",
+      "kicker": "Discussion",
+      "newPostA11y": "New post",
+      "unavailableTitle": "Discussion unavailable"
+    },
     "title": "Community"
   },
   "events": {
