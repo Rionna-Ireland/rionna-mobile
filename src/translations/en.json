@@ -6,6 +6,26 @@
     "tryAgain": "Try again"
   },
   "community": {
+    "comment": {
+      "delete": "Delete",
+      "deleteAction": "Delete comment",
+      "deleteCancel": "Cancel",
+      "deleteConfirm": "Delete",
+      "deleteConfirmBody": "This can’t be undone.",
+      "deleteConfirmTitle": "Delete this comment?",
+      "emptyBody": "Be the first to join the conversation.",
+      "emptyTitle": "No comments yet",
+      "repliesLabel": "Replies ({{count}})",
+      "reportAction": "Report comment",
+      "unavailable": "Comments couldn’t load."
+    },
+    "composer": {
+      "blocked": "Our auto-moderation held back this comment. Please edit it and try again.",
+      "failed": "Couldn’t send your reply. Try again.",
+      "inputA11y": "Write a comment",
+      "placeholder": "Write a reply…",
+      "sendA11y": "Send comment"
+    },
     "like": {
       "countOne": "{{count}} like",
       "countOther": "{{count}} likes",
@@ -18,12 +38,18 @@
       "anonymousAuthor": "Rionna member",
       "commentCountOne": "{{count}} comment",
       "commentCountOther": "{{count}} comments",
-      "openHint": "Opens the post"
+      "kicker": "Community",
+      "noContent": "This post has no readable content yet.",
+      "openHint": "Opens the post",
+      "retryA11y": "Retry post",
+      "unavailableBody": "Check your connection and try again.",
+      "unavailableTitle": "Post unavailable"
     },
     "role": {
       "staff": "Staff",
       "trainer": "Trainer"
-    }
+    },
+    "savedContent": "Showing saved content"
   },
   "events": {
     "all": "All",
