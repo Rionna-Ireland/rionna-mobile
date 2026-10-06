@@ -88,6 +88,9 @@ function barProgress(progress?: SharedValue<number>, scrollY?: SharedValue<numbe
   return scrollY ? collapseProgress(scrollY.get()) : 0;
 }
 
+/** Compact bar fill opacity: high enough that dark cards don't tint it. */
+export const COMPACT_BAR_OPACITY = 0.97;
+
 /** Fixed compact bar over the top of a scrolling screen: status-bar scrim + 44pt row. */
 export function CompactHeaderBar({ progress, scrollY, title, children, topInset, testID }: CompactHeaderBarProps) {
   const safeTop = useScreenTopPadding(0);
@@ -122,7 +125,10 @@ export function CompactHeaderBar({ progress, scrollY, title, children, topInset,
 const styles = StyleSheet.create({
   titleOrigin: { transformOrigin: 'left center' },
   bar: { position: 'absolute', top: 0, left: 0, right: 0 },
-  chrome: { ...StyleSheet.absoluteFillObject, backgroundColor: withAlpha(colors.surface, 0.9) },
+  // A-014: the page continuing, not a slab. The page gradient's top stop
+  // (secondaryContainer, cream) at 97%: surface @90% let 10% navy through over
+  // dark cards and read as grey. The hairline stays the separation cue.
+  chrome: { ...StyleSheet.absoluteFillObject, backgroundColor: withAlpha(colors.secondaryContainer, COMPACT_BAR_OPACITY) },
   hairline: {
     position: 'absolute',
     left: 0,

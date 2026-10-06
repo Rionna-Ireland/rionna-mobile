@@ -5,7 +5,9 @@ import { useReducedMotion } from 'react-native-reanimated';
 
 import { cleanup, render, screen } from '@/lib/test-utils';
 
-import { CollapsingTitle, CompactHeaderBar } from './scroll-header';
+import colors from './colors';
+import { withAlpha } from './gradient-styles';
+import { CollapsingTitle, COMPACT_BAR_OPACITY, CompactHeaderBar } from './scroll-header';
 import { LARGE_TITLE_MIN_SCALE } from './scroll-header-math';
 
 jest.mock('./screen-layout', () => ({ useScreenTopPadding: jest.fn(() => 47) }));
@@ -17,6 +19,14 @@ function offset(y: number) {
 }
 
 describe('compactHeaderBar', () => {
+  it('fills with the page-top cream, not a translucent slab (A-014)', () => {
+    render(<CompactHeaderBar testID="bar" scrollY={offset(60)} />);
+    expect(screen.getByTestId('bar-chrome')).toHaveStyle({
+      backgroundColor: withAlpha(colors.secondaryContainer, COMPACT_BAR_OPACITY),
+    });
+    expect(COMPACT_BAR_OPACITY).toBeGreaterThanOrEqual(0.97);
+  });
+
   it('is invisible at rest', () => {
     render(<CompactHeaderBar testID="bar" scrollY={offset(0)} title="Stables" />);
     expect(screen.getByTestId('bar-chrome')).toHaveStyle({ opacity: 0 });
