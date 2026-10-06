@@ -120,6 +120,12 @@
     "unavailableBody": "Check your connection and try again shortly.",
     "unavailableTitle": "Events unavailable"
   },
+  "news": {
+    "byline": "By {{name}}",
+    "kicker": "News",
+    "notFoundBody": "It may have been removed, or your connection dropped.",
+    "notFoundTitle": "Article not found"
+  },
   "onboarding": {
     "message": "Welcome to obytes app site"
   },
