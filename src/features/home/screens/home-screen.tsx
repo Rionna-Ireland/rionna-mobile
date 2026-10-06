@@ -106,7 +106,7 @@ function HomeHeaderRight({ scope, name }: { scope: { organizationId: string; mem
       <NotificationsBell scope={scope} />
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel="Open profile"
+        accessibilityLabel={translate('home.openProfile')}
         testID="home-avatar"
         onPress={() => router.push('/profile')}
       >

@@ -6,6 +6,7 @@ import { Pressable, View } from 'react-native';
 import { Image, MonoLabel, Text } from '@/components/ui';
 import { tagSpecForKind } from '@/features/notification-centre/lib/kind-tag';
 import { relativeTime } from '@/features/pulse/components/relative-time';
+import { translate } from '@/lib/i18n';
 
 type InboxRowProps = {
   item: InboxItem;
@@ -24,7 +25,7 @@ export function InboxRow({ item, onPress }: InboxRowProps) {
       testID={`inbox-row-${item.id}`}
       accessibilityRole="button"
       accessibilityLabel={[item.title, item.body, relativeTime(item.updatedAt)].filter(Boolean).join('. ')}
-      accessibilityHint={item.unread ? 'Unread' : undefined}
+      accessibilityHint={item.unread ? translate('notificationCentre.unreadHint') : undefined}
       onPress={() => onPress(item)}
       className="flex-row overflow-hidden rounded-lg bg-white"
       style={({ pressed }) => (pressed ? { opacity: 0.7 } : null)}

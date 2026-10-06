@@ -26,6 +26,7 @@ import { useOffers } from '@/features/paddock/api/use-offers';
 import { OfferCard } from '@/features/paddock/components/offer-card';
 import { BenefitsSkeleton } from '@/features/paddock/components/paddock-skeletons';
 import { copyToClipboard } from '@/lib/copy-to-clipboard';
+import { translate } from '@/lib/i18n';
 import { EntranceItem, isFirstLoad, SkeletonSwap, useContentEntrance } from '@/lib/motion';
 import { openExternalLink } from '@/lib/open-external-link';
 
@@ -58,7 +59,7 @@ export function BenefitsView({ offers, isLoading, isError, isRefetching, onRefre
       <ScreenBackground variant="page-ice" />
       <FocusAwareStatusBar />
       {/* S14-02 §5: the kicker stays fixed; its hairline fades in as the page scrolls under it. */}
-      <ScreenHeader kicker="BENEFITS" onBack={onBack} scrollY={scrollY} testID="benefits-header" />
+      <ScreenHeader kicker={translate('paddock.benefits.kicker')} onBack={onBack} scrollY={scrollY} testID="benefits-header" />
       <View className="flex-1">
         <AnimatedScrollView
           className="flex-1"
@@ -68,13 +69,13 @@ export function BenefitsView({ offers, isLoading, isError, isRefetching, onRefre
           scrollEventThrottle={16}
         >
           {/* Frame 13 breaks after the comma (A-020). */}
-          <Text variant="display-lg" accessibilityRole="header" className="px-4">{'The good life,\nmembers’ rates'}</Text>
+          <Text variant="display-lg" accessibilityRole="header" className="px-4">{translate('paddock.benefits.title')}</Text>
           <View className="gap-2 px-4">
             {showUnavailable
-              ? <ErrorState testID="benefits-unavailable" kicker="BENEFITS" title="Offers unavailable" body="Check your connection and try again." onRetry={onRefresh} retrying={isRefetching} />
+              ? <ErrorState testID="benefits-unavailable" kicker={translate('paddock.benefits.kicker')} title={translate('paddock.benefits.unavailableTitle')} body={translate('paddock.checkConnection')} onRetry={onRefresh} retrying={isRefetching} />
               : null}
             {showEmpty
-              ? <EmptyState testID="benefits-empty" kicker="BENEFITS" title="New partners are on the way" body="Partner offers will appear here as the club adds them." />
+              ? <EmptyState testID="benefits-empty" kicker={translate('paddock.benefits.kicker')} title={translate('paddock.benefits.emptyTitle')} body={translate('paddock.benefits.emptyBody')} />
               : null}
             <SkeletonSwap loading={showLoading} skeleton={<BenefitsSkeleton />} style={styles.list}>
               {offers?.length
@@ -107,7 +108,7 @@ export function BenefitsScreen() {
   const onCopyCode = async (code: string) => {
     const ok = await copyToClipboard(code);
     showMessage({
-      message: ok ? 'Code copied' : 'Copy unavailable — long-press the code to select it',
+      message: ok ? translate('paddock.benefits.codeCopied') : translate('paddock.benefits.copyUnavailable'),
       type: ok ? 'success' : 'warning',
     });
   };

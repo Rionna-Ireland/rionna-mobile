@@ -51,12 +51,20 @@
     "full": "Full",
     "going": "Going ✓",
     "goingA11y": "You are going",
+    "location": {
+      "online": "Online",
+      "tbc": "Location TBC"
+    },
     "nextMonth": "Next month",
     "nothingThisDay": "Nothing on this day",
     "pastA11y": "Past event",
     "pastEvents": "Past events",
     "prevMonth": "Previous month",
     "remindMe": "Remind me",
+    "reminder": {
+      "tomorrow": "Starts tomorrow",
+      "tomorrowAt": "Tomorrow at {{place}}"
+    },
     "reminderOffA11y": "Turn off reminder",
     "reminding": "Reminder on",
     "rsvp": "RSVP",
@@ -65,15 +73,127 @@
     "unavailableTitle": "Events unavailable"
   },
   "home": {
+    "bell": {
+      "label": "Notifications",
+      "unread": "Notifications, {{count}} unread"
+    },
     "charityA11y": "Charity snapshot, {{amount}} raised for {{name}}",
     "charityKicker": "Charity snapshot",
+    "chips": {
+      "events": "Events",
+      "raceDay": "Race day",
+      "unread": "Unread"
+    },
+    "greeting": {
+      "afternoon": "Good afternoon",
+      "evening": "Good evening",
+      "morning": "Good morning",
+      "named": "{{greeting}}, {{name}}"
+    },
+    "insideTrack": {
+      "a11y": "Inside Track: {{title}}",
+      "kicker": "Inside Track",
+      "new": "NEW",
+      "play": "Play"
+    },
+    "myHorses": {
+      "emptyAction": "Go to Stables",
+      "emptyTitle": "Follow a horse to see it here",
+      "kicker": "My horses"
+    },
     "openCharity": "Open charity",
+    "openProfile": "Open profile",
     "raisedFor": "raised for {{name}}",
     "unavailableBody": "Check your connection and pull to refresh.",
-    "unavailableTitle": "Couldn't load your yard"
+    "unavailableTitle": "Couldn't load your yard",
+    "upcoming": {
+      "dateTbc": "Date to be confirmed",
+      "kicker": "Upcoming events"
+    },
+    "yardKicker": "Today at the yard"
+  },
+  "notificationCentre": {
+    "emptyBody": "New activity from the club and your horses will show up here.",
+    "emptyTitle": "You're all caught up",
+    "menu": {
+      "close": "Close menu",
+      "markAllRead": "Mark all as read",
+      "more": "More actions"
+    },
+    "sections": {
+      "earlier": "Earlier",
+      "today": "Today",
+      "week": "This week"
+    },
+    "tags": {
+      "club": "Club",
+      "community": "Community",
+      "racing": "Racing",
+      "updates": "Updates"
+    },
+    "title": "Notifications",
+    "unavailableBody": "Check your connection and try again shortly.",
+    "unavailableTitle": "Notifications unavailable",
+    "unreadHint": "Unread"
   },
   "onboarding": {
     "message": "Welcome to obytes app site"
+  },
+  "paddock": {
+    "benefits": {
+      "codeCopied": "Code copied",
+      "copyUnavailable": "Copy unavailable — long-press the code to select it",
+      "emptyBody": "Partner offers will appear here as the club adds them.",
+      "emptyTitle": "New partners are on the way",
+      "kicker": "BENEFITS",
+      "title": "The good life,\nmembers’ rates",
+      "unavailableTitle": "Offers unavailable"
+    },
+    "charity": {
+      "current": "Current charities",
+      "emptyBody": "The club will announce its charity partner here.",
+      "kicker": "CHARITY",
+      "totalKicker": "Raised together, to date",
+      "unavailableTitle": "Charity impact unavailable"
+    },
+    "checkConnection": "Check your connection and try again.",
+    "comingSoon": "Coming soon",
+    "hub": {
+      "benefitsFallback": "Restaurants, hotels, lifestyle partners",
+      "charityFallback": "Total donated, voting and impact stories",
+      "manyOffers": "{{count}} offers",
+      "oneOffer": "1 offer",
+      "raised": "{{amount}} raised to date",
+      "raisedVote": "{{raised}}. Vote on what’s next"
+    },
+    "journey": {
+      "founding": "Founding Member",
+      "kicker": "My Rionna journey"
+    },
+    "offer": {
+      "copyCode": "Copy code",
+      "open": "Open offer"
+    },
+    "rows": {
+      "benefits": "Membership Benefits",
+      "charity": "Charity Snapshot",
+      "merch": "Merchandise",
+      "merchSubtitle": "Caps, jackets, polos, accessories"
+    },
+    "story": {
+      "kicker": "Impact story",
+      "read": "Read story"
+    },
+    "subtitleAccent": "one of us.",
+    "subtitleLead": "Everything that comes with being ",
+    "title": "Paddock",
+    "vote": {
+      "hint": "Tap an option to vote. You can change your mind while the vote is open.",
+      "kicker": "Member vote",
+      "many": "{{count}} votes",
+      "one": "1 vote",
+      "saving": "Saving your vote…"
+    }
   },
   "settings": {
     "about": "About",

@@ -3,6 +3,7 @@ import type { CharityStoryTeaser } from '@/features/paddock/types';
 import { colors, IconButton, Image, MonoLabel, Pressable, Text, View } from '@/components/ui';
 import { ArticleIcon } from '@/features/paddock/components/paddock-icons';
 import { readTimeLabel } from '@/features/paddock/lib/read-time';
+import { translate } from '@/lib/i18n';
 
 type Props = { story: CharityStoryTeaser; onOpen: (slug: string) => void };
 
@@ -25,13 +26,13 @@ export function CharityStoryCard({ story, onOpen }: Props) {
           fallback={{ colourway: 'green' }}
         />
         <View className="absolute top-4 left-4">
-          <MonoLabel className="text-forest">Impact story</MonoLabel>
+          <MonoLabel className="text-forest">{translate('paddock.story.kicker')}</MonoLabel>
         </View>
       </View>
       <View className="gap-6 p-4">
         <Text variant="display-md" className="text-forest">{story.title}</Text>
         <View className="flex-row items-center justify-between">
-          <IconButton variant="circle" accessibilityLabel="Read story" onPress={() => onOpen(story.slug)} className="bg-sage">
+          <IconButton variant="circle" accessibilityLabel={translate('paddock.story.read')} onPress={() => onOpen(story.slug)} className="bg-sage">
             <ArticleIcon size={14} color={colors.forest} />
           </IconButton>
           {readTime

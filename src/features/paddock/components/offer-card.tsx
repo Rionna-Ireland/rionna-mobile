@@ -7,6 +7,7 @@ import { CaretRightV2 } from '@/components/ui/icons/v2';
 import { getInitials } from '@/components/ui/initials';
 import { CopyIcon } from '@/features/paddock/components/paddock-icons';
 import { formatValidTo } from '@/features/paddock/lib/format-valid-to';
+import { translate } from '@/lib/i18n';
 
 type OfferCardProps = {
   offer: Offer;
@@ -46,7 +47,7 @@ export function OfferCard({ offer, onCopyCode, onOpenLink }: OfferCardProps) {
                 testID={`offer-copy-${offer.id}`}
                 variant="circle-light"
                 className="bg-ice"
-                accessibilityLabel="Copy code"
+                accessibilityLabel={translate('paddock.offer.copyCode')}
                 onPress={() => onCopyCode(offer.discountCode ?? '')}
               >
                 <CopyIcon color={colors.ink} />
@@ -58,7 +59,7 @@ export function OfferCard({ offer, onCopyCode, onOpenLink }: OfferCardProps) {
                   testID={`offer-link-${offer.id}`}
                   variant="circle-light"
                   className="bg-ice"
-                  accessibilityLabel="Open offer"
+                  accessibilityLabel={translate('paddock.offer.open')}
                   onPress={() => onOpenLink(offer.redeemUrl ?? '')}
                 >
                   <CaretRightV2 size={20} color={colors.ink} />
@@ -75,7 +76,7 @@ export function OfferCard({ offer, onCopyCode, onOpenLink }: OfferCardProps) {
               {offer.redeemUrl && offer.discountCode
                 ? (
                     <Pressable testID={`offer-link-${offer.id}`} accessibilityRole="link" onPress={() => onOpenLink(offer.redeemUrl ?? '')}>
-                      <Text variant="body-sm" className="font-sans-semibold text-primary">Open offer</Text>
+                      <Text variant="body-sm" className="font-sans-semibold text-primary">{translate('paddock.offer.open')}</Text>
                     </Pressable>
                   )
                 : null}

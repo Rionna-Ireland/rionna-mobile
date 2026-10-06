@@ -5,6 +5,7 @@ import type * as StorageModule from '@/lib/storage';
 import * as React from 'react';
 
 import { reminderTime } from '@/features/events/lib/calendar-grid';
+import { translate } from '@/lib/i18n';
 
 /**
  * Remind-me: a local notification 24h before the event, persisted per event id
@@ -120,8 +121,8 @@ export async function scheduleEventReminder(
       content: {
         title: event.title,
         body: event.inPersonLocation
-          ? `Tomorrow at ${event.inPersonLocation}`
-          : 'Starts tomorrow',
+          ? translate('events.reminder.tomorrowAt', { place: event.inPersonLocation })
+          : translate('events.reminder.tomorrow'),
         // Shape must satisfy deep-link.ts isPushData (screen: 'event').
         data: { screen: 'event', eventId: event.id },
       },

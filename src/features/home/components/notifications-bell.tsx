@@ -7,6 +7,7 @@ import { Pressable, Text, View } from '@/components/ui';
 import colors from '@/components/ui/colors';
 import { BellV2 } from '@/components/ui/icons/v2';
 import { useInboxBadge } from '@/features/notification-centre/api/use-inbox-badge';
+import { translate } from '@/lib/i18n';
 
 const ICON_SIZE = 20;
 // 1.4pt rendered stroke in the icon's 24-unit viewBox (tab-bar icon style).
@@ -25,7 +26,7 @@ export function NotificationsBell({ scope }: { scope: MemberContentScope }) {
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={badge ? `Notifications, ${badge} unread` : 'Notifications'}
+      accessibilityLabel={badge ? translate('home.bell.unread', { count: badge }) : translate('home.bell.label')}
       testID="home-bell"
       hitSlop={2}
       onPress={() => router.push('/notifications')}

@@ -26,6 +26,7 @@ import { useOffers } from '@/features/paddock/api/use-offers';
 import { JourneyCard } from '@/features/paddock/components/journey-card';
 import { HubSubtitleSkeleton } from '@/features/paddock/components/paddock-skeletons';
 import { charitySubtitle, offersSubtitle } from '@/features/paddock/lib/hub-copy';
+import { translate } from '@/lib/i18n';
 import { EntranceItem, isFirstLoad, SkeletonSwap, useFirstLoadEntrance } from '@/lib/motion';
 
 const TILE_PLUM: TileSpec = { kind: 'gem', colourway: 'plum', turn: 0 };
@@ -61,7 +62,7 @@ function HubRow({ title, subtitle, spec, onPress, comingSoon, subtitleLoading = 
           {comingSoon
             ? (
                 <View className="rounded-full bg-label/10 px-2 py-1">
-                  <MonoLabel size="sm">Coming soon</MonoLabel>
+                  <MonoLabel size="sm">{translate('paddock.comingSoon')}</MonoLabel>
                 </View>
               )
             : null}
@@ -127,11 +128,11 @@ export function PaddockHubView({ offersCount, charitySummary, offersLoading, cha
       >
         <View className="gap-2">
           <CollapsingTitle scrollY={scrollY}>
-            <Text variant="display-lg" accessibilityRole="header">Paddock</Text>
+            <Text variant="display-lg" accessibilityRole="header">{translate('paddock.title')}</Text>
           </CollapsingTitle>
           <Text variant="body">
-            {'Everything that comes with being '}
-            <Text variant="body" className="text-plum-mid">one of us.</Text>
+            {translate('paddock.subtitleLead')}
+            <Text variant="body" className="text-plum-mid">{translate('paddock.subtitleAccent')}</Text>
           </Text>
         </View>
         <View className="gap-3">
@@ -139,7 +140,7 @@ export function PaddockHubView({ offersCount, charitySummary, offersLoading, cha
           <View className="gap-2">
             <EntranceItem entering={entering(0)}>
               <HubRow
-                title="Membership Benefits"
+                title={translate('paddock.rows.benefits')}
                 subtitle={offersSubtitle(offersCount)}
                 subtitleLoading={offersLoading}
                 spec={TILE_PLUM}
@@ -147,11 +148,11 @@ export function PaddockHubView({ offersCount, charitySummary, offersLoading, cha
               />
             </EntranceItem>
             <EntranceItem entering={entering(1)}>
-              <HubRow title="Merchandise" subtitle="Caps, jackets, polos, accessories" spec={TILE_NAVY} comingSoon />
+              <HubRow title={translate('paddock.rows.merch')} subtitle={translate('paddock.rows.merchSubtitle')} spec={TILE_NAVY} comingSoon />
             </EntranceItem>
             <EntranceItem entering={entering(2)}>
               <HubRow
-                title="Charity Snapshot"
+                title={translate('paddock.rows.charity')}
                 subtitle={charitySummary}
                 subtitleLoading={charityLoading}
                 spec={TILE_GREEN}
@@ -161,7 +162,7 @@ export function PaddockHubView({ offersCount, charitySummary, offersLoading, cha
           </View>
         </View>
       </AnimatedScrollView>
-      <CompactHeaderBar scrollY={scrollY} title="Paddock" testID="paddock-compact-header" />
+      <CompactHeaderBar scrollY={scrollY} title={translate('paddock.title')} testID="paddock-compact-header" />
     </View>
   );
 }

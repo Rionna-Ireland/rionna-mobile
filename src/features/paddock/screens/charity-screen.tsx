@@ -28,6 +28,7 @@ import { CharitySkeleton } from '@/features/paddock/components/paddock-skeletons
 import { currentCharities } from '@/features/paddock/lib/current-charities';
 import { useActivePolls } from '@/features/polls/api/use-active-polls';
 import { usePollVote } from '@/features/polls/api/use-poll-vote';
+import { translate } from '@/lib/i18n';
 import { isFirstLoad, SkeletonSwap } from '@/lib/motion';
 import { openExternalLink } from '@/lib/open-external-link';
 
@@ -72,7 +73,7 @@ export function CharityView(props: CharityViewProps) {
     <View className="flex-1 bg-secondary-container">
       <FocusAwareStatusBar />
       {/* S14-02 §5: the kicker stays fixed; its hairline fades in as the page scrolls under it. */}
-      <ScreenHeader kicker="CHARITY" onBack={onBack} scrollY={scrollY} testID="charity-header" />
+      <ScreenHeader kicker={translate('paddock.charity.kicker')} onBack={onBack} scrollY={scrollY} testID="charity-header" />
       <View className="flex-1">
         <AnimatedScrollView
           className="flex-1"
@@ -83,10 +84,10 @@ export function CharityView(props: CharityViewProps) {
         >
           <View className="px-4">
             {showUnavailable
-              ? <ErrorState testID="charity-unavailable" kicker="CHARITY" title="Charity impact unavailable" body="Check your connection and try again." onRetry={onRefresh} retrying={isRefetching} />
+              ? <ErrorState testID="charity-unavailable" kicker={translate('paddock.charity.kicker')} title={translate('paddock.charity.unavailableTitle')} body={translate('paddock.checkConnection')} onRetry={onRefresh} retrying={isRefetching} />
               : null}
             {showEmpty
-              ? <EmptyState testID="charity-empty" kicker="CHARITY" title="Coming soon" body="The club will announce its charity partner here." />
+              ? <EmptyState testID="charity-empty" kicker={translate('paddock.charity.kicker')} title={translate('paddock.comingSoon')} body={translate('paddock.charity.emptyBody')} />
               : null}
             <SkeletonSwap loading={showLoading} skeleton={<CharitySkeleton />}>
               {charity ? <CharityBody {...props} charity={charity} /> : null}

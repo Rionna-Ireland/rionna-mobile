@@ -1,3 +1,5 @@
+import { translate } from '@/lib/i18n';
+
 export type DayPart = 'morning' | 'afternoon' | 'evening';
 
 /** S13-03 §2: morning 05:00–11:59, afternoon 12:00–17:59, evening otherwise (device clock). */
@@ -18,7 +20,7 @@ export function firstName(name: string | null | undefined): string | null {
 
 /** "Good morning, Sarah", or "Good morning" alone without a name. */
 export function greeting(now: Date, name: string | null | undefined): string {
-  const base = `Good ${dayPart(now)}`;
+  const base = translate(`home.greeting.${dayPart(now)}`);
   const first = firstName(name);
-  return first ? `${base}, ${first}` : base;
+  return first ? translate('home.greeting.named', { greeting: base, name: first }) : base;
 }
