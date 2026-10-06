@@ -30,7 +30,7 @@ type Preferences = NonNullable<ReturnType<typeof usePreferences>['data']>;
 /** Mirrors the screen: the master switch card, then a titled card of switch rows (A-015). */
 function PreferencesSkeleton() {
   const row = (divider: boolean, key: number) => (
-    <View key={key} className={`min-h-11 flex-row items-center justify-between py-3 ${divider ? 'border-b border-outline-variant' : ''}`}>
+    <View key={key} className={`min-h-11 flex-row items-center justify-between py-3 ${divider ? 'border-b border-ice' : ''}`}>
       <SkeletonText variant="body-lg" width="55%" />
       <Skeleton width={51} height={31} radius={16} />
     </View>

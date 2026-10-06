@@ -12,7 +12,7 @@ describe('list row', () => {
     render(<ListRow testID="row" label="Sire" value="Sea The Stars" />);
     expect(screen.getByText('Sire')).toBeOnTheScreen();
     expect(screen.getByText('Sea The Stars')).toBeOnTheScreen();
-    expect(screen.getByTestId('row').props.className).toContain('border-outline-variant');
+    expect(screen.getByTestId('row').props.className).toContain('border-ice');
   });
 
   it('drops the divider on the last row', () => {
