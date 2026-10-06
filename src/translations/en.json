@@ -7,6 +7,11 @@
   },
   "events": {
     "all": "All",
+    "calendar": {
+      "manyEvents": "{{count}} events",
+      "oneEvent": "1 event",
+      "today": "today"
+    },
     "detail": {
       "addToCalendar": "Add to calendar",
       "addingToCalendar": "Adding…",
