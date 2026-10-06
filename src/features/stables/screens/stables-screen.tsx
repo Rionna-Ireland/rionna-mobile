@@ -31,6 +31,7 @@ import {
   resolveStablesFilter,
 } from '@/features/stables/lib/stables-filters';
 import { translate } from '@/lib/i18n';
+import { EntranceItem, useFirstLoadEntrance } from '@/lib/motion';
 
 const CHIP_LABELS: Record<StablesFilter, TxKeyPath> = {
   all: 'stables.list.filterAll',
@@ -100,14 +101,42 @@ function FilterEmpty({ filter }: { filter: StablesFilter }) {
       );
 }
 
+/** Horse rows: open on press, follow toggle, first-load entrance (S14-02 §6). */
+function useHorseRenderItem(ready: boolean) {
+  const { toggleFollow, pendingHorseId } = useFollowHorse();
+  const router = useRouter();
+  const handlePress = React.useCallback(
+    (horseId: string) => router.push(`/stables/${horseId}`),
+    [router],
+  );
+  const handleToggleFollow = React.useCallback(
+    (horseId: string, following: boolean) => toggleFollow({ horseId, following }),
+    [toggleFollow],
+  );
+
+  // First load only: FlashList cells mounted or recycled later get no entrance.
+  const entering = useFirstLoadEntrance(ready);
+  return React.useCallback(
+    ({ item, index }: { item: Horse; index: number }) => (
+      <EntranceItem entering={entering(index)}>
+        <HorseCard
+          horse={item}
+          onPress={() => handlePress(item.id)}
+          onToggleFollow={handleToggleFollow}
+          followPending={pendingHorseId === item.id}
+        />
+      </EntranceItem>
+    ),
+    [entering, handlePress, handleToggleFollow, pendingHorseId],
+  );
+}
+
 /**
  * Stables list (S13-04, Figma frame 6). `?filter=following` preselects the
  * Following chip (S13-08 links with it); anything else opens on All.
  */
 export function StablesScreen() {
   const { data, isLoading, isError, refetch, isRefetching } = useHorses();
-  const { toggleFollow, pendingHorseId } = useFollowHorse();
-  const router = useRouter();
   const params = useLocalSearchParams<{ filter?: string }>();
   const contentPaddingBottom = useTabBarContentPadding(16);
   const contentPaddingTop = useScreenTopPadding(20);
@@ -126,26 +155,7 @@ export function StablesScreen() {
   const filter = resolveStablesFilter(requested, buildStablesFilterChips(horses));
   const filtered = React.useMemo(() => applyStablesFilter(horses, filter), [horses, filter]);
 
-  const handlePress = React.useCallback(
-    (horseId: string) => router.push(`/stables/${horseId}`),
-    [router],
-  );
-  const handleToggleFollow = React.useCallback(
-    (horseId: string, following: boolean) => toggleFollow({ horseId, following }),
-    [toggleFollow],
-  );
-
-  const renderItem = React.useCallback(
-    ({ item }: { item: Horse }) => (
-      <HorseCard
-        horse={item}
-        onPress={() => handlePress(item.id)}
-        onToggleFollow={handleToggleFollow}
-        followPending={pendingHorseId === item.id}
-      />
-    ),
-    [handlePress, handleToggleFollow, pendingHorseId],
-  );
+  const renderItem = useHorseRenderItem(horses.length > 0);
 
   const pagePadding = { paddingTop: contentPaddingTop, paddingBottom: contentPaddingBottom };
 
