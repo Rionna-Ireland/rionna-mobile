@@ -20,10 +20,10 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import * as React from 'react';
 import { AppState, LogBox, StyleSheet, View } from 'react-native';
-import FlashMessage from 'react-native-flash-message';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import colors from '@/components/ui/colors';
+import { Toaster } from '@/components/ui/toast';
 import { useThemeConfig } from '@/components/ui/use-theme-config';
 import { ArrivalOverlay } from '@/features/arrival/arrival-overlay';
 import { ArrivalProvider } from '@/features/arrival/arrival-provider';
@@ -287,7 +287,7 @@ function Providers({ children }: { children: React.ReactNode }) {
             <MotionProvider>
               <BottomSheetModalProvider>
                 <HeroTransitionProvider>{children}</HeroTransitionProvider>
-                <FlashMessage position="top" />
+                <Toaster />
               </BottomSheetModalProvider>
             </MotionProvider>
           </APIProvider>

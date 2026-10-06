@@ -36,6 +36,7 @@ export * from './select';
 export * from './skeleton';
 export * from './text';
 export * from './text-variants';
+export * from './toast';
 export * from './utils';
 
 // export base components from react-native

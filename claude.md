@@ -58,7 +58,7 @@ monorepo's oRPC API; planning docs/specs live in `../Architecture` (see its
 - `community/` — Circle WebView session handling (`use-community-session` — cookie
   install via minted member token; see gotchas 2–3)
 - `stables/` — horse profiles, race history; `paddock/` — paddock components
-- `events/`, `notifications/`, `news/`, `auth/`, `onboarding/`, `settings/`
+- `events/`, `notifications/`, `news/`, `auth/`, `settings/`
 
 ## Commands
 
