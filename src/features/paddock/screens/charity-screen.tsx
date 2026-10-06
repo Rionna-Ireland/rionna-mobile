@@ -7,7 +7,6 @@ import * as React from 'react';
 import { RefreshControl } from 'react-native';
 
 import {
-  ActivityIndicator,
   EmptyState,
   ErrorState,
   FocusAwareStatusBar,
@@ -23,9 +22,11 @@ import { CharityStoryCard } from '@/features/paddock/components/charity-story-ca
 import { CharityTotalCard } from '@/features/paddock/components/charity-total-card';
 import { CharityVoteCard } from '@/features/paddock/components/charity-vote-card';
 import { CurrentCharitiesCard } from '@/features/paddock/components/current-charities-card';
+import { CharitySkeleton } from '@/features/paddock/components/paddock-skeletons';
 import { currentCharities } from '@/features/paddock/lib/current-charities';
 import { useActivePolls } from '@/features/polls/api/use-active-polls';
 import { usePollVote } from '@/features/polls/api/use-poll-vote';
+import { isFirstLoad, SkeletonSwap } from '@/lib/motion';
 import { openExternalLink } from '@/lib/open-external-link';
 
 type CharityViewProps = {
@@ -75,14 +76,15 @@ export function CharityView(props: CharityViewProps) {
         scrollEventThrottle={16}
       >
         <View className="px-4">
-          {showLoading ? <View testID="charity-loading" className="items-center py-16"><ActivityIndicator /></View> : null}
           {showUnavailable
             ? <ErrorState testID="charity-unavailable" kicker="CHARITY" title="Charity impact unavailable" body="Check your connection and try again." onRetry={onRefresh} retrying={isRefetching} />
             : null}
           {showEmpty
             ? <EmptyState testID="charity-empty" kicker="CHARITY" title="Coming soon" body="The club will announce its charity partner here." />
             : null}
-          {charity ? <CharityBody {...props} charity={charity} /> : null}
+          <SkeletonSwap loading={showLoading} skeleton={<CharitySkeleton />}>
+            {charity ? <CharityBody {...props} charity={charity} /> : null}
+          </SkeletonSwap>
         </View>
       </AnimatedScrollView>
     </View>
@@ -106,7 +108,7 @@ export function CharityScreen() {
     <CharityView
       charity={charity.data?.charity}
       poll={poll}
-      isLoading={charity.isLoading}
+      isLoading={isFirstLoad(charity)}
       isError={charity.isError}
       isRefetching={charity.isRefetching}
       onRefresh={() => {

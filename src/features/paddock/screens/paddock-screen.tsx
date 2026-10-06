@@ -24,8 +24,9 @@ import { useAuthStore } from '@/features/auth/use-auth-store';
 import { useCharity } from '@/features/paddock/api/use-charity';
 import { useOffers } from '@/features/paddock/api/use-offers';
 import { JourneyCard } from '@/features/paddock/components/journey-card';
+import { HubSubtitleSkeleton } from '@/features/paddock/components/paddock-skeletons';
 import { charitySubtitle, offersSubtitle } from '@/features/paddock/lib/hub-copy';
-import { EntranceItem, useFirstLoadEntrance } from '@/lib/motion';
+import { EntranceItem, isFirstLoad, SkeletonSwap, useFirstLoadEntrance } from '@/lib/motion';
 
 const TILE_PLUM: TileSpec = { kind: 'gem', colourway: 'plum', turn: 0 };
 const TILE_NAVY: TileSpec = { kind: 'gem', colourway: 'navy', turn: 0 };
@@ -45,9 +46,11 @@ type HubRowProps = {
   spec: TileSpec;
   onPress?: () => void;
   comingSoon?: boolean;
+  /** The subtitle's count/total is on a cold first load: a skeleton line crossfades to it. */
+  subtitleLoading?: boolean;
 };
 
-function HubRow({ title, subtitle, spec, onPress, comingSoon }: HubRowProps) {
+function HubRow({ title, subtitle, spec, onPress, comingSoon, subtitleLoading = false }: HubRowProps) {
   const body = (
     <Card className="min-h-[72px] flex-row items-center gap-4" style={comingSoon ? { opacity: 0.6 } : undefined}>
       <RowIcon spec={spec} />
@@ -62,7 +65,9 @@ function HubRow({ title, subtitle, spec, onPress, comingSoon }: HubRowProps) {
               )
             : null}
         </View>
-        <Text variant="body-sm" className="text-ink-variant">{subtitle}</Text>
+        <SkeletonSwap loading={subtitleLoading} skeleton={<HubSubtitleSkeleton />}>
+          <Text variant="body-sm" className="text-ink-variant">{subtitle}</Text>
+        </SkeletonSwap>
       </View>
       {comingSoon ? null : <CaretRightV2 size={20} color={colors.ink} />}
     </Card>
@@ -90,12 +95,14 @@ function HubRow({ title, subtitle, spec, onPress, comingSoon }: HubRowProps) {
 type PaddockHubViewProps = {
   offersCount: number | null;
   charitySummary: string;
+  offersLoading?: boolean;
+  charityLoading?: boolean;
   badges?: JourneyBadge[];
   onOpenBenefits: () => void;
   onOpenCharity: () => void;
 };
 
-export function PaddockHubView({ offersCount, charitySummary, badges = [], onOpenBenefits, onOpenCharity }: PaddockHubViewProps) {
+export function PaddockHubView({ offersCount, charitySummary, offersLoading, charityLoading, badges = [], onOpenBenefits, onOpenCharity }: PaddockHubViewProps) {
   const contentPaddingBottom = useTabBarContentPadding(24);
   const contentPaddingTop = useScreenTopPadding();
   const { scrollY, onScroll } = useScrollHeader();
@@ -130,13 +137,25 @@ export function PaddockHubView({ offersCount, charitySummary, badges = [], onOpe
           <JourneyCard badges={badges} />
           <View className="gap-2">
             <EntranceItem entering={entering(0)}>
-              <HubRow title="Membership Benefits" subtitle={offersSubtitle(offersCount)} spec={TILE_PLUM} onPress={onOpenBenefits} />
+              <HubRow
+                title="Membership Benefits"
+                subtitle={offersSubtitle(offersCount)}
+                subtitleLoading={offersLoading}
+                spec={TILE_PLUM}
+                onPress={onOpenBenefits}
+              />
             </EntranceItem>
             <EntranceItem entering={entering(1)}>
               <HubRow title="Merchandise" subtitle="Caps, jackets, polos, accessories" spec={TILE_NAVY} comingSoon />
             </EntranceItem>
             <EntranceItem entering={entering(2)}>
-              <HubRow title="Charity Snapshot" subtitle={charitySummary} spec={TILE_GREEN} onPress={onOpenCharity} />
+              <HubRow
+                title="Charity Snapshot"
+                subtitle={charitySummary}
+                subtitleLoading={charityLoading}
+                spec={TILE_GREEN}
+                onPress={onOpenCharity}
+              />
             </EntranceItem>
           </View>
         </View>
@@ -162,6 +181,8 @@ export function PaddockScreen() {
     <PaddockHubView
       offersCount={offers.data ? offers.data.offers.length : null}
       charitySummary={charitySubtitle(charity.data?.charity)}
+      offersLoading={isFirstLoad(offers)}
+      charityLoading={isFirstLoad(charity)}
       badges={badges}
       onOpenBenefits={() => router.push('/paddock/benefits')}
       onOpenCharity={() => router.push('/paddock/charity')}
