@@ -205,7 +205,7 @@ describe('composePostScreen spaces status', () => {
     mockUsePostableSpaces.mockReturnValue({ data: undefined, refetch: mockRefetch, isError: true, isPending: false, isSuccess: false });
     render(<ComposePostScreen />);
 
-    expect(screen.getByText('Couldn\'t load your spaces. Pull to retry.')).toBeOnTheScreen();
+    expect(screen.getByText('Couldn\'t load your spaces.')).toBeOnTheScreen();
     expect(screen.queryByTestId('compose-post-space-space-1')).toBeNull();
 
     fireEvent.press(screen.getByTestId('compose-post-spaces-retry'));
@@ -217,7 +217,7 @@ describe('composePostScreen spaces status', () => {
     render(<ComposePostScreen />);
 
     expect(screen.queryByText('You can\'t post in any spaces yet.')).toBeNull();
-    expect(screen.queryByText('Couldn\'t load your spaces. Pull to retry.')).toBeNull();
+    expect(screen.queryByText('Couldn\'t load your spaces.')).toBeNull();
     expect(screen.queryByTestId('compose-post-space-space-1')).toBeNull();
     expect(screen.getByTestId('compose-post-submit').props.accessibilityState).toEqual(
       expect.objectContaining({ disabled: true }),

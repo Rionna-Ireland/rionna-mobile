@@ -19,6 +19,25 @@
       "reportAction": "Report comment",
       "unavailable": "Comments couldn’t load."
     },
+    "compose": {
+      "bodyA11y": "Post body",
+      "bodyPlaceholder": "What's on your mind?",
+      "cancel": "Cancel",
+      "failureBlocked": "Our auto-moderation held back this post. Please edit it to keep things friendly and respectful, then try again.",
+      "failureImage": "That photo couldn't be uploaded.",
+      "failureNotAllowed": "You can't post in that space.",
+      "failurePublish": "Couldn't publish right now. Try again.",
+      "failureRateLimited": "You've posted a lot today — try again later.",
+      "imageTooBig": "Choose a photo under 10 MB.",
+      "kicker": "New post",
+      "noSpaces": "You can't post in any spaces yet.",
+      "post": "Post",
+      "postIn": "Post in",
+      "posting": "Posting…",
+      "spacesFailed": "Couldn't load your spaces.",
+      "titleA11y": "Post title",
+      "titlePlaceholder": "Title (optional)"
+    },
     "composer": {
       "blocked": "Our auto-moderation held back this comment. Please edit it and try again.",
       "failed": "Couldn’t send your reply. Try again.",
