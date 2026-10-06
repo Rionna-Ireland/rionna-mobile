@@ -5,6 +5,8 @@ import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } fr
 import { NumberRoll } from '@/components/ui';
 import colors from '@/components/ui/colors';
 import { Heart } from '@/components/ui/icons';
+import { likeCountLabel } from '@/features/member-content/lib/post-labels';
+import { translate } from '@/lib/i18n';
 import { haptics, popScale, springs, timings, useMotion } from '@/lib/motion';
 
 const HEART = 20;
@@ -76,7 +78,7 @@ export function LikeToggle({ likeCount, isLiked, onToggle, pending = false, test
     return (
       <View
         accessible
-        accessibilityLabel={`${likeCount} ${likeCount === 1 ? 'like' : 'likes'}`}
+        accessibilityLabel={likeCountLabel(likeCount)}
         className="flex-row items-center gap-0.5"
       >
         {content}
@@ -87,7 +89,8 @@ export function LikeToggle({ likeCount, isLiked, onToggle, pending = false, test
     <Pressable
       testID={testID}
       accessibilityRole="button"
-      accessibilityLabel={isLiked ? 'Unlike post' : 'Like post'}
+      accessibilityLabel={translate(isLiked ? 'community.like.liked' : 'community.like.like')}
+      accessibilityValue={{ text: likeCountLabel(likeCount) }}
       accessibilityState={{ selected: isLiked, disabled: pending }}
       disabled={pending}
       hitSlop={8}

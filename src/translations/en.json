@@ -5,6 +5,26 @@
     "loading": "Loading",
     "tryAgain": "Try again"
   },
+  "community": {
+    "like": {
+      "countOne": "{{count}} like",
+      "countOther": "{{count}} likes",
+      "like": "Like",
+      "likeAction": "Like",
+      "liked": "Liked",
+      "unlikeAction": "Unlike"
+    },
+    "post": {
+      "anonymousAuthor": "Rionna member",
+      "commentCountOne": "{{count}} comment",
+      "commentCountOther": "{{count}} comments",
+      "openHint": "Opens the post"
+    },
+    "role": {
+      "staff": "Staff",
+      "trainer": "Trainer"
+    }
+  },
   "events": {
     "all": "All",
     "detail": {

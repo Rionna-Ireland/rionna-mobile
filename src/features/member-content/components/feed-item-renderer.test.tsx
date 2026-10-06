@@ -87,7 +87,7 @@ describe('feedItemRenderer', () => {
       story: { slug: 'charity-gala', category: 'charity' },
     };
     render(<FeedItemRenderer item={item} {...props} />);
-    expect(screen.queryByLabelText('Like post')).toBeNull();
-    expect(screen.queryByLabelText('Unlike post')).toBeNull();
+    expect(screen.queryByLabelText('Like')).toBeNull();
+    expect(screen.queryByLabelText('Liked')).toBeNull();
   });
 });

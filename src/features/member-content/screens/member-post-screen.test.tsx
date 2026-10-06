@@ -101,7 +101,7 @@ describe('memberPostView', () => {
     const onToggleLike = jest.fn();
     render(<MemberPostView post={POST} contentState="fresh" onToggleLike={onToggleLike} />);
 
-    fireEvent.press(screen.getByLabelText('Like post'));
+    fireEvent.press(screen.getByLabelText('Like'));
     expect(onToggleLike).toHaveBeenCalledWith('post-1', true);
   });
 
@@ -116,13 +116,13 @@ describe('memberPostView', () => {
       />,
     );
 
-    fireEvent.press(screen.getByLabelText('Unlike post'));
+    fireEvent.press(screen.getByLabelText('Liked'));
     expect(onToggleLike).not.toHaveBeenCalled();
   });
 
   it('keeps the like count read-only when no handler is wired', () => {
     render(<MemberPostView post={POST} contentState="fresh" />);
-    expect(screen.queryByLabelText('Like post')).not.toBeOnTheScreen();
+    expect(screen.queryByLabelText('Like')).not.toBeOnTheScreen();
     expect(screen.getByLabelText('5 likes')).toBeOnTheScreen();
   });
 
