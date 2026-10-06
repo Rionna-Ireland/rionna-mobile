@@ -25,6 +25,12 @@ export type MotionPressableProps = Omit<PressableProps, 'style'> & {
   size?: 'default' | 'small' | 'flat';
   /** Opacity while pressed (iOS), e.g. 0.85. Omit to keep full opacity. */
   pressedOpacity?: number;
+  /**
+   * Dim to `disabledOpacity` while `disabled` (default true). Pass false for
+   * controls that lock without looking unavailable (e.g. vote options showing
+   * results after the vote).
+   */
+  dimDisabled?: boolean;
   /** Haptic fired on press, from the motion vocabulary. */
   haptic?: HapticIntent;
   ref?: React.Ref<View>;
@@ -91,12 +97,14 @@ export function MotionPressable({
   onPressOut,
   android_ripple,
   disabled,
+  dimDisabled = true,
   ...props
 }: MotionPressableProps) {
   const { reduceMotion } = useMotion();
   const isAndroid = Platform.OS === 'android';
   const scaleTo = reduceMotion || size === 'flat' ? 1 : size === 'small' ? pressScaleSmall : pressScale;
-  const feedback = usePressFeedback({ enabled: !isAndroid, scaleTo, pressedOpacity, disabled });
+  const dimmed = dimDisabled ? disabled : undefined;
+  const feedback = usePressFeedback({ enabled: !isAndroid, scaleTo, pressedOpacity, disabled: dimmed });
 
   const handlePress = (e: GestureResponderEvent) => {
     if (haptic)
@@ -118,7 +126,7 @@ export function MotionPressable({
         onPressOut?.(e);
       }}
       android_ripple={isAndroid ? (android_ripple ?? { color: RIPPLE_COLOR, borderless: false }) : undefined}
-      style={isAndroid ? [style, disabled ? styles.disabled : null] : [style, feedback.animatedStyle]}
+      style={isAndroid ? [style, dimmed ? styles.disabled : null] : [style, feedback.animatedStyle]}
     />
   );
 }

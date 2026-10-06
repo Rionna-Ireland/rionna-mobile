@@ -2,11 +2,14 @@ import type { PedigreeRow, PedigreeRowKey } from '@/features/stables/lib/horse-f
 import type { TxKeyPath } from '@/lib/i18n';
 
 import * as React from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { twMerge } from 'tailwind-merge';
 
-import { Card, MonoLabel, Text } from '@/components/ui';
+import { Card, minHitSlop, MonoLabel, MotionPressable, Text } from '@/components/ui';
 import { translate } from '@/lib/i18n';
+
+/** The Read more mono label's line height: its hitSlop grows it to 44pt (A-040). */
+const READ_MORE_HEIGHT = 14;
 
 type StorySectionProps = {
   /** Story text (`story`, falling back to `bio`). */
@@ -67,16 +70,17 @@ export function StorySection({ story, pedigree }: StorySectionProps) {
               <Text variant="body-lg" className="text-ink-variant">{shownStory}</Text>
               {isLong
                 ? (
-                    <Pressable
+                    <MotionPressable
+                      size="small"
                       accessibilityRole="button"
                       onPress={() => setExpanded(prev => !prev)}
-                      hitSlop={8}
+                      hitSlop={minHitSlop(READ_MORE_HEIGHT)}
                       className="self-start"
                     >
                       <MonoLabel className="text-ink">
                         {translate(expanded ? 'stables.detail.showLess' : 'stables.detail.readMore')}
                       </MonoLabel>
-                    </Pressable>
+                    </MotionPressable>
                   )
                 : null}
             </View>

@@ -2,12 +2,15 @@ import type { HorseUpdate, HorseUpdateType } from '@/features/stables/types';
 import type { TxKeyPath } from '@/lib/i18n';
 
 import * as React from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 
-import { Card, MonoLabel, Tag, Text } from '@/components/ui';
+import { Card, minHitSlop, MonoLabel, MotionPressable, Tag, Text } from '@/components/ui';
 import { formatUpdateStamp } from '@/features/stables/lib/horse-facts';
 import { translate } from '@/lib/i18n';
 import { EntranceItem, useFirstLoadEntrance } from '@/lib/motion';
+
+/** The Read more mono label's line height: its hitSlop grows it to 44pt (A-040). */
+const READ_MORE_HEIGHT = 14;
 
 type HorseUpdatesTimelineProps = {
   updates: HorseUpdate[] | undefined;
@@ -43,16 +46,17 @@ function UpdateBody({ bodyText }: { bodyText: string }) {
       </Text>
       {isLong
         ? (
-            <Pressable
+            <MotionPressable
+              size="small"
               accessibilityRole="button"
               onPress={() => setExpanded(prev => !prev)}
-              hitSlop={8}
+              hitSlop={minHitSlop(READ_MORE_HEIGHT)}
               className="self-start"
             >
               <MonoLabel className="text-ink">
                 {translate(expanded ? 'stables.detail.showLess' : 'stables.detail.readMore')}
               </MonoLabel>
-            </Pressable>
+            </MotionPressable>
           )
         : null}
     </View>

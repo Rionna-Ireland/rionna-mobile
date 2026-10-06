@@ -8,7 +8,7 @@ import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import * as z from 'zod';
 
 import { Submark } from '@/components/brand/logo';
-import { Button, colors, Input, Text, View } from '@/components/ui';
+import { Button, colors, Input, minHitSlop, MotionPressable, Text, View } from '@/components/ui';
 import { getFieldError } from '@/components/ui/form-utils';
 import { ArrivalSlot } from '@/features/arrival/arrival-slot';
 import { LoginMedia } from '@/features/arrival/login-media';
@@ -116,30 +116,39 @@ function FormHeader() {
   );
 }
 
+/** Body-sm line height: the links' hitSlop grows them to 44pt (A-040). */
+const LINK_HEIGHT = 16;
+
 function FormFooter() {
   return (
     <View className="mt-4 items-center gap-2">
-      <Text
+      <MotionPressable
+        size="small"
         testID="forgot-password-link"
         accessibilityRole="link"
-        variant="body-sm"
-        className="font-sans-medium text-on-primary-container"
+        hitSlop={minHitSlop(LINK_HEIGHT)}
         onPress={() => openExternalLink(forgotPasswordUrl())}
       >
-        Forgot password?
-      </Text>
-      <Text variant="body-sm" className="font-sans-medium text-white">
-        {'Don’t have an account? '}
-        <Text
+        <Text variant="body-sm" className="font-sans-medium text-on-primary-container">
+          Forgot password?
+        </Text>
+      </MotionPressable>
+      <View className="flex-row items-center">
+        <Text variant="body-sm" className="font-sans-medium text-white">
+          {'Don’t have an account? '}
+        </Text>
+        <MotionPressable
+          size="small"
           testID="signup-link"
           accessibilityRole="link"
-          variant="body-sm"
-          className="font-sans-medium text-on-primary-container"
+          hitSlop={minHitSlop(LINK_HEIGHT)}
           onPress={() => openExternalLink(MARKETING_URL)}
         >
-          Rionna.com
-        </Text>
-      </Text>
+          <Text variant="body-sm" className="font-sans-medium text-on-primary-container">
+            Rionna.com
+          </Text>
+        </MotionPressable>
+      </View>
     </View>
   );
 }

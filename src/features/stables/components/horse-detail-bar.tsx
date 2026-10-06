@@ -2,10 +2,10 @@
 import type { SharedValue } from 'react-native-reanimated';
 
 import * as React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 
-import { colors, MonoLabel, Text } from '@/components/ui';
+import { colors, MonoLabel, MotionPressable, Text } from '@/components/ui';
 import { CaretRightV2 } from '@/components/ui/icons/v2';
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { CompactHeaderBar } from '@/components/ui/scroll-header';
@@ -62,26 +62,26 @@ export function HorseDetailBar({ horseName, progress, onBack, onShare }: HorseDe
   return (
     <CompactHeaderBar progress={progress} topInset={top} testID="horse-detail-bar">
       <View pointerEvents="box-none" className="h-11 flex-row items-center justify-between">
-        <Pressable
+        <MotionPressable
+          size="small"
           testID="horse-hero-back"
           onPress={onBack}
           accessibilityRole="button"
           accessibilityLabel={translate('stables.detail.backA11y')}
           hitSlop={12}
           className="-ml-1"
-          style={({ pressed }) => (pressed ? styles.pressed : null)}
         >
           <Crossfade testID="horse-detail-bar-back" progress={progress} white={<BackLabel color={colors.white} />} ink={<BackLabel color={colors.ink} />} />
-        </Pressable>
+        </MotionPressable>
         {onShare
           ? (
-              <Pressable
+              <MotionPressable
+                size="small"
                 testID="horse-hero-share"
                 onPress={onShare}
                 accessibilityRole="button"
                 accessibilityLabel={tx('stables.detail.shareA11y', { name: horseName })}
                 hitSlop={12}
-                style={({ pressed }) => (pressed ? styles.pressed : null)}
               >
                 <Crossfade
                   testID="horse-detail-bar-share"
@@ -89,14 +89,10 @@ export function HorseDetailBar({ horseName, progress, onBack, onShare }: HorseDe
                   white={<MonoLabel tone="white">{translate('stables.detail.share')}</MonoLabel>}
                   ink={<MonoLabel className="text-ink">{translate('stables.detail.share')}</MonoLabel>}
                 />
-              </Pressable>
+              </MotionPressable>
             )
           : null}
       </View>
     </CompactHeaderBar>
   );
 }
-
-const styles = StyleSheet.create({
-  pressed: { opacity: 0.6 },
-});

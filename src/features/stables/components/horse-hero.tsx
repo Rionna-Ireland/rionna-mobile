@@ -4,7 +4,7 @@ import type { HeroReveal } from '@/features/hero-transition/types';
 import type { Entry, HorseDetail } from '@/features/stables/types';
 
 import * as React from 'react';
-import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
 
 import {
@@ -13,6 +13,7 @@ import {
   getInitials,
   Gradient,
   MonoLabel,
+  MotionPressable,
   PhotoFallback,
   Tag,
   Text,
@@ -85,28 +86,28 @@ function HeroPhoto({ horse, onIndexChange, onPhotoDisplayed }: { horse: HorseDet
 function HeroNavRow({ horse, onBack, onShare }: Pick<HorseHeroProps, 'horse' | 'onBack' | 'onShare'>) {
   return (
     <View pointerEvents="box-none" className="h-11 flex-row items-center justify-between">
-      <Pressable
+      <MotionPressable
+        size="small"
         testID="horse-hero-back"
         onPress={onBack}
         accessibilityRole="button"
         accessibilityLabel={translate('stables.detail.backA11y')}
         hitSlop={12}
         className="-ml-1 flex-row items-center gap-1.5"
-        style={({ pressed }) => (pressed ? styles.pressed : null)}
       >
         <CaretRightV2 size={18} color={colors.white} style={BACK_ICON_STYLE} />
         <Text variant="body-sm" className="text-white">{translate('stables.detail.back')}</Text>
-      </Pressable>
-      <Pressable
+      </MotionPressable>
+      <MotionPressable
+        size="small"
         testID="horse-hero-share"
         onPress={onShare}
         accessibilityRole="button"
         accessibilityLabel={tx('stables.detail.shareA11y', { name: horse.name })}
         hitSlop={12}
-        style={({ pressed }) => (pressed ? styles.pressed : null)}
       >
         <MonoLabel tone="white">{translate('stables.detail.share')}</MonoLabel>
-      </Pressable>
+      </MotionPressable>
     </View>
   );
 }
@@ -264,7 +265,6 @@ export function HorseHero(props: HorseHeroProps) {
 }
 
 const styles = StyleSheet.create({
-  pressed: { opacity: 0.6 },
   hero: { backgroundColor: colors.primary },
   dots: { position: 'absolute', left: 0, right: 0, bottom: 12, alignItems: 'center' },
   // Stretch scales from the top edge; the clip moves with it so it can reach above the hero.

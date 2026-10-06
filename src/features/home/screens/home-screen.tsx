@@ -12,7 +12,7 @@ import {
   BrandedRefreshControl,
   colors,
   FocusAwareStatusBar,
-  Pressable,
+  MotionPressable,
   RefreshIndicator,
   ScreenBackground,
   ScreenHeader,
@@ -102,14 +102,17 @@ function HomeHeaderRight({ scope, name }: { scope: { organizationId: string; mem
   return (
     <View className="flex-row items-center gap-3">
       <NotificationsBell scope={scope} />
-      <Pressable
+      <MotionPressable
+        size="small"
+        hitSlop={2}
+        className="rounded-full"
         accessibilityRole="button"
         accessibilityLabel="Open profile"
         testID="home-avatar"
         onPress={() => router.push('/profile')}
       >
         <Avatar ring size={41} name={name} />
-      </Pressable>
+      </MotionPressable>
     </View>
   );
 }

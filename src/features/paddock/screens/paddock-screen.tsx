@@ -11,7 +11,7 @@ import {
   colors,
   FocusAwareStatusBar,
   MonoLabel,
-  Pressable,
+  MotionPressable,
   ScreenBackground,
   Text,
   View,
@@ -81,14 +81,15 @@ function HubRow({ title, subtitle, spec, onPress, comingSoon, subtitleLoading = 
     );
   }
   return (
-    <Pressable
+    <MotionPressable
+      size="flat"
+      pressedOpacity={0.85}
       testID={`paddock-row-${title}`}
       accessibilityRole="button"
       onPress={onPress}
-      style={({ pressed }) => (pressed ? { opacity: 0.7 } : null)}
     >
       {body}
-    </Pressable>
+    </MotionPressable>
   );
 }
 

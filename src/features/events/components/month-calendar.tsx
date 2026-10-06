@@ -2,7 +2,7 @@ import type { CalendarCell, MonthRef } from '@/features/events/lib/calendar-grid
 
 import type { PageDirection } from '@/lib/motion';
 import * as React from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 
 import Animated from 'react-native-reanimated';
 import { Card, MotionPressable, Text } from '@/components/ui';
@@ -127,27 +127,29 @@ export function MonthCalendar({
   return (
     <Card testID={testID}>
       <View className="mb-3 flex-row items-center justify-between">
-        <Pressable
+        <MotionPressable
+          size="small"
           testID={`${testID}-prev`}
           accessibilityRole="button"
           accessibilityLabel={translate('events.prevMonth')}
           onPress={onPrevMonth}
-          className="size-11 items-center justify-center"
+          className="size-11 items-center justify-center overflow-hidden rounded-full"
         >
           <CaretRightV2 size={20} color={colors.ink} style={FLIP} />
-        </Pressable>
+        </MotionPressable>
         <Text variant="body-sm" className="text-ink-variant" testID={`${testID}-title`}>
           {monthTitle(month)}
         </Text>
-        <Pressable
+        <MotionPressable
+          size="small"
           testID={`${testID}-next`}
           accessibilityRole="button"
           accessibilityLabel={translate('events.nextMonth')}
           onPress={onNextMonth}
-          className="size-11 items-center justify-center"
+          className="size-11 items-center justify-center overflow-hidden rounded-full"
         >
           <CaretRightV2 size={20} color={colors.ink} />
-        </Pressable>
+        </MotionPressable>
       </View>
 
       <View className="mb-2 flex-row">

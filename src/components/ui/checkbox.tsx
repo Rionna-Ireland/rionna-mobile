@@ -50,9 +50,7 @@ export function Root({
       size="small"
       haptic="selection"
       onPress={handleChange}
-      className={`flex-row items-center ${className} ${
-        disabled ? 'opacity-50' : ''
-      }`}
+      className={`flex-row items-center ${className}`}
       accessibilityState={{ checked }}
       disabled={disabled}
       {...props}

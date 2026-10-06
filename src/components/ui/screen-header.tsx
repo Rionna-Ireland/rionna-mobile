@@ -1,7 +1,7 @@
 import type { SharedValue } from 'react-native-reanimated';
 
 import * as React from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { twMerge } from 'tailwind-merge';
 
 import { Submark } from '@/components/brand/logo';
@@ -10,6 +10,7 @@ import { translate } from '@/lib/i18n';
 import colors from './colors';
 import { CaretRightV2 } from './icons/v2';
 import { MonoLabel } from './mono-label';
+import { MotionPressable } from './pressable';
 import { useScreenTopPadding } from './screen-layout';
 import { ScrollHairline } from './scroll-header';
 import { Text } from './text';
@@ -54,16 +55,16 @@ export type ScreenHeaderProps = {
 
 function BackButton({ onBack, label, color, testID }: { onBack: () => void; label: string; color: string; testID?: string }) {
   return (
-    <Pressable
+    <MotionPressable
       testID={testID}
       onPress={onBack}
+      size="small"
       accessibilityRole="button"
       accessibilityLabel={label}
-      className="size-11 items-center justify-center"
-      style={({ pressed }) => (pressed ? { opacity: 0.6 } : null)}
+      className="size-11 items-center justify-center overflow-hidden rounded-full"
     >
       <CaretRightV2 size={20} color={color} style={BACK_ICON_STYLE} />
-    </Pressable>
+    </MotionPressable>
   );
 }
 

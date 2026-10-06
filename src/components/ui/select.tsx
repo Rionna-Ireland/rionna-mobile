@@ -40,9 +40,10 @@ const selectTv = tv({
         inputValue: 'text-danger-700',
       },
     },
+    // Disabled dimming lives in MotionPressable (A-003).
     disabled: {
       true: {
-        input: 'opacity-50',
+        input: '',
       },
     },
   },

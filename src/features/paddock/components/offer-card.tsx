@@ -2,7 +2,7 @@ import type { Offer } from '@/features/paddock/types';
 
 import * as React from 'react';
 
-import { Card, colors, IconButton, Image, Pressable, Text, View } from '@/components/ui';
+import { Card, colors, IconButton, Image, MotionPressable, Text, View } from '@/components/ui';
 import { CaretRightV2 } from '@/components/ui/icons/v2';
 import { getInitials } from '@/components/ui/initials';
 import { CopyIcon } from '@/features/paddock/components/paddock-icons';
@@ -22,7 +22,10 @@ export function OfferCard({ offer, onCopyCode, onOpenLink }: OfferCardProps) {
 
   return (
     <Card testID={`offer-card-${offer.id}`} className="gap-3">
-      <Pressable
+      <MotionPressable
+        size="flat"
+        pressedOpacity={0.85}
+        dimDisabled={false}
         testID={`offer-toggle-${offer.id}`}
         accessibilityRole={hasDetails ? 'button' : undefined}
         accessibilityState={hasDetails ? { expanded: open } : undefined}
@@ -65,7 +68,7 @@ export function OfferCard({ offer, onCopyCode, onOpenLink }: OfferCardProps) {
                 </IconButton>
               )
             : null}
-      </Pressable>
+      </MotionPressable>
       {open
         ? (
             <View testID={`offer-details-${offer.id}`} className="gap-2 border-t border-outline-variant pt-3">
@@ -74,9 +77,9 @@ export function OfferCard({ offer, onCopyCode, onOpenLink }: OfferCardProps) {
               {offer.howToRedeem ? <Text variant="body-sm" className="text-ink-variant">{offer.howToRedeem}</Text> : null}
               {offer.redeemUrl && offer.discountCode
                 ? (
-                    <Pressable testID={`offer-link-${offer.id}`} accessibilityRole="link" onPress={() => onOpenLink(offer.redeemUrl ?? '')}>
+                    <MotionPressable size="small" testID={`offer-link-${offer.id}`} accessibilityRole="link" onPress={() => onOpenLink(offer.redeemUrl ?? '')}>
                       <Text variant="body-sm" className="font-sans-semibold text-primary">Open offer</Text>
-                    </Pressable>
+                    </MotionPressable>
                   )
                 : null}
             </View>

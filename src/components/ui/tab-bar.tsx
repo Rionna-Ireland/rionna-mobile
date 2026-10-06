@@ -3,7 +3,7 @@ import type { SharedValue } from 'react-native-reanimated';
 import type { IconV2Props } from '@/components/ui/icons/v2';
 
 import * as React from 'react';
-import { Platform, Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Platform, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 import colors from '@/components/ui/colors';
@@ -154,14 +154,18 @@ function useCentreLift() {
   return { liftStyle, shadowStyle, pressIn: () => to(1), pressOut: () => to(0) };
 }
 
-/** Community: the raised lilac circle. Lifts on press; its own Android ripple. */
+/**
+ * Community: the raised lilac circle. Lifts on press (a `flat` MotionPressable:
+ * the lift is the feedback, no scale); its own borderless Android ripple.
+ */
 function CentreTab({ routeName, label, focused, onPress, onLongPress, testID }: TabButtonProps) {
   const Icon = ICONS[routeName] ?? ChatV2;
   const { liftStyle, shadowStyle, pressIn, pressOut } = useCentreLift();
   return (
     <Animated.View style={liftStyle}>
       <Animated.View pointerEvents="none" style={[styles.centreLiftShadow, shadowStyle]} />
-      <Pressable
+      <MotionPressable
+        size="flat"
         testID={testID}
         onPress={onPress}
         onLongPress={onLongPress}
@@ -175,7 +179,7 @@ function CentreTab({ routeName, label, focused, onPress, onLongPress, testID }: 
         style={[styles.centre, focused && styles.centreActive]}
       >
         <Icon size={ICON_SIZE} color={focused ? colors.plum : colors.plumMid} />
-      </Pressable>
+      </MotionPressable>
     </Animated.View>
   );
 }

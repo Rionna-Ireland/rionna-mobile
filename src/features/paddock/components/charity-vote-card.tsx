@@ -5,7 +5,7 @@ import * as React from 'react';
 import { useSharedValue } from 'react-native-reanimated';
 
 import { PatternWave } from '@/components/brand/pattern';
-import { Card, CheckSquare, colors, MonoLabel, Pressable, Text, View, withAlpha } from '@/components/ui';
+import { Card, CheckSquare, colors, MonoLabel, MotionPressable, Text, View, withAlpha } from '@/components/ui';
 import { PollResultBar } from '@/features/polls/components/poll-result-bar';
 import { castVote } from '@/features/polls/lib/cast-vote';
 import { percentagesFor } from '@/features/polls/lib/percentages';
@@ -66,7 +66,10 @@ export function CharityVoteCard({ poll, pending, onVote }: Props) {
         ? (
             <View className="gap-2">
               {poll.options.map((option, index) => (
-                <Pressable
+                <MotionPressable
+                  size="flat"
+                  pressedOpacity={0.85}
+                  dimDisabled={false}
                   key={option.id}
                   testID={`poll-option-${option.id}`}
                   accessibilityRole="button"
@@ -84,7 +87,7 @@ export function CharityVoteCard({ poll, pending, onVote }: Props) {
                     drawKey={replay}
                     drawDelay={WAVE_BARS_DELAY + staggerDelay(index)}
                   />
-                </Pressable>
+                </MotionPressable>
               ))}
             </View>
           )
@@ -93,7 +96,10 @@ export function CharityVoteCard({ poll, pending, onVote }: Props) {
               {poll.options.map((option) => {
                 const mine = poll.myVoteOptionId === option.id;
                 return (
-                  <Pressable
+                  <MotionPressable
+                    size="flat"
+                    pressedOpacity={0.85}
+                    dimDisabled={false}
                     key={option.id}
                     testID={`poll-option-${option.id}`}
                     accessibilityRole="button"
@@ -105,7 +111,7 @@ export function CharityVoteCard({ poll, pending, onVote }: Props) {
                   >
                     <CheckSquare checked={mine} size={15} fill={colors.forest} track={FOREST_TRACK} />
                     <Text variant="body-sm" className="flex-1 font-sans-semibold" numberOfLines={2}>{option.label}</Text>
-                  </Pressable>
+                  </MotionPressable>
                 );
               })}
             </View>

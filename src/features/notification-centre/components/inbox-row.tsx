@@ -1,9 +1,9 @@
 import type { InboxItem } from '@/features/notification-centre/types';
 
 import * as React from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 
-import { Image, MonoLabel, Text } from '@/components/ui';
+import { Image, MonoLabel, MotionPressable, Text } from '@/components/ui';
 import { tagSpecForKind } from '@/features/notification-centre/lib/kind-tag';
 import { relativeTime } from '@/features/pulse/components/relative-time';
 
@@ -20,14 +20,13 @@ type InboxRowProps = {
 export function InboxRow({ item, onPress }: InboxRowProps) {
   const spec = tagSpecForKind(item.kind);
   return (
-    <Pressable
+    <MotionPressable
       testID={`inbox-row-${item.id}`}
       accessibilityRole="button"
       accessibilityLabel={[item.title, item.body, relativeTime(item.updatedAt)].filter(Boolean).join('. ')}
       accessibilityHint={item.unread ? 'Unread' : undefined}
       onPress={() => onPress(item)}
       className="flex-row overflow-hidden rounded-lg bg-white"
-      style={({ pressed }) => (pressed ? { opacity: 0.7 } : null)}
     >
       <View className="flex-1 items-start gap-2 p-4">
         <View className={`rounded-sm px-2.5 py-1.5 ${spec.boxClass}`}>
@@ -60,6 +59,6 @@ export function InboxRow({ item, onPress }: InboxRowProps) {
             />
           )
         : null}
-    </Pressable>
+    </MotionPressable>
   );
 }

@@ -1,6 +1,6 @@
 import type { CharityStoryTeaser } from '@/features/paddock/types';
 
-import { colors, IconButton, Image, MonoLabel, Pressable, Text, View } from '@/components/ui';
+import { colors, IconButton, Image, MonoLabel, MotionPressable, Text, View } from '@/components/ui';
 import { ArticleIcon } from '@/features/paddock/components/paddock-icons';
 import { readTimeLabel } from '@/features/paddock/lib/read-time';
 
@@ -10,7 +10,7 @@ type Props = { story: CharityStoryTeaser; onOpen: (slug: string) => void };
 export function CharityStoryCard({ story, onOpen }: Props) {
   const readTime = readTimeLabel(story);
   return (
-    <Pressable
+    <MotionPressable
       testID={`charity-story-${story.id}`}
       accessibilityRole="button"
       accessibilityLabel={story.title}
@@ -43,6 +43,6 @@ export function CharityStoryCard({ story, onOpen }: Props) {
             : null}
         </View>
       </View>
-    </Pressable>
+    </MotionPressable>
   );
 }

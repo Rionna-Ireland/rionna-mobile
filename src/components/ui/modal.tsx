@@ -39,9 +39,11 @@ import { Pressable, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Path, Svg } from 'react-native-svg';
 
+import { translate } from '@/lib/i18n';
 import { durations, springs, useMotion } from '@/lib/motion';
 
 import colors from './colors';
+import { MotionPressable } from './pressable';
 import { Text } from './text';
 
 type ModalProps = BottomSheetModalProps & {
@@ -183,13 +185,13 @@ const ModalHeader = React.memo(({ title, dismiss }: ModalHeaderProps) => {
 
 function CloseButton({ close }: { close: () => void }) {
   return (
-    <Pressable
+    <MotionPressable
       onPress={close}
+      size="small"
       className="absolute top-3 right-3 size-6 items-center justify-center"
       hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-      accessibilityLabel="close modal"
+      accessibilityLabel={translate('common.close')}
       accessibilityRole="button"
-      accessibilityHint="closes the modal"
     >
       <Svg
         className="fill-ink-muted"
@@ -200,6 +202,6 @@ function CloseButton({ close }: { close: () => void }) {
       >
         <Path d="M18.707 6.707a1 1 0 0 0-1.414-1.414L12 10.586 6.707 5.293a1 1 0 0 0-1.414 1.414L10.586 12l-5.293 5.293a1 1 0 1 0 1.414 1.414L12 13.414l5.293 5.293a1 1 0 0 0 1.414-1.414L13.414 12l5.293-5.293Z" />
       </Svg>
-    </Pressable>
+    </MotionPressable>
   );
 }

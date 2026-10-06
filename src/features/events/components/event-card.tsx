@@ -4,7 +4,7 @@ import type { ClubEvent } from '@/features/events/types';
 import * as React from 'react';
 
 import { PatternFill } from '@/components/brand/pattern';
-import { Button, Card, Pressable, Text, View } from '@/components/ui';
+import { Button, Card, Text, View } from '@/components/ui';
 import { rsvpButtonState } from '@/features/events/lib/calendar-grid';
 import { eventStripColourway } from '@/features/events/lib/event-type';
 import { formatEventDateLine } from '@/features/events/lib/format-event-date';
@@ -49,13 +49,14 @@ export function EventCard({
   const state = rsvpButtonState(event);
 
   return (
-    <Card noPadding testID={`event-card-${event.id}`} className={past ? 'opacity-60' : undefined}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={event.title}
-        onPress={onPress}
-        className="flex-row"
-      >
+    <Card
+      noPadding
+      testID={`event-card-${event.id}`}
+      className={past ? 'opacity-60' : undefined}
+      accessibilityLabel={event.title}
+      onPress={onPress}
+    >
+      <View className="flex-row">
         <View testID={`event-card-${event.id}-strip`} style={STRIP_WIDTH_STYLE}>
           <PatternFill
             spec={past ? PAST_SPEC : stripSpec(eventStripColourway(event.type))}
@@ -97,7 +98,7 @@ export function EventCard({
               )
             : null}
         </View>
-      </Pressable>
+      </View>
     </Card>
   );
 }

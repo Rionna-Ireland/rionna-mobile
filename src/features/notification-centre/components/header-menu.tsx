@@ -1,14 +1,15 @@
 import * as React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
 
-import { colors, Text } from '@/components/ui';
+import { colors, MotionPressable, Text } from '@/components/ui';
 
 const DOTS = [0, 1, 2];
 
 /** The ⋮ trigger for the header's right slot. */
 export function MenuButton({ onPress, expanded }: { onPress: () => void; expanded: boolean }) {
   return (
-    <Pressable
+    <MotionPressable
+      size="small"
       testID="inbox-menu"
       accessibilityRole="button"
       accessibilityLabel="More actions"
@@ -17,7 +18,7 @@ export function MenuButton({ onPress, expanded }: { onPress: () => void; expande
       className="size-11 items-center justify-center gap-[3px]"
     >
       {DOTS.map(i => <View key={i} className="size-1 rounded-full bg-ink" />)}
-    </Pressable>
+    </MotionPressable>
   );
 }
 
@@ -32,17 +33,16 @@ type MenuSheetProps = {
 export function MenuSheet({ top, onDismiss, onMarkAllRead }: MenuSheetProps) {
   return (
     <>
-      <Pressable
-        testID="inbox-menu-backdrop"
-        accessibilityLabel="Close menu"
-        style={StyleSheet.absoluteFill}
-        onPress={onDismiss}
-      />
+      <TouchableWithoutFeedback testID="inbox-menu-backdrop" accessibilityLabel="Close menu" onPress={onDismiss}>
+        <View style={StyleSheet.absoluteFill} />
+      </TouchableWithoutFeedback>
       <View
         className="absolute right-4 min-w-44 overflow-hidden rounded-lg bg-white"
         style={{ top, shadowColor: colors.ink, shadowOpacity: 0.12, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 4 }}
       >
-        <Pressable
+        <MotionPressable
+          size="flat"
+          pressedOpacity={0.85}
           testID="inbox-mark-all"
           accessibilityRole="button"
           onPress={() => {
@@ -52,7 +52,7 @@ export function MenuSheet({ top, onDismiss, onMarkAllRead }: MenuSheetProps) {
           className="px-4 py-3"
         >
           <Text variant="body-lg">Mark all as read</Text>
-        </Pressable>
+        </MotionPressable>
       </View>
     </>
   );

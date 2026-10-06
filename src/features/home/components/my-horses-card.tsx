@@ -2,9 +2,9 @@ import type { Horse } from '@/features/stables/types';
 
 import { useRouter } from 'expo-router';
 import * as React from 'react';
-import { Pressable, ScrollView } from 'react-native';
+import { ScrollView } from 'react-native';
 
-import { Avatar, Card, EmptyState, MonoLabel } from '@/components/ui';
+import { Avatar, Card, EmptyState, MonoLabel, MotionPressable } from '@/components/ui';
 import { HorsePhotoSource } from '@/features/hero-transition/horse-photo-source';
 import { heroSourceKey } from '@/features/hero-transition/types';
 import { useOpenHorse } from '@/features/hero-transition/use-open-horse';
@@ -73,16 +73,16 @@ export function MyHorsesCard({ horses, isLoading, entranceIndex }: MyHorsesCardP
           contentContainerStyle={{ gap: 9 }}
         >
           {horses.map(horse => (
-            <Pressable
+            <MotionPressable
+              size="small"
               key={horse.id}
               testID={`home-horse-${horse.id}`}
               accessibilityRole="button"
               accessibilityLabel={horse.name}
               onPress={() => openHorse(horse.id, heroSourceKey('home', horse.id))}
-              style={({ pressed }) => (pressed ? { opacity: 0.7 } : null)}
             >
               <HorseAvatar horse={horse} />
-            </Pressable>
+            </MotionPressable>
           ))}
         </ScrollView>
       </Card>

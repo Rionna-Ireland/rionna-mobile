@@ -1,6 +1,7 @@
 {
   "common": {
     "back": "Back",
+    "close": "Close",
     "errorTitle": "Something went wrong",
     "loading": "Loading",
     "tryAgain": "Try again"

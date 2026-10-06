@@ -107,6 +107,12 @@ describe('motionPressable', () => {
       expect(opacityOf()).toBe(1);
     });
 
+    it('does not dim when dimDisabled is false', () => {
+      Platform.OS = 'ios';
+      setup({ disabled: true, dimDisabled: false });
+      expect(opacityOf()).toBeUndefined();
+    });
+
     it('leaves opacity to the caller when it manages neither disabled nor pressedOpacity', () => {
       Platform.OS = 'ios';
       setup({ style: { opacity: 0.6 } });

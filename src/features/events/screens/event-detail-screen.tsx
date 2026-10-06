@@ -17,8 +17,8 @@ import {
   Gradient,
   Image,
   MonoLabel,
+  MotionPressable,
   NumberRoll,
-  Pressable,
   ScreenBackground,
   ScrollView,
   Text,
@@ -101,7 +101,8 @@ function HeaderBand({
           )}
       <View className="min-h-[210px] justify-between px-4 pb-6">
         <View className="h-11 flex-row items-center justify-between">
-          <Pressable
+          <MotionPressable
+            size="small"
             testID="event-detail-back"
             accessibilityRole="button"
             accessibilityLabel={translate('common.back')}
@@ -112,10 +113,11 @@ function HeaderBand({
               <CaretRightV2 size={20} color={colors.white} style={BACK_ICON_STYLE} />
             </View>
             <Text variant="body" className="-ml-2 text-white">{translate('events.detail.back')}</Text>
-          </Pressable>
+          </MotionPressable>
           {event.url
             ? (
-                <Pressable
+                <MotionPressable
+                  size="small"
                   testID="event-detail-share"
                   accessibilityRole="button"
                   accessibilityLabel={translate('events.detail.share')}
@@ -123,7 +125,7 @@ function HeaderBand({
                   className="h-11 justify-center"
                 >
                   <MonoLabel tone="white">{translate('events.detail.share')}</MonoLabel>
-                </Pressable>
+                </MotionPressable>
               )
             : null}
         </View>
@@ -140,7 +142,8 @@ function EventLocationLink({ event }: { event: ClubEvent }) {
   if (event.inPersonLocation || !event.virtualLocationUrl)
     return null;
   return (
-    <Pressable
+    <MotionPressable
+      size="small"
       testID="event-location-link"
       accessibilityRole="link"
       onPress={() => openExternalLink(event.virtualLocationUrl!)}
@@ -148,7 +151,7 @@ function EventLocationLink({ event }: { event: ClubEvent }) {
       <Text variant="body-lg" className="font-sans-semibold underline">
         {translate('events.detail.joinOnline')}
       </Text>
-    </Pressable>
+    </MotionPressable>
   );
 }
 
