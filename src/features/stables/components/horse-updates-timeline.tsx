@@ -1,4 +1,3 @@
-import type { LayoutChangeEvent } from 'react-native';
 import type { HorseUpdate, HorseUpdateType } from '@/features/stables/types';
 import type { TxKeyPath } from '@/lib/i18n';
 
@@ -8,6 +7,7 @@ import { Pressable, View } from 'react-native';
 import { Card, MonoLabel, Tag, Text } from '@/components/ui';
 import { formatUpdateStamp } from '@/features/stables/lib/horse-facts';
 import { translate } from '@/lib/i18n';
+import { EntranceItem, useFirstLoadEntrance } from '@/lib/motion';
 
 type HorseUpdatesTimelineProps = {
   updates: HorseUpdate[] | undefined;
@@ -59,12 +59,12 @@ function UpdateBody({ bodyText }: { bodyText: string }) {
   );
 }
 
-function UpdateCard({ update, onLayout }: { update: HorseUpdate; onLayout?: (event: LayoutChangeEvent) => void }) {
+function UpdateCard({ update }: { update: HorseUpdate }) {
   const typeLabel = update.updateType && TYPE_LABELS[update.updateType]
     ? translate(TYPE_LABELS[update.updateType])
     : null;
   return (
-    <Card testID={`update-card-${update.id}`} onLayout={onLayout} className="gap-3 border border-outline-variant">
+    <Card testID={`update-card-${update.id}`} className="gap-3 border border-outline-variant">
       <View className="flex-row items-center justify-between gap-3">
         {/* S8-05 category chip, restyled as a V2 tag. */}
         {typeLabel ? <Tag variant="ice" label={typeLabel} /> : <View />}
@@ -83,6 +83,8 @@ function UpdateCard({ update, onLayout }: { update: HorseUpdate; onLayout?: (eve
  */
 export function HorseUpdatesTimeline({ updates, onItemLayout }: HorseUpdatesTimelineProps) {
   const items = updates ?? [];
+  // First load only (S14-02 §6); a refetch adding an update mounts it instantly.
+  const entering = useFirstLoadEntrance(items.length > 0);
 
   if (items.length === 0)
     return null;
@@ -90,12 +92,14 @@ export function HorseUpdatesTimeline({ updates, onItemLayout }: HorseUpdatesTime
   return (
     <View testID="updates-section" className="gap-2">
       <MonoLabel className="px-1 pt-2 pb-1">{translate('stables.detail.updatesLabel')}</MonoLabel>
-      {items.map(update => (
-        <UpdateCard
+      {items.map((update, i) => (
+        <EntranceItem
           key={update.id}
-          update={update}
+          entering={entering(i)}
           onLayout={onItemLayout ? e => onItemLayout(update.id, e.nativeEvent.layout.y) : undefined}
-        />
+        >
+          <UpdateCard update={update} />
+        </EntranceItem>
       ))}
     </View>
   );
