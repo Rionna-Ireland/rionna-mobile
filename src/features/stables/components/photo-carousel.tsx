@@ -47,6 +47,7 @@ export function PhotoCarousel({ photos, onIndexChange, onFirstPhotoDisplay }: Ph
         style={StyleSheet.absoluteFill}
         contentFit="cover"
         cachePolicy="memory-disk"
+        transition={0}
         {...firstPhotoEvents}
         fallback={{ colourway: 'navy' }}
         accessibilityIgnoresInvertColors
@@ -76,6 +77,7 @@ export function PhotoCarousel({ photos, onIndexChange, onFirstPhotoDisplay }: Ph
               className="size-full"
               contentFit="cover"
               cachePolicy="memory-disk"
+              transition={index === 0 ? 0 : undefined}
               {...(index === 0 ? firstPhotoEvents : null)}
               fallback={{ colourway: 'navy' }}
               accessibilityIgnoresInvertColors

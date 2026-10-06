@@ -90,6 +90,7 @@ export function HorsePhotoSource({ sourceKey, horseId, horseName, uri, heroUri, 
           contentFit="cover"
           cachePolicy="memory-disk"
           recyclingKey={horseId}
+          transition={0}
           onLoad={handleLoad}
           fallback={{ colourway: 'navy', initials: getInitials(horseName) }}
           accessibilityIgnoresInvertColors
