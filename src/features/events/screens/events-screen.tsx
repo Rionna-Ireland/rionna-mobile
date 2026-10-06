@@ -2,10 +2,11 @@ import type { ScrollView } from 'react-native';
 import type { MonthRef } from '@/features/events/lib/calendar-grid';
 import type { ClubEvent } from '@/features/events/types';
 
+import type { EntranceFn } from '@/lib/motion';
 import Env from 'env';
 import { useRouter } from 'expo-router';
-import * as React from 'react';
 
+import * as React from 'react';
 import {
   ActivityIndicator,
   ChipRow,
@@ -35,6 +36,7 @@ import {
 import { useEventReminder } from '@/features/events/lib/event-reminders';
 import { eventDayColour } from '@/features/events/lib/event-type';
 import { translate } from '@/lib/i18n';
+import { EntranceItem, useFirstLoadEntrance } from '@/lib/motion';
 
 const ALL = 'all';
 
@@ -121,14 +123,16 @@ function useEventsModel(
   return { typeChips, upcoming, past, eventDays };
 }
 
-function TrackedCard({
-  onLayoutY,
-  ...props
-}: React.ComponentProps<typeof ConnectedEventCard> & { onLayoutY: (y: number) => void }) {
+type TrackedCardProps = React.ComponentProps<typeof ConnectedEventCard> & {
+  onLayoutY: (y: number) => void;
+  entering: ReturnType<EntranceFn>;
+};
+
+function TrackedCard({ onLayoutY, entering, ...props }: TrackedCardProps) {
   return (
-    <View onLayout={e => onLayoutY(e.nativeEvent.layout.y)}>
+    <EntranceItem entering={entering} onLayout={e => onLayoutY(e.nativeEvent.layout.y)}>
       <ConnectedEventCard {...props} />
-    </View>
+    </EntranceItem>
   );
 }
 
@@ -279,9 +283,12 @@ export function EventsScreen() {
   const isUnavailable = !upcomingAll && !pastAll && (upcomingQuery.isError || pastQuery.isError);
   const hasEvents = upcoming.length + past.length > 0;
 
-  const renderCard = (event: ClubEvent, isPast: boolean) => (
+  // First load only; filter changes, refetches and month jumps mount instantly.
+  const entering = useFirstLoadEntrance(hasEvents);
+  const renderCard = (event: ClubEvent, index: number, isPast: boolean) => (
     <TrackedCard
       key={event.id}
+      entering={entering(index)}
       event={event}
       past={isPast}
       onLayoutY={y => setCardY(event.id, y)}
@@ -340,7 +347,7 @@ export function EventsScreen() {
           hasEvents={hasEvents}
           onListLayout={setListY}
         >
-          {upcoming.map(event => renderCard(event, false))}
+          {upcoming.map((event, i) => renderCard(event, i, false))}
           {past.length > 0
             ? (
                 <View className="mt-2">
@@ -348,7 +355,7 @@ export function EventsScreen() {
                 </View>
               )
             : null}
-          {past.map(event => renderCard(event, true))}
+          {past.map((event, i) => renderCard(event, upcoming.length + i, true))}
         </EventsBody>
       </AnimatedScrollView>
       <CompactHeaderBar scrollY={scrollY} title={translate('events.title')} testID="events-compact-header" />

@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import type { StyleProp, ViewStyle } from 'react-native';
+import type { StyleProp, ViewProps, ViewStyle } from 'react-native';
 import type { EntryExitAnimationFunction } from 'react-native-reanimated';
 import * as React from 'react';
 import Animated, { withDelay, withTiming } from 'react-native-reanimated';
@@ -104,14 +104,15 @@ export function useFirstLoadEntrance(ready: boolean): EntranceFn {
 type EntranceItemProps = {
   entering: EntryExitAnimationFunction | undefined;
   style?: StyleProp<ViewStyle>;
+  onLayout?: ViewProps['onLayout'];
   testID?: string;
   children: React.ReactNode;
 };
 
 /** Wraps one list card so it can carry its `entering` animation. */
-export function EntranceItem({ entering, style, testID, children }: EntranceItemProps) {
+export function EntranceItem({ entering, style, onLayout, testID, children }: EntranceItemProps) {
   return (
-    <Animated.View entering={entering} style={style} testID={testID}>
+    <Animated.View entering={entering} style={style} onLayout={onLayout} testID={testID}>
       {children}
     </Animated.View>
   );
