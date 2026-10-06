@@ -50,6 +50,7 @@ import {
 } from '@/features/stables/lib/horse-facts';
 import { getVisibleHorseSections } from '@/features/stables/lib/horse-sections';
 import { tx } from '@/features/stables/lib/tx';
+import { useRefetchFailureNotice } from '@/features/stables/lib/use-refetch-failure-notice';
 import { useSectionScrollSync } from '@/features/stables/lib/use-section-scroll-sync';
 import { translate } from '@/lib/i18n';
 import { fadeUpEntering, heroTransition, isFirstLoad, SkeletonSwap, stagger, useMotion, useSkeletonShown } from '@/lib/motion';
@@ -384,8 +385,10 @@ export function HorseDetailScreen() {
   const hadSkeleton = useSkeletonShown(loading);
   const dest = useHeroDestination(horseId, hadSkeleton);
   const pull = usePullToRefresh(() => Promise.all([horseQuery.refetch(), updatesQuery.refetch()]));
+  useRefetchFailureNotice(horseQuery, translate('stables.detail.refreshFailed'));
 
-  if (!loading && isError) {
+  // A failed refetch keeps the cached horse (A-006); the error page is only for no data.
+  if (!loading && isError && horse === undefined) {
     return (
       <StateScreen>
         <ErrorState testID="horse-error" onRetry={() => refetch()} retrying={isRefetching} />

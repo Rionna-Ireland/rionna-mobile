@@ -15,6 +15,12 @@ jest.mock('expo-router', () => ({
   Stack: { Screen: () => null },
 }));
 
+const mockShowError = jest.fn();
+jest.mock('@/components/ui/utils', () => ({
+  ...jest.requireActual('@/components/ui/utils'),
+  showErrorMessage: (m: string) => mockShowError(m),
+}));
+
 jest.mock('@/components/ui', () => {
   const actual = jest.requireActual('@/components/ui');
   return { ...actual, Image: 'Image', FocusAwareStatusBar: () => null };
@@ -341,5 +347,12 @@ describe('horseDetailScreen hero and states', () => {
     expect(screen.queryByText('Private')).toBeNull();
     fireEvent.press(screen.getByLabelText('Follow horse'));
     expect(mockToggleFollow).toHaveBeenCalledWith({ horseId: 'horse-1', following: true });
+  });
+  it('keeps the cached horse when a refetch fails, with a quiet notice (A-006)', () => {
+    mockUseHorseUpdates.mockReturnValue({ data: [] });
+    mockUseHorse.mockReturnValue({ data: baseHorse(), isLoading: false, isError: true, errorUpdatedAt: 1, refetch: jest.fn(), isRefetching: false });
+    render(<HorseProfileScreen />);
+    expect(screen.queryByTestId('horse-error')).not.toBeOnTheScreen();
+    expect(mockShowError).toHaveBeenCalledTimes(1);
   });
 });
