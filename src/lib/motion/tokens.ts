@@ -68,6 +68,8 @@ export const timings = {
   crossfade: { duration: durations.base, easing: easings.enter },
   /** Indeterminate spinner revolution: constant speed, no easing. */
   spin: { duration: durations.spin, easing: Easing.linear },
+  /** Signature draws (S14-06 charity count-up + goal bar): `slow`×2 on the enter curve. */
+  draw: { duration: durations.draw, easing: easings.enter },
 };
 
 /** List entrance stagger: 40ms per item, capped so item 7+ arrives with item 6. */
