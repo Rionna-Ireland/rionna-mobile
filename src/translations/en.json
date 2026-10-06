@@ -129,6 +129,18 @@
   "onboarding": {
     "message": "Welcome to obytes app site"
   },
+  "polls": {
+    "closed": "Closed",
+    "clubVote": "Club vote",
+    "endedBody": "Results stay in the Community feed for a week after closing.",
+    "endedTitle": "This vote has ended",
+    "hint": "Tap an option to vote. You can change your mind while the vote is open.",
+    "saving": "Saving your vote…",
+    "stableVote": "Stable vote",
+    "unavailableTitle": "Vote unavailable",
+    "votesOne": "{{count}} vote",
+    "votesOther": "{{count}} votes"
+  },
   "settings": {
     "about": "About",
     "account": {
