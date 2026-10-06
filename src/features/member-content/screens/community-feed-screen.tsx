@@ -24,6 +24,7 @@ import { announcementSpaceIdsFromChips, selectAnnouncements } from '@/features/m
 import { chipToFilter } from '@/features/member-content/lib/chip-filter';
 import { useFeedChipSelection } from '@/features/member-content/lib/use-feed-chip-selection';
 import { usePollVote } from '@/features/polls/api/use-poll-vote';
+import { EntranceItem, useFirstLoadEntrance } from '@/lib/motion';
 
 type CommunityFeedViewProps = {
   items: MemberFeedItem[] | undefined;
@@ -103,6 +104,8 @@ export function CommunityFeedView({
     [items, chips],
   );
   const { scrollY, onScroll } = useScrollHeader();
+  // First load only; chip switches, refetches and refreshes mount rows instantly.
+  const entering = useFirstLoadEntrance(Boolean(items?.length));
 
   return (
     <View className="flex-1">
@@ -162,17 +165,18 @@ export function CommunityFeedView({
                 />
               )
             : null}
-          {items?.map(item => (
-            <FeedItemRenderer
-              key={item.id}
-              item={item}
-              onOpen={onOpenPost}
-              onToggleLike={onToggleLike}
-              likePending={pendingLikePostId === item.id}
-              onVote={onVote}
-              votePending={item.poll ? pendingVotePollIds.includes(item.poll.id) : false}
-              onOpenStory={onOpenStory}
-            />
+          {items?.map((item, i) => (
+            <EntranceItem key={item.id} entering={entering(i)}>
+              <FeedItemRenderer
+                item={item}
+                onOpen={onOpenPost}
+                onToggleLike={onToggleLike}
+                likePending={pendingLikePostId === item.id}
+                onVote={onVote}
+                votePending={item.poll ? pendingVotePollIds.includes(item.poll.id) : false}
+                onOpenStory={onOpenStory}
+              />
+            </EntranceItem>
           ))}
         </View>
       </AnimatedScrollView>

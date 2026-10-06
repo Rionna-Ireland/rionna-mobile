@@ -20,6 +20,7 @@ import { usePostLike } from '@/features/member-content/api/use-post-like';
 import { useSpaceFeed } from '@/features/member-content/api/use-space-feed';
 import { FeedItemRenderer } from '@/features/member-content/components/feed-item-renderer';
 import { usePollVote } from '@/features/polls/api/use-poll-vote';
+import { EntranceItem, useFirstLoadEntrance } from '@/lib/motion';
 
 type SpaceFeedViewProps = {
   title: string;
@@ -57,6 +58,8 @@ export function SpaceFeedView({
   onBack,
   onNewPost,
 }: SpaceFeedViewProps) {
+  // First load only; refetches and refreshes mount new rows instantly.
+  const entering = useFirstLoadEntrance(Boolean(items?.length));
   return (
     <ScrollView
       className="flex-1 bg-surface"
@@ -113,17 +116,18 @@ export function SpaceFeedView({
               />
             )
           : null}
-        {items?.map(item => (
-          <FeedItemRenderer
-            key={item.id}
-            item={item}
-            onOpen={onOpenPost}
-            onToggleLike={onToggleLike}
-            likePending={pendingLikePostId === item.id}
-            onVote={onVote}
-            votePending={item.poll ? pendingVotePollIds.includes(item.poll.id) : false}
-            onOpenStory={noOpOpenStory}
-          />
+        {items?.map((item, i) => (
+          <EntranceItem key={item.id} entering={entering(i)}>
+            <FeedItemRenderer
+              item={item}
+              onOpen={onOpenPost}
+              onToggleLike={onToggleLike}
+              likePending={pendingLikePostId === item.id}
+              onVote={onVote}
+              votePending={item.poll ? pendingVotePollIds.includes(item.poll.id) : false}
+              onOpenStory={noOpOpenStory}
+            />
+          </EntranceItem>
         ))}
       </View>
     </ScrollView>
