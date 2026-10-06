@@ -1,3 +1,4 @@
+import type { SharedValue } from 'react-native-reanimated';
 import * as React from 'react';
 import { useImperativeHandle } from 'react';
 import { View } from 'react-native';
@@ -33,6 +34,11 @@ type Props = {
   tone?: ProgressBarTone;
   /** Bar thickness in points (default 8). */
   height?: number;
+  /**
+   * Externally driven draw (0–1) that scales the fill and thumb, e.g. the
+   * S14-06 charity goal draw. When set, the bar doesn't animate `value` itself.
+   */
+  drawProgress?: SharedValue<number>;
   /** Optional marker centred on the fill's leading edge (e.g. the charity star). */
   renderThumb?: () => React.ReactNode;
   accessibilityLabel?: string;
@@ -52,6 +58,7 @@ export function ProgressBar({
   value,
   tone = 'light',
   height = 8,
+  drawProgress,
   renderThumb,
   accessibilityLabel,
   className = '',
@@ -69,13 +76,17 @@ export function ProgressBar({
   // Reduce Motion: the fill jumps to its value (no growth animation).
   const { reduceMotion } = useMotion();
   const fillStyle = useAnimatedStyle(() => ({
-    width: reduceMotion ? `${now}%` : withTiming(`${now}%`, timings.enter),
+    width: drawProgress
+      ? `${now * drawProgress.get()}%`
+      : reduceMotion ? `${now}%` : withTiming(`${now}%`, timings.enter),
     backgroundColor: fill,
     height,
     borderRadius: height / 2,
   }));
   const thumbStyle = useAnimatedStyle(() => ({
-    left: reduceMotion ? `${now}%` : withTiming(`${now}%`, timings.enter),
+    left: drawProgress
+      ? `${now * drawProgress.get()}%`
+      : reduceMotion ? `${now}%` : withTiming(`${now}%`, timings.enter),
   }));
 
   return (

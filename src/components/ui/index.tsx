@@ -10,6 +10,7 @@ export * from './check-square';
 export * from './checkbox';
 export * from './chip';
 export { default as colors } from './colors';
+export * from './count-up';
 export * from './dots';
 export * from './empty-state';
 export * from './focus-aware-status-bar';

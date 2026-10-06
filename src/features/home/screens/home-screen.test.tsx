@@ -124,7 +124,8 @@ describe('homeScreen', () => {
     fireEvent.press(screen.getByTestId('home-horse-h1'));
     expect(mockPush).toHaveBeenCalledWith('/stables/h1');
 
-    expect(screen.getByText('€24,500')).toBeOnTheScreen();
+    // First view: the S14-06 count-up, read as one label.
+    expect(screen.getByLabelText('€24,500')).toBeOnTheScreen();
     expect(screen.getByText('raised for Womens Health')).toBeOnTheScreen();
     fireEvent.press(screen.getByTestId('home-charity-open'));
     expect(mockPush).toHaveBeenCalledWith('/paddock/charity');

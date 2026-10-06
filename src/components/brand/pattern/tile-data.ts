@@ -1,6 +1,15 @@
+const PLUM = { base: '#3A243C', mid: '#57385A', accent: '#CCA1D0', light: '#F2D6F4', spur: '#57385A' } as const;
+const GREEN = {
+  base: '#043F29',
+  mid: '#A6B999',
+  accent: '#EEEADF',
+  light: '#D4DCCE',
+  spur: '#A6B999',
+} as const;
+
 export const COLOURWAYS = {
   // `spur`: the harlequin tile's stars (the sheet draws them in `mid`).
-  plum: { base: '#3A243C', mid: '#57385A', accent: '#CCA1D0', light: '#F2D6F4', spur: '#57385A' },
+  plum: PLUM,
   navy: { base: '#172741', mid: '#374B6C', accent: '#B9D8E1', light: '#DAEDF3', spur: '#374B6C' },
   navyLit: {
     base: '#172741',
@@ -9,13 +18,7 @@ export const COLOURWAYS = {
     light: '#DAEDF3',
     spur: '#B9D8E1',
   },
-  green: {
-    base: '#043F29',
-    mid: '#A6B999',
-    accent: '#EEEADF',
-    light: '#D4DCCE',
-    spur: '#A6B999',
-  },
+  green: GREEN,
   cream: {
     base: '#EEEADF',
     mid: '#FFFFFF',
@@ -23,6 +26,9 @@ export const COLOURWAYS = {
     light: '#FFFFFF',
     spur: '#FFFFFF',
   },
+  // S14-06 charity wave: the spurs lit in the colourway's accent (cf. navyLit).
+  plumLit: { ...PLUM, spur: PLUM.accent },
+  greenLit: { ...GREEN, spur: GREEN.accent },
 } as const;
 
 export type Colourway = keyof typeof COLOURWAYS;

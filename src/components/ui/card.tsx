@@ -51,6 +51,11 @@ export type CardProps = ViewProps & {
   fallbackColourway?: FallbackColourway;
   /** `plum`/`forest`: override the pattern tile. `sage`: opt-in faint pattern. */
   pattern?: TileSpec;
+  /**
+   * Drawn over the backdrop (pattern, veil, glow) and under the content: the
+   * S14-06 charity wave's lit tiles (`PatternWave`).
+   */
+  patternOverlay?: React.ReactNode;
   /** Drop the default 16pt padding (e.g. a card whose top is a full-bleed image). */
   noPadding?: boolean;
   className?: string;
@@ -113,6 +118,7 @@ export function Card({
   image,
   fallbackColourway,
   pattern,
+  patternOverlay,
   noPadding = false,
   className,
   children,
@@ -123,6 +129,7 @@ export function Card({
   const content = (
     <>
       <CardBackdrop variant={variant} image={image} fallbackColourway={fallbackColourway} pattern={pattern} />
+      {patternOverlay}
       {children}
     </>
   );

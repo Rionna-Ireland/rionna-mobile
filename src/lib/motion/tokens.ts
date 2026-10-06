@@ -70,7 +70,7 @@ export const timings = {
   crossfade: { duration: durations.base, easing: easings.enter },
   /** Indeterminate spinner revolution: constant speed, no easing. */
   spin: { duration: durations.spin, easing: Easing.linear },
-  /** Stroke-draws: the Arrival submark outline, the charity progress line. */
+  /** Signature draws: the Arrival submark outline, the charity count-up + goal bar (`slow`×2). */
   draw: { duration: durations.draw, easing: easings.enter },
   /** One half-cycle of the Arrival mark breathing while data is late (S14-04 §3). */
   breathe: { duration: durations.draw, easing: easings.breathe },
