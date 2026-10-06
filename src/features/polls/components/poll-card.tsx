@@ -57,6 +57,7 @@ export function PollCard({ poll, onVote, pending, variant }: PollCardProps) {
                 accessibilityValue={{ text: `${percents?.[option.id] ?? 0}%` }}
                 accessibilityState={{ selected: mine, disabled: !canVote }}
                 disabled={!canVote}
+                dimDisabled={false}
                 onPress={() => castVote(poll, option.id, onVote)}
               >
                 <PollResultBar
@@ -78,6 +79,7 @@ export function PollCard({ poll, onVote, pending, variant }: PollCardProps) {
               accessibilityLabel={option.label}
               accessibilityState={{ selected: mine, disabled: !canVote }}
               disabled={!canVote}
+              dimDisabled={false}
               onPress={() => castVote(poll, option.id, onVote)}
               className="flex-row items-center gap-3 overflow-hidden rounded-lg border border-outline-variant bg-white p-3"
             >

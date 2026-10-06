@@ -79,6 +79,7 @@ export function CircleFileBlock({ node, onOpenUrl }: CircleFileBlockProps) {
     <MotionPressable
       accessibilityRole="link"
       disabled={!onOpenUrl}
+      dimDisabled={false}
       style={styles.fileLink}
       onPress={() => onOpenUrl?.(src)}
     >

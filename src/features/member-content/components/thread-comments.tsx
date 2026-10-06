@@ -61,6 +61,7 @@ function CommentRow({ postId, comment, onDeleteComment, pendingDeleteCommentId, 
               accessibilityRole="button"
               accessibilityLabel={translate('community.comment.deleteAction')}
               disabled={deleting}
+              dimDisabled={false}
               hitSlop={8}
               className="self-start"
               onPress={requestDelete}

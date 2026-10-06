@@ -99,6 +99,7 @@ export function PostOverflowMenu({ scope, postId, spaceId, isOwn, onReportPost, 
                   accessibilityRole="button"
                   accessibilityLabel={translate('community.postMenu.delete')}
                   disabled={isPending}
+                  dimDisabled={false}
                   onPress={onDelete}
                   className="py-3.5"
                 >

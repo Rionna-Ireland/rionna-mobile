@@ -135,6 +135,7 @@ export function ReportSheet({ scope, target, onClose }: ReportSheetProps) {
           accessibilityRole="button"
           accessibilityLabel={translate('community.report.sendA11y')}
           disabled={isPending}
+          dimDisabled={false}
           onPress={() => void onSend()}
           className={`mt-4 items-center rounded-2xl px-4 py-3 ${isPending ? 'bg-ink-muted' : 'bg-primary'}`}
         >

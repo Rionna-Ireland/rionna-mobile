@@ -46,6 +46,7 @@ export function CircleEmbedBlock({ node, onOpenUrl }: CircleEmbedBlockProps) {
       <MotionPressable
         accessibilityRole="link"
         disabled={!onOpenUrl}
+        dimDisabled={false}
         style={styles.fallback}
         onPress={() => onOpenUrl?.(fallbackUrl)}
       >
