@@ -57,6 +57,10 @@
     "unavailableTitle": "Events unavailable"
   },
   "home": {
+    "charityA11y": "Charity snapshot, {{amount}} raised for {{name}}",
+    "charityKicker": "Charity snapshot",
+    "openCharity": "Open charity",
+    "raisedFor": "raised for {{name}}",
     "unavailableBody": "Check your connection and pull to refresh.",
     "unavailableTitle": "Couldn't load your yard"
   },

@@ -144,6 +144,10 @@ describe('homeScreen', () => {
     expect(screen.getByText('raised for Womens Health')).toBeOnTheScreen();
     fireEvent.press(screen.getByTestId('home-charity-open'));
     expect(mockPush).toHaveBeenCalledWith('/paddock/charity');
+    // A-041: the whole card opens Charity too, with one summary label.
+    mockPush.mockClear();
+    fireEvent.press(screen.getByLabelText('Charity snapshot, €24,500 raised for Womens Health'));
+    expect(mockPush).toHaveBeenCalledWith('/paddock/charity');
 
     expect(screen.getByText('12/20 slots remaining')).toBeOnTheScreen();
     fireEvent.press(screen.getByTestId('home-event'));

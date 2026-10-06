@@ -13,7 +13,9 @@ import colors from '@/components/ui/colors';
 import { WalletV2 } from '@/components/ui/icons/v2';
 import { useVisibleOnce } from '@/features/home/lib/use-visible-once';
 import { CharityTotalText } from '@/features/paddock/components/charity-total-text';
+import { formatEuro } from '@/features/paddock/lib/format-euro';
 import { useCharityCounter } from '@/features/paddock/lib/use-charity-counter';
+import { translate } from '@/lib/i18n';
 import { EntranceItem, useFirstLoadEntrance } from '@/lib/motion';
 
 /** The plum harlequin with its spurs lit lilac (S14-06 wave). */
@@ -53,17 +55,21 @@ function HomeCharityCard({ charity, scrollY }: { charity: Charity; scrollY: Shar
   const router = useRouter();
   const counter = useCharityCounter('home', charity.totalCents);
   const { ref, onLayout } = useVisibleOnce(scrollY, counter.start);
+  // The whole card opens Charity, like every other Home card (A-041).
+  const open = () => router.push('/paddock/charity');
 
   return (
     <Animated.View ref={ref} onLayout={onLayout}>
       <Card
         variant="plum"
         testID="home-charity"
+        onPress={open}
+        accessibilityLabel={translate('home.charityA11y', { amount: formatEuro(charity.totalCents), name: charity.charityName })}
         className="min-h-[204px] justify-between"
         patternOverlay={counter.waveArmed ? <PatternWave spec={PLUM_LIT} clock={counter.wave} borderRadius={8} testID="home-charity-wave" /> : null}
       >
         <View className="gap-2.5">
-          <MonoLabel tone="white">Charity snapshot</MonoLabel>
+          <MonoLabel tone="white">{translate('home.charityKicker')}</MonoLabel>
           <CharityTotalText
             counter={counter}
             totalCents={charity.totalCents}
@@ -74,12 +80,14 @@ function HomeCharityCard({ charity, scrollY }: { charity: Charity; scrollY: Shar
           />
         </View>
         <View className="flex-row items-end justify-between gap-4">
-          <Text variant="body-sm" className="flex-1 text-white">{`raised for ${charity.charityName}`}</Text>
+          <Text variant="body-sm" className="flex-1 text-white">{translate('home.raisedFor', { name: charity.charityName })}</Text>
+          {/* Visual affordance; the card is the one accessible element (A-004 pattern). */}
           <IconButton
             variant="square-accent"
-            accessibilityLabel="Open charity"
+            accessibilityLabel={translate('home.openCharity')}
+            accessible={false}
             testID="home-charity-open"
-            onPress={() => router.push('/paddock/charity')}
+            onPress={open}
           >
             <WalletV2 size={24} color={colors.plum} />
           </IconButton>
