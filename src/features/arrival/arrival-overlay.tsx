@@ -117,6 +117,7 @@ export function ArrivalOverlay() {
       pointerEvents={state.phase === 'handingOff' ? 'none' : 'auto'}
       onLayout={hideNativeSplash}
       accessibilityElementsHidden={state.kind === 'launch'}
+      importantForAccessibility={state.kind === 'launch' ? 'no-hide-descendants' : 'auto'}
     >
       <SystemBars style={onNavy ? 'light' : 'dark'} />
       <Animated.View style={[StyleSheet.absoluteFill, backdrop]}>
