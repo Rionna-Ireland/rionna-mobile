@@ -26,6 +26,17 @@
       "placeholder": "Write a reply…",
       "sendA11y": "Send comment"
     },
+    "feed": {
+      "emptyBody": "New updates from your live circles will appear here.",
+      "emptyHorsesBody": "Follow a horse to see its space here.",
+      "emptyHorsesTitle": "Nothing from your horses yet",
+      "emptyPollsTitle": "No polls right now",
+      "emptySpaceBody": "Start the first post.",
+      "emptySpaceTitle": "Nothing in {{name}} yet",
+      "emptyStoriesTitle": "No stories yet",
+      "emptyTitle": "Nothing new yet",
+      "unavailableTitle": "Feed unavailable"
+    },
     "like": {
       "countOne": "{{count}} like",
       "countOther": "{{count}} likes",
@@ -49,7 +60,8 @@
       "staff": "Staff",
       "trainer": "Trainer"
     },
-    "savedContent": "Showing saved content"
+    "savedContent": "Showing saved content",
+    "title": "Community"
   },
   "events": {
     "all": "All",

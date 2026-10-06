@@ -33,6 +33,7 @@ import { announcementSpaceIdsFromChips, selectAnnouncements } from '@/features/m
 import { chipToFilter } from '@/features/member-content/lib/chip-filter';
 import { useFeedChipSelection } from '@/features/member-content/lib/use-feed-chip-selection';
 import { usePollVote } from '@/features/polls/api/use-poll-vote';
+import { translate } from '@/lib/i18n';
 import { EntranceItem, isFirstLoad, SkeletonSwap, useContentEntrance } from '@/lib/motion';
 
 type CommunityFeedViewProps = {
@@ -58,31 +59,27 @@ type CommunityFeedViewProps = {
   onOpenFeaturedCard?: (id: string) => void;
 };
 
-const DEFAULT_EMPTY_COPY = {
-  title: 'Nothing new yet',
-  message: 'New updates from your live circles will appear here.',
-};
+function defaultEmptyCopy() {
+  return { title: translate('community.feed.emptyTitle'), message: translate('community.feed.emptyBody') };
+}
 
 /** Per-chip empty copy (S12-02b) — falls back to the default feed copy for the "all" chip. */
 export function emptyCopyForChip(chip: FeedChip | undefined): { title: string; message: string } {
   if (!chip) {
-    return DEFAULT_EMPTY_COPY;
+    return defaultEmptyCopy();
   }
   switch (chip.kind) {
     case 'space':
-      return { title: `Nothing in ${chip.label} yet`, message: 'Start the first post.' };
+      return { title: translate('community.feed.emptySpaceTitle', { name: chip.label }), message: translate('community.feed.emptySpaceBody') };
     case 'horses':
-      return {
-        title: 'Nothing from your horses yet',
-        message: 'Follow a horse to see its space here.',
-      };
+      return { title: translate('community.feed.emptyHorsesTitle'), message: translate('community.feed.emptyHorsesBody') };
     case 'polls':
-      return { title: 'No polls right now', message: '' };
+      return { title: translate('community.feed.emptyPollsTitle'), message: '' };
     case 'news':
     case 'charity':
-      return { title: 'No stories yet', message: '' };
+      return { title: translate('community.feed.emptyStoriesTitle'), message: '' };
     default:
-      return DEFAULT_EMPTY_COPY;
+      return defaultEmptyCopy();
   }
 }
 
@@ -101,7 +98,7 @@ export function CommunityFeedView({
   chips = [],
   selectedChipId = 'all',
   onSelectChip = () => {},
-  emptyCopy = DEFAULT_EMPTY_COPY,
+  emptyCopy,
   headerRight,
   featuredCard,
   onOpenFeaturedCard,
@@ -114,6 +111,7 @@ export function CommunityFeedView({
     [items, chips],
   );
   const { scrollY, onScroll } = useScrollHeader();
+  const empty = emptyCopy ?? defaultEmptyCopy();
   // First load only; chip switches, refetches and refreshes mount rows instantly.
   // After a skeleton, its crossfade is the entrance (S14-03).
   const entering = useContentEntrance(Boolean(items?.length), isLoading && !items);
@@ -132,7 +130,7 @@ export function CommunityFeedView({
           <Gradient variant="page" pointerEvents="none" style={StyleSheet.absoluteFill} />
           <View className="flex-row items-center justify-between px-4">
             <CollapsingTitle scrollY={scrollY}>
-              <Text variant="display-lg" accessibilityRole="header">Community</Text>
+              <Text variant="display-lg" accessibilityRole="header">{translate('community.title')}</Text>
             </CollapsingTitle>
             {headerRight}
           </View>
@@ -147,23 +145,24 @@ export function CommunityFeedView({
             : null}
         </View>
 
-        <View className="gap-3 px-4">
+        {/* 20pt between the band's edge and the first post (frame 10, A-013). */}
+        <View className="gap-3 px-4 pt-5">
           {contentState === 'saved'
             ? (
                 <View className="rounded-lg bg-primary-fixed px-4 py-3">
-                  <Text variant="body-sm" className="font-sans-medium">Showing saved content</Text>
+                  <Text variant="body-sm" className="font-sans-medium">{translate('community.savedContent')}</Text>
                 </View>
               )
             : null}
           {!isLoading && contentState === 'empty'
-            ? <EmptyState testID="member-feed-empty" title={emptyCopy.title} body={emptyCopy.message || undefined} />
+            ? <EmptyState testID="member-feed-empty" title={empty.title} body={empty.message || undefined} />
             : null}
           {!isLoading && contentState === 'unavailable'
             ? (
                 <ErrorState
                   testID="member-feed-unavailable"
-                  title="Feed unavailable"
-                  body="Check your connection and try again."
+                  title={translate('community.feed.unavailableTitle')}
+                  body={translate('community.post.unavailableBody')}
                   onRetry={onRefresh}
                 />
               )
@@ -188,7 +187,7 @@ export function CommunityFeedView({
         </View>
       </AnimatedScrollView>
       <RefreshIndicator scrollY={scrollY} refreshing={isRefetching} top={safeTop} />
-      <CompactHeaderBar scrollY={scrollY} title="Community" testID="community-compact-header" />
+      <CompactHeaderBar scrollY={scrollY} title={translate('community.title')} testID="community-compact-header" />
     </View>
   );
 }
