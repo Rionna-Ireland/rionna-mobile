@@ -1,9 +1,22 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import * as React from 'react';
+import { useReducedMotion } from 'react-native-reanimated';
 
 import colors from '@/components/ui/colors';
 
 import { MonthCalendar } from './month-calendar';
+
+const mockSelection = jest.fn();
+jest.mock('@/lib/motion/haptics', () => ({
+  ...jest.requireActual('@/lib/motion/haptics'),
+  selection: () => mockSelection(),
+}));
+
+type Anim = { initialValues: Record<string, unknown> };
+function gridEntering() {
+  const entering = screen.getByTestId('month-calendar-grid').props.entering as (() => Anim) | undefined;
+  return entering?.();
+}
 
 const base = {
   month: { year: 2026, month: 6 },
@@ -15,6 +28,7 @@ const base = {
 
 describe('monthCalendar', () => {
   beforeEach(() => jest.clearAllMocks());
+  afterEach(() => jest.mocked(useReducedMotion).mockReturnValue(false));
 
   it('renders the month title and a Monday-first weekday row', () => {
     render(<MonthCalendar {...base} eventDays={new Map()} />);
@@ -37,5 +51,29 @@ describe('monthCalendar', () => {
     expect(base.onNextMonth).toHaveBeenCalledTimes(1);
     expect(base.onPrevMonth).toHaveBeenCalledTimes(1);
     expect(base.onSelectDay).toHaveBeenCalledWith('2026-07-10');
+  });
+
+  it('ticks a selection haptic when a day is tapped', () => {
+    render(<MonthCalendar {...base} eventDays={new Map()} />);
+    fireEvent.press(screen.getByTestId('month-calendar-day-2026-07-10'));
+    expect(mockSelection).toHaveBeenCalledTimes(1);
+  });
+
+  it('slides a new month in from the side it came from, but not on first render', () => {
+    const { rerender } = render(<MonthCalendar {...base} eventDays={new Map()} />);
+    expect(gridEntering()).toBeUndefined();
+
+    rerender(<MonthCalendar {...base} month={{ year: 2026, month: 7 }} eventDays={new Map()} />);
+    expect(gridEntering()?.initialValues).toEqual({ opacity: 0, transform: [{ translateX: 32 }] });
+
+    rerender(<MonthCalendar {...base} month={{ year: 2026, month: 6 }} eventDays={new Map()} />);
+    expect(gridEntering()?.initialValues).toEqual({ opacity: 0, transform: [{ translateX: -32 }] });
+  });
+
+  it('crossfades months under Reduce Motion', () => {
+    jest.mocked(useReducedMotion).mockReturnValue(true);
+    const { rerender } = render(<MonthCalendar {...base} eventDays={new Map()} />);
+    rerender(<MonthCalendar {...base} month={{ year: 2026, month: 7 }} eventDays={new Map()} />);
+    expect(gridEntering()?.initialValues).toEqual({ opacity: 0 });
   });
 });
