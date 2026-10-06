@@ -150,3 +150,24 @@ describe('eventsScreen', () => {
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/event/[event-id]', params: { 'event-id': 'event-1' } });
   });
 });
+
+describe('eventsScreen with nothing upcoming', () => {
+  beforeEach(() => jest.useFakeTimers({ now: NOW, doNotFake: ['nextTick', 'setImmediate'] }));
+  afterEach(() => jest.useRealTimers());
+
+  it('shows the empty state above the past events (A-011)', () => {
+    mockQueries = {
+      upcoming: ok([]),
+      past: ok([clubEvent({ id: 'event-2', title: 'Summer Brunch', startsAt: '2030-08-10T10:00:00.000Z' })]),
+    };
+    render(<EventsScreen />);
+    expect(screen.getByTestId('events-upcoming-empty')).toBeOnTheScreen();
+    expect(screen.getByText('Summer Brunch')).toBeOnTheScreen();
+  });
+
+  it('has no upcoming empty state when something is upcoming', () => {
+    mockQueries = { upcoming: ok([clubEvent()]), past: ok([]) };
+    render(<EventsScreen />);
+    expect(screen.queryByTestId('events-upcoming-empty')).toBeNull();
+  });
+});
