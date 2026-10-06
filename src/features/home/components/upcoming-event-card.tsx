@@ -2,7 +2,7 @@ import type { EventsResult } from '@/features/events/types';
 
 import { useRouter } from 'expo-router';
 import * as React from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 
 import { Card, MonoLabel, NumberRoll, Text } from '@/components/ui';
 import { formatEventDate } from '@/features/events/lib/format-event-date';
@@ -19,20 +19,17 @@ export function UpcomingEventCard({ data }: { data: EventsResult | undefined }) 
   const date = formatEventDate(event.startsAt) ?? 'Date to be confirmed';
 
   return (
-    <Pressable
+    <Card
       testID="home-event"
-      accessibilityRole="button"
+      className="gap-8"
       onPress={() => router.push({ pathname: '/event/[event-id]', params: { 'event-id': event.id } })}
-      style={({ pressed }) => (pressed ? { opacity: 0.7 } : null)}
     >
-      <Card className="gap-8">
-        <MonoLabel>Upcoming events</MonoLabel>
-        <View className="gap-1.5">
-          {slots ? <NumberRoll variant="body-sm" className="text-on-primary-container" value={slots} /> : null}
-          <Text variant="body-lg" numberOfLines={2}>{event.title}</Text>
-          <Text variant="body-sm" className="text-ink-variant">{date}</Text>
-        </View>
-      </Card>
-    </Pressable>
+      <MonoLabel>Upcoming events</MonoLabel>
+      <View className="gap-1.5">
+        {slots ? <NumberRoll variant="body-sm" className="text-on-primary-container" value={slots} /> : null}
+        <Text variant="body-lg" numberOfLines={2}>{event.title}</Text>
+        <Text variant="body-sm" className="text-ink-variant">{date}</Text>
+      </View>
+    </Card>
   );
 }

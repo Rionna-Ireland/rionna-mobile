@@ -1,7 +1,7 @@
 import type { Horse } from '@/features/stables/types';
 
 import * as React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Card, getInitials, Image, Tag, Text } from '@/components/ui';
 import { FollowToggle } from '@/features/stables/components/follow-toggle';
@@ -47,66 +47,59 @@ export function HorseCard({ horse, onPress, onToggleFollow, followPending = fals
     : null;
 
   return (
-    <Pressable
+    <Card
       testID={`horse-card-${horse.id}`}
       onPress={onPress}
-      accessibilityRole="button"
       accessibilityLabel={horse.name}
-      style={({ pressed }) => (pressed ? styles.pressed : null)}
+      className="flex-row gap-4 border border-outline-variant"
     >
-      <Card className="flex-row gap-4 border border-outline-variant">
-        <View className="min-h-[146px] w-[86px] overflow-hidden rounded-lg">
-          <Image
-            testID="horse-card-photo"
-            source={photoUrl ? { uri: `${photoUrl}?width=400&quality=80` } : null}
-            style={StyleSheet.absoluteFill}
-            contentFit="cover"
-            fallback={{ colourway: 'navy', initials: getInitials(horse.name) }}
-            accessibilityIgnoresInvertColors
-          />
-        </View>
+      <View className="min-h-[146px] w-[86px] overflow-hidden rounded-lg">
+        <Image
+          testID="horse-card-photo"
+          source={photoUrl ? { uri: `${photoUrl}?width=400&quality=80` } : null}
+          style={StyleSheet.absoluteFill}
+          contentFit="cover"
+          fallback={{ colourway: 'navy', initials: getInitials(horse.name) }}
+          accessibilityIgnoresInvertColors
+        />
+      </View>
 
-        <View className="flex-1 justify-between gap-4">
-          <View className="gap-2">
-            <Text variant="display-sm" numberOfLines={2}>{horse.name}</Text>
-            {profileLine || trainerLine
-              ? (
-                  <View className="gap-1">
-                    {profileLine
-                      ? <Text testID="horse-card-profile-line" variant="body-sm" className="text-ink-variant">{profileLine}</Text>
-                      : null}
-                    {trainerLine
-                      ? <Text variant="body-sm" className="font-sans-semibold text-label">{trainerLine}</Text>
-                      : null}
-                  </View>
-                )
-              : null}
-            {horse.inviteOnly
-              ? <Tag variant="ice" label={translate('stables.card.private')} testID="horse-card-private" />
-              : null}
-          </View>
-
-          {declared || horse.nextEntryId
+      <View className="flex-1 justify-between gap-4">
+        <View className="gap-2">
+          <Text variant="display-sm" numberOfLines={2}>{horse.name}</Text>
+          {profileLine || trainerLine
             ? (
                 <View className="gap-1">
-                  {declared
-                    ? <DeclaredPill date={formatDeclaredDate(declared.race.postTime)} />
-                    : <EntryUpcomingPill />}
-                  {follow ? <View className="flex-row">{follow}</View> : null}
+                  {profileLine
+                    ? <Text testID="horse-card-profile-line" variant="body-sm" className="text-ink-variant">{profileLine}</Text>
+                    : null}
+                  {trainerLine
+                    ? <Text variant="body-sm" className="font-sans-semibold text-label">{trainerLine}</Text>
+                    : null}
                 </View>
               )
-            : (
-                <View className="flex-row gap-1">
-                  <StatusPill status={horse.status} className="flex-1" />
-                  {follow}
-                </View>
-              )}
+            : null}
+          {horse.inviteOnly
+            ? <Tag variant="ice" label={translate('stables.card.private')} testID="horse-card-private" />
+            : null}
         </View>
-      </Card>
-    </Pressable>
+
+        {declared || horse.nextEntryId
+          ? (
+              <View className="gap-1">
+                {declared
+                  ? <DeclaredPill date={formatDeclaredDate(declared.race.postTime)} />
+                  : <EntryUpcomingPill />}
+                {follow ? <View className="flex-row">{follow}</View> : null}
+              </View>
+            )
+          : (
+              <View className="flex-row gap-1">
+                <StatusPill status={horse.status} className="flex-1" />
+                {follow}
+              </View>
+            )}
+      </View>
+    </Card>
   );
 }
-
-const styles = StyleSheet.create({
-  pressed: { opacity: 0.85 },
-});

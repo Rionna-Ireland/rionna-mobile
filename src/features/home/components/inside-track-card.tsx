@@ -2,7 +2,7 @@ import type { InsideTrackResult } from '@/features/member-content/types';
 
 import { useRouter } from 'expo-router';
 import * as React from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 
 import { Card, IconButton, MonoLabel, Tag, Text } from '@/components/ui';
 import colors from '@/components/ui/colors';
@@ -32,32 +32,27 @@ export function InsideTrackCard({ data, now }: { data: InsideTrackResult | undef
   };
 
   return (
-    <Pressable
+    <Card
       testID="home-inside-track"
-      accessibilityRole="button"
       accessibilityLabel={`Inside Track: ${teaser.title}`}
       onPress={open}
-      style={({ pressed }) => (pressed ? { opacity: 0.85 } : null)}
+      variant="photo"
+      image={INSIDE_TRACK_BACKGROUND}
+      className="justify-between"
+      style={{ height: INSIDE_TRACK_HEIGHT }}
     >
-      <Card
-        variant="photo"
-        image={INSIDE_TRACK_BACKGROUND}
-        className="justify-between"
-        style={{ height: INSIDE_TRACK_HEIGHT }}
-      >
-        <View className="gap-2.5 pr-20">
-          <MonoLabel tone="white">Inside Track</MonoLabel>
-          <Text variant="display-md" className="text-white" numberOfLines={2}>{teaser.title}</Text>
+      <View className="gap-2.5 pr-20">
+        <MonoLabel tone="white">Inside Track</MonoLabel>
+        <Text variant="display-md" className="text-white" numberOfLines={2}>{teaser.title}</Text>
+      </View>
+      <View className="flex-row items-end justify-between">
+        <IconButton variant="circle" accessibilityLabel="Play" onPress={open} testID="home-inside-track-play">
+          <PlayV2 size={12} color={colors.ink} />
+        </IconButton>
+        <View className="flex-row gap-1.5">
+          {isNewItem(teaser.createdAt, now) ? <Tag variant="ice" label="NEW" testID="home-inside-track-new" /> : null}
         </View>
-        <View className="flex-row items-end justify-between">
-          <IconButton variant="circle" accessibilityLabel="Play" onPress={open} testID="home-inside-track-play">
-            <PlayV2 size={12} color={colors.ink} />
-          </IconButton>
-          <View className="flex-row gap-1.5">
-            {isNewItem(teaser.createdAt, now) ? <Tag variant="ice" label="NEW" testID="home-inside-track-new" /> : null}
-          </View>
-        </View>
-      </Card>
-    </Pressable>
+      </View>
+    </Card>
   );
 }
