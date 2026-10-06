@@ -23,6 +23,7 @@ import { useAuthStore } from '@/features/auth/use-auth-store';
 import { useOffers } from '@/features/paddock/api/use-offers';
 import { OfferCard } from '@/features/paddock/components/offer-card';
 import { copyToClipboard } from '@/lib/copy-to-clipboard';
+import { EntranceItem, useFirstLoadEntrance } from '@/lib/motion';
 import { openExternalLink } from '@/lib/open-external-link';
 
 type BenefitsViewProps = {
@@ -42,6 +43,8 @@ export function BenefitsView({ offers, isLoading, isError, isRefetching, onRefre
   const showEmpty = !showLoading && !showUnavailable && offers?.length === 0;
   const paddingBottom = useScreenBottomPadding(24);
   const { scrollY, onScroll } = useScrollHeader();
+  // First load only; refetches and refreshes mount new offers instantly.
+  const entering = useFirstLoadEntrance(Boolean(offers?.length));
 
   return (
     <View className="flex-1 bg-background">
@@ -69,8 +72,10 @@ export function BenefitsView({ offers, isLoading, isError, isRefetching, onRefre
           {showEmpty
             ? <EmptyState testID="benefits-empty" kicker="BENEFITS" title="New partners are on the way" body="Partner offers will appear here as the club adds them." />
             : null}
-          {offers?.map(offer => (
-            <OfferCard key={offer.id} offer={offer} onCopyCode={onCopyCode} onOpenLink={onOpenLink} />
+          {offers?.map((offer, i) => (
+            <EntranceItem key={offer.id} entering={entering(i)}>
+              <OfferCard offer={offer} onCopyCode={onCopyCode} onOpenLink={onOpenLink} />
+            </EntranceItem>
           ))}
         </View>
       </AnimatedScrollView>

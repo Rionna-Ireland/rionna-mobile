@@ -25,6 +25,7 @@ import { useCharity } from '@/features/paddock/api/use-charity';
 import { useOffers } from '@/features/paddock/api/use-offers';
 import { JourneyCard } from '@/features/paddock/components/journey-card';
 import { charitySubtitle, offersSubtitle } from '@/features/paddock/lib/hub-copy';
+import { EntranceItem, useFirstLoadEntrance } from '@/lib/motion';
 
 const TILE_PLUM: TileSpec = { kind: 'gem', colourway: 'plum', turn: 0 };
 const TILE_NAVY: TileSpec = { kind: 'gem', colourway: 'navy', turn: 0 };
@@ -98,6 +99,8 @@ export function PaddockHubView({ offersCount, charitySummary, badges = [], onOpe
   const contentPaddingBottom = useTabBarContentPadding(24);
   const contentPaddingTop = useScreenTopPadding();
   const { scrollY, onScroll } = useScrollHeader();
+  // The hub rows are static (subtitles fill in later), so they enter on mount.
+  const entering = useFirstLoadEntrance(true);
 
   return (
     <View className="flex-1 bg-background">
@@ -126,9 +129,15 @@ export function PaddockHubView({ offersCount, charitySummary, badges = [], onOpe
         <View className="gap-3">
           <JourneyCard badges={badges} />
           <View className="gap-2">
-            <HubRow title="Membership Benefits" subtitle={offersSubtitle(offersCount)} spec={TILE_PLUM} onPress={onOpenBenefits} />
-            <HubRow title="Merchandise" subtitle="Caps, jackets, polos, accessories" spec={TILE_NAVY} comingSoon />
-            <HubRow title="Charity Snapshot" subtitle={charitySummary} spec={TILE_GREEN} onPress={onOpenCharity} />
+            <EntranceItem entering={entering(0)}>
+              <HubRow title="Membership Benefits" subtitle={offersSubtitle(offersCount)} spec={TILE_PLUM} onPress={onOpenBenefits} />
+            </EntranceItem>
+            <EntranceItem entering={entering(1)}>
+              <HubRow title="Merchandise" subtitle="Caps, jackets, polos, accessories" spec={TILE_NAVY} comingSoon />
+            </EntranceItem>
+            <EntranceItem entering={entering(2)}>
+              <HubRow title="Charity Snapshot" subtitle={charitySummary} spec={TILE_GREEN} onPress={onOpenCharity} />
+            </EntranceItem>
           </View>
         </View>
       </AnimatedScrollView>
