@@ -125,7 +125,7 @@ describe('eventsScreen', () => {
   });
 
   it('shows a loading state on first fetch', () => {
-    const loading = { data: undefined, isLoading: true, isError: false, refetch: jest.fn() };
+    const loading = { data: undefined, isLoading: true, isPending: true, isFetching: true, isError: false, refetch: jest.fn() };
     mockQueries = { upcoming: loading, past: loading };
     render(<EventsScreen />);
     expect(screen.getByTestId('events-loading')).toBeOnTheScreen();

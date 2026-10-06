@@ -5,17 +5,19 @@ import type { TxKeyPath } from '@/lib/i18n';
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
-import { RefreshControl, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import {
-  ActivityIndicator,
+  BrandedRefreshControl,
   ChipRow,
   EmptyState,
   ErrorState,
   FocusAwareStatusBar,
   MonoLabel,
+  RefreshIndicator,
   ScreenBackground,
   Text,
+  usePullToRefresh,
 } from '@/components/ui';
 import { List } from '@/components/ui/list';
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
@@ -24,6 +26,7 @@ import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { useFollowHorse } from '@/features/stables/api/use-horse-follow';
 import { useHorses } from '@/features/stables/api/use-horses';
 import { HorseCard } from '@/features/stables/components/horse-card';
+import { StablesSkeleton } from '@/features/stables/components/stables-skeletons';
 import {
   applyStablesFilter,
   buildStablesFilterChips,
@@ -31,7 +34,7 @@ import {
   resolveStablesFilter,
 } from '@/features/stables/lib/stables-filters';
 import { translate } from '@/lib/i18n';
-import { EntranceItem, useFirstLoadEntrance } from '@/lib/motion';
+import { EntranceItem, isFirstLoad, SkeletonSwap, useContentEntrance } from '@/lib/motion';
 
 const CHIP_LABELS: Record<StablesFilter, TxKeyPath> = {
   all: 'stables.list.filterAll',
@@ -102,7 +105,7 @@ function FilterEmpty({ filter }: { filter: StablesFilter }) {
 }
 
 /** Horse rows: open on press, follow toggle, first-load entrance (S14-02 §6). */
-function useHorseRenderItem(ready: boolean) {
+function useHorseRenderItem(ready: boolean, skeletonShowing: boolean) {
   const { toggleFollow, pendingHorseId } = useFollowHorse();
   const router = useRouter();
   const handlePress = React.useCallback(
@@ -114,8 +117,9 @@ function useHorseRenderItem(ready: boolean) {
     [toggleFollow],
   );
 
-  // First load only: FlashList cells mounted or recycled later get no entrance.
-  const entering = useFirstLoadEntrance(ready);
+  // First load only: FlashList cells mounted or recycled later get no entrance;
+  // after a skeleton the crossfade is the entrance (S14-03).
+  const entering = useContentEntrance(ready, skeletonShowing);
   return React.useCallback(
     ({ item, index }: { item: Horse; index: number }) => (
       <EntranceItem entering={entering(index)}>
@@ -131,93 +135,106 @@ function useHorseRenderItem(ready: boolean) {
   );
 }
 
-/**
- * Stables list (S13-04, Figma frame 6). `?filter=following` preselects the
- * Following chip (S13-08 links with it); anything else opens on All.
- */
-export function StablesScreen() {
-  const { data, isLoading, isError, refetch, isRefetching } = useHorses();
-  const params = useLocalSearchParams<{ filter?: string }>();
-  const contentPaddingBottom = useTabBarContentPadding(16);
-  const contentPaddingTop = useScreenTopPadding(20);
-  const { scrollY, onScrollJS } = useScrollHeader();
+type PagePadding = { paddingTop: number; paddingBottom: number };
 
-  // The tab stays mounted, so a later navigation with a new `filter` param
-  // must re-apply it (state adjusted during render, not in an effect).
+function StablesFallback({ isError, retrying, onRetry, pagePadding }: {
+  isError: boolean;
+  retrying: boolean;
+  onRetry: () => void;
+  pagePadding: PagePadding;
+}) {
+  return (
+    <View className="flex-1 px-4" style={pagePadding}>
+      <View className="gap-2 pb-8">
+        <Text variant="display-lg" accessibilityRole="header">{translate('stables.list.title')}</Text>
+        <Text variant="body">{translate('stables.list.subtitle')}</Text>
+      </View>
+      {isError
+        ? (
+            <ErrorState
+              testID="stables-error"
+              body={translate('stables.list.errorBody')}
+              onRetry={onRetry}
+              retrying={retrying}
+            />
+          )
+        : (
+            <EmptyState
+              testID="stables-empty"
+              title={translate('stables.list.emptyTitle')}
+              body={translate('stables.list.emptyBody')}
+            />
+          )}
+    </View>
+  );
+}
+
+/** The tab stays mounted, so a later navigation with a new `filter` param re-applies it (state adjusted in render). */
+function useRequestedFilter() {
+  const params = useLocalSearchParams<{ filter?: string }>();
   const [requested, setRequested] = React.useState<StablesFilter>(() => parseStablesFilterParam(params.filter));
   const [lastParam, setLastParam] = React.useState(params.filter);
   if (params.filter !== lastParam) {
     setLastParam(params.filter);
     setRequested(parseStablesFilterParam(params.filter));
   }
+  return [requested, setRequested] as const;
+}
+
+/**
+ * Stables list (S13-04, Figma frame 6). `?filter=following` preselects the
+ * Following chip (S13-08 links with it); anything else opens on All. A cold
+ * first load shows the skeleton list, crossfading to the cards (S14-03).
+ */
+export function StablesScreen() {
+  const query = useHorses();
+  const { data, isError, refetch, isRefetching } = query;
+  const contentPaddingBottom = useTabBarContentPadding(16);
+  const contentPaddingTop = useScreenTopPadding(20);
+  const safeTop = useScreenTopPadding(0);
+  const { scrollY, onScrollJS } = useScrollHeader();
+  const pull = usePullToRefresh(refetch);
+  const [requested, setRequested] = useRequestedFilter();
 
   const horses = React.useMemo(() => data ?? [], [data]);
   const filter = resolveStablesFilter(requested, buildStablesFilterChips(horses));
   const filtered = React.useMemo(() => applyStablesFilter(horses, filter), [horses, filter]);
 
-  const renderItem = useHorseRenderItem(horses.length > 0);
-
+  const loading = isFirstLoad(query);
+  const renderItem = useHorseRenderItem(horses.length > 0, loading);
+  const showList = !isError && horses.length > 0;
   const pagePadding = { paddingTop: contentPaddingTop, paddingBottom: contentPaddingBottom };
-
-  if (isLoading) {
-    return (
-      <View className="flex-1 items-center justify-center">
-        <ScreenBackground />
-        <ActivityIndicator />
-      </View>
-    );
-  }
-
-  if (isError || horses.length === 0) {
-    return (
-      <View className="flex-1 px-4" style={pagePadding}>
-        <FocusAwareStatusBar />
-        <ScreenBackground />
-        <View className="gap-2 pb-8">
-          <Text variant="display-lg" accessibilityRole="header">{translate('stables.list.title')}</Text>
-          <Text variant="body">{translate('stables.list.subtitle')}</Text>
-        </View>
-        {isError
-          ? (
-              <ErrorState
-                testID="stables-error"
-                body={translate('stables.list.errorBody')}
-                onRetry={() => refetch()}
-                retrying={isRefetching}
-              />
-            )
-          : (
-              <EmptyState
-                testID="stables-empty"
-                title={translate('stables.list.emptyTitle')}
-                body={translate('stables.list.emptyBody')}
-              />
-            )}
-      </View>
-    );
-  }
 
   return (
     <View className="flex-1">
       <FocusAwareStatusBar />
       <ScreenBackground />
-      <List
-        data={filtered}
-        extraData={filter}
-        ListHeaderComponent={(
-          <StablesHeader horses={horses} filter={filter} onFilterChange={setRequested} scrollY={scrollY} />
-        )}
-        ListEmptyComponent={<FilterEmpty filter={filter} />}
-        renderItem={renderItem}
-        keyExtractor={(item: Horse) => item.id}
-        contentContainerStyle={{ paddingHorizontal: 16, ...pagePadding }}
-        ItemSeparatorComponent={() => <View className="h-2" />}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
-        // FlashList already handles scroll on JS; feed the header from there.
-        onScroll={onScrollJS}
-        scrollEventThrottle={16}
-      />
-      <CompactHeaderBar scrollY={scrollY} title={translate('stables.list.title')} testID="stables-compact-header" />
+      <SkeletonSwap loading={loading} skeleton={<StablesSkeleton style={pagePadding} />} style={styles.fill}>
+        {showList
+          ? (
+              <List
+                data={filtered}
+                extraData={filter}
+                ListHeaderComponent={(
+                  <StablesHeader horses={horses} filter={filter} onFilterChange={setRequested} scrollY={scrollY} />
+                )}
+                ListEmptyComponent={<FilterEmpty filter={filter} />}
+                renderItem={renderItem}
+                keyExtractor={(item: Horse) => item.id}
+                contentContainerStyle={{ paddingHorizontal: 16, ...pagePadding }}
+                ItemSeparatorComponent={() => <View className="h-2" />}
+                refreshControl={<BrandedRefreshControl refreshing={pull.refreshing} onRefresh={pull.onRefresh} />}
+                // FlashList already handles scroll on JS; feed the header from there.
+                onScroll={onScrollJS}
+                scrollEventThrottle={16}
+              />
+            )
+          : <StablesFallback isError={isError} retrying={isRefetching} onRetry={() => refetch()} pagePadding={pagePadding} />}
+      </SkeletonSwap>
+      {showList ? <RefreshIndicator scrollY={scrollY} refreshing={pull.refreshing} top={safeTop} /> : null}
+      {showList ? <CompactHeaderBar scrollY={scrollY} title={translate('stables.list.title')} testID="stables-compact-header" /> : null}
     </View>
   );
 }
+
+const styles = StyleSheet.create({ fill: { flex: 1 } });

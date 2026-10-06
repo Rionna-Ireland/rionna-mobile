@@ -176,4 +176,22 @@ describe('stablesScreen', () => {
     fireEvent.press(screen.getByText('Try again'));
     expect(refetch).toHaveBeenCalled();
   });
+
+  it('shows the skeleton list on a cold first load, then the cards', () => {
+    withHorses(undefined, { isPending: true, isFetching: true });
+    const { rerender } = render(<StablesTab />);
+    expect(screen.getByTestId('stables-skeleton')).toBeOnTheScreen();
+    expect(screen.queryByTestId('stables-empty')).not.toBeOnTheScreen();
+
+    withHorses(HORSES, { isPending: false, isFetching: false });
+    rerender(<StablesTab />);
+    expect(screen.queryByTestId('stables-skeleton')).not.toBeOnTheScreen();
+    expect(screen.getByText('Ashfield Rose')).toBeOnTheScreen();
+  });
+
+  it('cached horses refetching show the list, never the skeleton', () => {
+    withHorses(HORSES, { isPending: false, isFetching: true });
+    render(<StablesTab />);
+    expect(screen.queryByTestId('stables-skeleton')).not.toBeOnTheScreen();
+  });
 });

@@ -7,18 +7,21 @@ import Env from 'env';
 import { useRouter } from 'expo-router';
 
 import * as React from 'react';
+import { StyleSheet } from 'react-native';
+
 import {
-  ActivityIndicator,
+  BrandedRefreshControl,
   ChipRow,
   EmptyState,
   ErrorState,
   FocusAwareStatusBar,
   MonoLabel,
+  RefreshIndicator,
   ScreenBackground,
   Text,
+  usePullToRefresh,
   View,
 } from '@/components/ui';
-import colors from '@/components/ui/colors';
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { AnimatedScrollView, CollapsingTitle, CompactHeaderBar, useScrollHeader } from '@/components/ui/scroll-header';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
@@ -27,6 +30,7 @@ import { useAuthStore } from '@/features/auth/use-auth-store';
 import { useEventRsvp } from '@/features/events/api/use-event-rsvp';
 import { useEvents } from '@/features/events/api/use-events';
 import { EventCard } from '@/features/events/components/event-card';
+import { EventsSkeleton } from '@/features/events/components/events-skeletons';
 import { MonthCalendar } from '@/features/events/components/month-calendar';
 import {
   groupEventsByDay,
@@ -36,7 +40,7 @@ import {
 import { useEventReminder } from '@/features/events/lib/event-reminders';
 import { eventDayColour } from '@/features/events/lib/event-type';
 import { translate } from '@/lib/i18n';
-import { EntranceItem, useFirstLoadEntrance } from '@/lib/motion';
+import { EntranceItem, isFirstLoad, SkeletonSwap, useContentEntrance } from '@/lib/motion';
 
 const ALL = 'all';
 
@@ -148,11 +152,12 @@ type EventsBodyProps = {
   emptyDay: string | null;
   hasEvents: boolean;
   onListLayout: (y: number) => void;
+  /** y of the body inside the scroll content (card offsets are measured inside it). */
+  onBodyLayout: (y: number) => void;
   children: React.ReactNode;
 };
 
-function EventsBody({
-  isLoading,
+function EventsContent({
   isUnavailable,
   retrying,
   onRetry,
@@ -164,14 +169,7 @@ function EventsBody({
   hasEvents,
   onListLayout,
   children,
-}: EventsBodyProps) {
-  if (isLoading) {
-    return (
-      <View testID="events-loading" className="items-center py-16">
-        <ActivityIndicator color={colors.primary} />
-      </View>
-    );
-  }
+}: Omit<EventsBodyProps, 'isLoading' | 'onBodyLayout'>) {
   if (isUnavailable) {
     return (
       <ErrorState
@@ -216,10 +214,27 @@ function EventsBody({
   );
 }
 
+/** Calendar + cards; a cold first load shows their skeleton and crossfades in place (S14-03). */
+function EventsBody({ isLoading, onBodyLayout, ...props }: EventsBodyProps) {
+  return (
+    <SkeletonSwap
+      loading={isLoading}
+      skeleton={<EventsSkeleton month={props.month} />}
+      style={styles.body}
+      onLayout={e => onBodyLayout(e.nativeEvent.layout.y)}
+    >
+      <EventsContent {...props} />
+    </SkeletonSwap>
+  );
+}
+
+const styles = StyleSheet.create({ body: { gap: 16 } });
+
 function useCalendarNavigation(events: ClubEvent[]) {
   const [month, setMonth] = React.useState(() => monthOf(new Date()));
   const [emptyDay, setEmptyDay] = React.useState<string | null>(null);
   const scrollRef = React.useRef<ScrollView>(null);
+  const bodyY = React.useRef(0);
   const listY = React.useRef(0);
   const cardY = React.useRef(new Map<string, number>());
 
@@ -234,9 +249,12 @@ function useCalendarNavigation(events: ClubEvent[]) {
     setEmptyDay(null);
     const y0 = cardY.current.get(day[0].id);
     if (y0 !== undefined)
-      scrollRef.current?.scrollTo({ y: listY.current + y0 - 12, animated: true });
+      scrollRef.current?.scrollTo({ y: bodyY.current + listY.current + y0 - 12, animated: true });
   };
 
+  const setBodyY = (y: number) => {
+    bodyY.current = y;
+  };
   const setListY = (y: number) => {
     listY.current = y;
   };
@@ -249,7 +267,24 @@ function useCalendarNavigation(events: ClubEvent[]) {
     setMonth(current => shiftMonth(current, delta));
   };
 
-  return { month, emptyDay, goToMonth, handleSelectDay, scrollRef, setListY, setCardY };
+  return { month, emptyDay, goToMonth, handleSelectDay, scrollRef, setBodyY, setListY, setCardY };
+}
+
+/** Both event lists, with the first-load / unavailable / refresh state they share. */
+function useEventsData(scope: { organizationId: string; memberId: string }) {
+  const upcomingQuery = useEvents(scope, 'upcoming');
+  const pastQuery = useEvents(scope, 'past');
+  const upcomingAll = upcomingQuery.data?.events;
+  const pastAll = pastQuery.data?.events;
+  const noData = !upcomingAll && !pastAll;
+  return {
+    upcomingAll,
+    pastAll,
+    isLoading: noData && (isFirstLoad(upcomingQuery) || isFirstLoad(pastQuery)),
+    isUnavailable: noData && (upcomingQuery.isError || pastQuery.isError),
+    retrying: upcomingQuery.isFetching || pastQuery.isFetching,
+    refetch: () => Promise.all([upcomingQuery.refetch(), pastQuery.refetch()]),
+  };
 }
 
 export function EventsScreen() {
@@ -257,34 +292,32 @@ export function EventsScreen() {
   const user = useAuthStore.use.user();
   const contentPaddingBottom = useTabBarContentPadding(24);
   const contentPaddingTop = useScreenTopPadding();
+  const safeTop = useScreenTopPadding(0);
   const { scrollY, onScroll } = useScrollHeader();
 
   const memberScope = React.useMemo(
     () => ({ organizationId: Env.EXPO_PUBLIC_CLUB_ID, memberId: user?.id ?? '' }),
     [user?.id],
   );
-  const upcomingQuery = useEvents(memberScope, 'upcoming');
-  const pastQuery = useEvents(memberScope, 'past');
+  const events = useEventsData(memberScope);
+  const pull = usePullToRefresh(events.refetch);
   const rsvp = useEventRsvp(memberScope);
 
   const [typeFilter, setTypeFilter] = React.useState(ALL);
-  const { typeChips, upcoming, past, eventDays } = useEventsModel(upcomingQuery.data?.events, pastQuery.data?.events, typeFilter);
-  const upcomingAll = upcomingQuery.data?.events;
-  const pastAll = pastQuery.data?.events;
+  const { typeChips, upcoming, past, eventDays } = useEventsModel(events.upcomingAll, events.pastAll, typeFilter);
 
   const openEvent = (id: string) =>
     router.push({ pathname: '/event/[event-id]', params: { 'event-id': id } });
 
   const handleToggleRsvp = (eventId: string, going: boolean) => rsvp.mutate({ eventId, going });
 
-  const { month, emptyDay, goToMonth, handleSelectDay, scrollRef, setListY, setCardY } = useCalendarNavigation([...upcoming, ...past]);
+  const { month, emptyDay, goToMonth, handleSelectDay, scrollRef, setBodyY, setListY, setCardY } = useCalendarNavigation([...upcoming, ...past]);
 
-  const isLoading = (upcomingQuery.isLoading || pastQuery.isLoading) && !upcomingAll && !pastAll;
-  const isUnavailable = !upcomingAll && !pastAll && (upcomingQuery.isError || pastQuery.isError);
   const hasEvents = upcoming.length + past.length > 0;
 
   // First load only; filter changes, refetches and month jumps mount instantly.
-  const entering = useFirstLoadEntrance(hasEvents);
+  // After a skeleton, the crossfade is the entrance (S14-03).
+  const entering = useContentEntrance(hasEvents, events.isLoading);
   const renderCard = (event: ClubEvent, index: number, isPast: boolean) => (
     <TrackedCard
       key={event.id}
@@ -304,6 +337,7 @@ export function EventsScreen() {
       <FocusAwareStatusBar />
       <AnimatedScrollView
         ref={scrollRef}
+        refreshControl={<BrandedRefreshControl refreshing={pull.refreshing} onRefresh={pull.onRefresh} />}
         onScroll={onScroll}
         scrollEventThrottle={16}
         contentContainerStyle={{
@@ -332,13 +366,10 @@ export function EventsScreen() {
           : null}
 
         <EventsBody
-          isLoading={isLoading}
-          isUnavailable={isUnavailable}
-          retrying={upcomingQuery.isFetching || pastQuery.isFetching}
-          onRetry={() => {
-            void upcomingQuery.refetch();
-            void pastQuery.refetch();
-          }}
+          isLoading={events.isLoading}
+          isUnavailable={events.isUnavailable}
+          retrying={events.retrying}
+          onRetry={() => void events.refetch()}
           month={month}
           eventDays={eventDays}
           onMonthChange={goToMonth}
@@ -346,6 +377,7 @@ export function EventsScreen() {
           emptyDay={emptyDay}
           hasEvents={hasEvents}
           onListLayout={setListY}
+          onBodyLayout={setBodyY}
         >
           {upcoming.map((event, i) => renderCard(event, i, false))}
           {past.length > 0
@@ -358,6 +390,7 @@ export function EventsScreen() {
           {past.map((event, i) => renderCard(event, upcoming.length + i, true))}
         </EventsBody>
       </AnimatedScrollView>
+      <RefreshIndicator scrollY={scrollY} refreshing={pull.refreshing} top={safeTop} />
       <CompactHeaderBar scrollY={scrollY} title={translate('events.title')} testID="events-compact-header" />
     </View>
   );

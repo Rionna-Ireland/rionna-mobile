@@ -1,35 +1,50 @@
+import type { SharedValue } from 'react-native-reanimated';
 import type { HeroRunInput } from '@/features/home/lib/hero-slides';
 
 import Env from 'env';
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as React from 'react';
-import { RefreshControl, useWindowDimensions, View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 
 import { Submark } from '@/components/brand/logo';
 import {
   Avatar,
+  BrandedRefreshControl,
   colors,
   FocusAwareStatusBar,
   Pressable,
+  RefreshIndicator,
   ScreenBackground,
   ScreenHeader,
   Text,
+  usePullToRefresh,
 } from '@/components/ui';
+import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { AnimatedScrollView, CompactHeaderBar, useScrollHeader } from '@/components/ui/scroll-header';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { ArrivalSlot, useArrivalReady } from '@/features/arrival/arrival-slot';
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { CharityCard } from '@/features/home/components/charity-card';
 import { HeroCarousel } from '@/features/home/components/hero-carousel';
+import {
+  CharitySkeleton,
+  HeroSkeleton,
+  HomeBlock,
+  InsideTrackSkeleton,
+  MyHorsesSkeleton,
+  UpcomingEventSkeleton,
+} from '@/features/home/components/home-skeletons';
 import { InsideTrackCard } from '@/features/home/components/inside-track-card';
 import { MyHorsesCard } from '@/features/home/components/my-horses-card';
 import { NotificationsBell } from '@/features/home/components/notifications-bell';
 import { UpcomingEventCard } from '@/features/home/components/upcoming-event-card';
 import { YardChipsRow } from '@/features/home/components/yard-chips-row';
+import { pickInsideTrackTeaser } from '@/features/home/lib/card-helpers';
 import { greeting } from '@/features/home/lib/greeting';
 import { buildHeroSlides } from '@/features/home/lib/hero-slides';
 import { useHomeQueries } from '@/features/home/lib/use-home-queries';
 import { buildYardChips, countEventsThisWeek, raceDayHorseIds } from '@/features/home/lib/yard-chips';
+import { isFirstLoad, SkeletonSwap } from '@/lib/motion';
 
 const GUTTER = 16;
 
@@ -99,6 +114,48 @@ function HomeHeaderRight({ scope, name }: { scope: { organizationId: string; mem
   );
 }
 
+type HomeBlocksProps = {
+  q: HomeQueries;
+  slides: ReturnType<typeof useHomeModel>['slides'];
+  now: Date;
+  heroWidth: number;
+  scrollY: SharedValue<number>;
+};
+
+/** The Home cards, each skeleton-first on a cold start (S14-03 §1), cached data straight away. */
+function HomeBlocks({ q, slides, now, heroWidth, scrollY }: HomeBlocksProps) {
+  const heroLoading = slides.length === 0 && [q.nextRun, q.news, q.results].some(isFirstLoad);
+  return (
+    <>
+      <SkeletonSwap loading={heroLoading} skeleton={<HeroSkeleton width={heroWidth} />}>
+        {slides.length > 0 ? <HeroCarousel slides={slides} width={heroWidth} /> : null}
+      </SkeletonSwap>
+      <HomeBlock loading={isFirstLoad(q.followedHorses)} skeleton={<MyHorsesSkeleton />} visible entranceIndex={0}>
+        {i => <MyHorsesCard horses={q.followedHorses.data} isLoading={q.followedHorses.isLoading} entranceIndex={i} />}
+      </HomeBlock>
+      <HomeBlock
+        loading={isFirstLoad(q.insideTrack)}
+        skeleton={<InsideTrackSkeleton />}
+        visible={Boolean(pickInsideTrackTeaser(q.insideTrack.data))}
+        entranceIndex={1}
+      >
+        {i => <InsideTrackCard data={q.insideTrack.data} now={now} entranceIndex={i} />}
+      </HomeBlock>
+      <HomeBlock loading={isFirstLoad(q.charity)} skeleton={<CharitySkeleton />} visible={Boolean(q.charity.data?.charity)} entranceIndex={2}>
+        {i => <CharityCard data={q.charity.data} entranceIndex={i} scrollY={scrollY} />}
+      </HomeBlock>
+      <HomeBlock
+        loading={isFirstLoad(q.upcomingEvents)}
+        skeleton={<UpcomingEventSkeleton />}
+        visible={Boolean(q.upcomingEvents.data?.events[0])}
+        entranceIndex={3}
+      >
+        {i => <UpcomingEventCard data={q.upcomingEvents.data} entranceIndex={i} />}
+      </HomeBlock>
+    </>
+  );
+}
+
 export function HomeScreen() {
   const user = useAuthStore.use.user();
   const { width } = useWindowDimensions();
@@ -114,6 +171,8 @@ export function HomeScreen() {
   useHomeArrival(q);
   const { chips, slides } = useHomeModel(q, now);
   const { scrollY, onScroll } = useScrollHeader();
+  const pull = usePullToRefresh(q.refetchAll);
+  const safeTop = useScreenTopPadding(0);
 
   return (
     <View className="flex-1">
@@ -122,7 +181,7 @@ export function HomeScreen() {
       <AnimatedScrollView
         className="flex-1"
         contentContainerStyle={{ paddingBottom: contentPaddingBottom }}
-        refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={q.refetchAll} />}
+        refreshControl={<BrandedRefreshControl refreshing={pull.refreshing} onRefresh={pull.onRefresh} />}
         onScroll={onScroll}
         scrollEventThrottle={16}
       >
@@ -139,14 +198,11 @@ export function HomeScreen() {
           </Text>
           <View className="gap-3">
             <YardChipsRow chips={chips} />
-            <HeroCarousel slides={slides} width={width - GUTTER * 2} />
-            <MyHorsesCard horses={q.followedHorses.data} isLoading={q.followedHorses.isLoading} entranceIndex={0} />
-            <InsideTrackCard data={q.insideTrack.data} now={now} entranceIndex={1} />
-            <CharityCard data={q.charity.data} entranceIndex={2} scrollY={scrollY} />
-            <UpcomingEventCard data={q.upcomingEvents.data} entranceIndex={3} />
+            <HomeBlocks q={q} slides={slides} now={now} heroWidth={width - GUTTER * 2} scrollY={scrollY} />
           </View>
         </View>
       </AnimatedScrollView>
+      <RefreshIndicator scrollY={scrollY} refreshing={pull.refreshing} top={safeTop} />
       {/* No display-lg title on Home (the submark is the header): scrim + hairline only. */}
       <CompactHeaderBar scrollY={scrollY} testID="home-compact-header" />
     </View>

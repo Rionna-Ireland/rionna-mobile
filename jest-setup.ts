@@ -33,11 +33,17 @@ jest.mock('react-native-reanimated', () => {
     useAnimatedStyle: jest.fn(fn => fn()),
     useAnimatedScrollHandler: jest.fn(() => jest.fn()),
     useAnimatedProps: jest.fn(fn => fn()),
-    useDerivedValue: jest.fn((fn) => {
-      const current = fn();
-      return { value: current, get: () => current, set: jest.fn() };
-    }),
     useAnimatedReaction: jest.fn(),
+    useDerivedValue: jest.fn((fn) => {
+      const sv = {
+        value: fn(),
+        get: () => sv.value,
+        set: (next: unknown) => {
+          sv.value = next;
+        },
+      };
+      return sv;
+    }),
     useAnimatedRef: jest.fn(() => ({ current: null })),
     measure: jest.fn(() => null),
     useReducedMotion: jest.fn(() => false),

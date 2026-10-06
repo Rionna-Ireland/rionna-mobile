@@ -43,6 +43,10 @@ export const durations = {
   draw: 900,
   /** Indeterminate loaders: one full linear revolution of a ring spinner. */
   spin: 900,
+  /** Skeleton shimmer: one slow linear sweep of the lighter band (S14-03). */
+  shimmer: 1200,
+  /** Refresher breathing loop: one half-cycle of the 0.6 ↔ 1 opacity pulse (S14-03). */
+  breathe: 900,
 } as const;
 
 export type DurationToken = keyof typeof durations;
@@ -72,8 +76,10 @@ export const timings = {
   spin: { duration: durations.spin, easing: Easing.linear },
   /** Signature draws: the Arrival submark outline, the charity count-up + goal bar (`slow`×2). */
   draw: { duration: durations.draw, easing: easings.enter },
-  /** One half-cycle of the Arrival mark breathing while data is late (S14-04 §3). */
-  breathe: { duration: durations.draw, easing: easings.breathe },
+  /** Skeleton shimmer sweep: constant speed, so the band never seems to pause. */
+  shimmer: { duration: durations.shimmer, easing: Easing.linear },
+  /** One half-cycle of the mark breathing (Arrival waiting on data, the refresher while loading). */
+  breathe: { duration: durations.breathe, easing: easings.breathe },
 };
 
 /**

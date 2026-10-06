@@ -47,7 +47,8 @@ type HorseDetailBarProps = {
   /** 0 while the photo is under the bar, 1 once the hero has scrolled under it. */
   progress: SharedValue<number>;
   onBack: () => void;
-  onShare: () => void;
+  /** Omit to hide Share (the loading skeleton has no horse to share yet). */
+  onShare?: () => void;
 };
 
 /**
@@ -72,21 +73,25 @@ export function HorseDetailBar({ horseName, progress, onBack, onShare }: HorseDe
         >
           <Crossfade testID="horse-detail-bar-back" progress={progress} white={<BackLabel color={colors.white} />} ink={<BackLabel color={colors.ink} />} />
         </Pressable>
-        <Pressable
-          testID="horse-hero-share"
-          onPress={onShare}
-          accessibilityRole="button"
-          accessibilityLabel={tx('stables.detail.shareA11y', { name: horseName })}
-          hitSlop={12}
-          style={({ pressed }) => (pressed ? styles.pressed : null)}
-        >
-          <Crossfade
-            testID="horse-detail-bar-share"
-            progress={progress}
-            white={<MonoLabel tone="white">{translate('stables.detail.share')}</MonoLabel>}
-            ink={<MonoLabel className="text-ink">{translate('stables.detail.share')}</MonoLabel>}
-          />
-        </Pressable>
+        {onShare
+          ? (
+              <Pressable
+                testID="horse-hero-share"
+                onPress={onShare}
+                accessibilityRole="button"
+                accessibilityLabel={tx('stables.detail.shareA11y', { name: horseName })}
+                hitSlop={12}
+                style={({ pressed }) => (pressed ? styles.pressed : null)}
+              >
+                <Crossfade
+                  testID="horse-detail-bar-share"
+                  progress={progress}
+                  white={<MonoLabel tone="white">{translate('stables.detail.share')}</MonoLabel>}
+                  ink={<MonoLabel className="text-ink">{translate('stables.detail.share')}</MonoLabel>}
+                />
+              </Pressable>
+            )
+          : null}
       </View>
     </CompactHeaderBar>
   );

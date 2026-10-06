@@ -1,13 +1,27 @@
-import { ActivityIndicator, EmptyState, ErrorState, Text, View } from '@/components/ui';
+import { EmptyState, ErrorState, Skeleton, SkeletonGroup, SkeletonText, View } from '@/components/ui';
 
+/** Mirrors `InboxRow`: white r8 row, tag box, two-line title, time. */
+function InboxRowSkeleton() {
+  return (
+    <View className="gap-2 rounded-lg bg-white p-4">
+      <Skeleton width={72} height={24} radius={4} />
+      <SkeletonText variant="body-lg" lines={2} />
+      <SkeletonText variant="body-sm" width={56} />
+    </View>
+  );
+}
+
+/** First load: one section label and four rows, laid out like the inbox SectionList. */
 export function InboxLoading() {
   return (
-    <View testID="inbox-loading" className="mt-6 items-center py-16">
-      <ActivityIndicator />
-      <Text variant="body" className="mt-3 text-ink-variant">
-        Loading notifications…
-      </Text>
-    </View>
+    <SkeletonGroup testID="inbox-loading" className="flex-1" style={{ paddingTop: 12 }}>
+      <View className="px-4 pt-5 pb-3">
+        <SkeletonText variant="label-sm" width={48} />
+      </View>
+      <View className="gap-3 px-4">
+        {[0, 1, 2, 3].map(i => <InboxRowSkeleton key={i} />)}
+      </View>
+    </SkeletonGroup>
   );
 }
 

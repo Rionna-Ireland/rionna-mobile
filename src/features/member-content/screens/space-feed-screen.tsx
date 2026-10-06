@@ -3,15 +3,13 @@ import type { MemberContentState, MemberFeedItem } from '@/features/member-conte
 import Env from 'env';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
-import { RefreshControl, ScrollView, View } from 'react-native';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 
 import {
-  ActivityIndicator,
   EmptyState,
   ErrorState,
   IconButton,
   ScreenHeader,
-  Text,
 } from '@/components/ui';
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { usePostableSpaces } from '@/features/community-posting/api/use-postable-spaces';
@@ -19,8 +17,9 @@ import { PlusGlyph } from '@/features/community-posting/components/plus-glyph';
 import { usePostLike } from '@/features/member-content/api/use-post-like';
 import { useSpaceFeed } from '@/features/member-content/api/use-space-feed';
 import { FeedItemRenderer } from '@/features/member-content/components/feed-item-renderer';
+import { FeedSkeleton } from '@/features/member-content/components/feed-skeletons';
 import { usePollVote } from '@/features/polls/api/use-poll-vote';
-import { EntranceItem, useFirstLoadEntrance } from '@/lib/motion';
+import { EntranceItem, isFirstLoad, SkeletonSwap, useContentEntrance } from '@/lib/motion';
 
 type SpaceFeedViewProps = {
   title: string;
@@ -58,8 +57,9 @@ export function SpaceFeedView({
   onBack,
   onNewPost,
 }: SpaceFeedViewProps) {
-  // First load only; refetches and refreshes mount new rows instantly.
-  const entering = useFirstLoadEntrance(Boolean(items?.length));
+  // First load only; refetches and refreshes mount new rows instantly. After a
+  // skeleton, its crossfade is the entrance (S14-03).
+  const entering = useContentEntrance(Boolean(items?.length), isLoading && !items);
   return (
     <ScrollView
       className="flex-1 bg-surface"
@@ -89,14 +89,6 @@ export function SpaceFeedView({
       />
 
       <View className="gap-3 px-4">
-        {isLoading && !items
-          ? (
-              <View testID="space-feed-loading" className="items-center py-16">
-                <ActivityIndicator />
-                <Text variant="body" className="mt-3 text-ink-variant">Loading the discussion…</Text>
-              </View>
-            )
-          : null}
         {!isLoading && contentState === 'empty'
           ? (
               <EmptyState
@@ -116,23 +108,33 @@ export function SpaceFeedView({
               />
             )
           : null}
-        {items?.map((item, i) => (
-          <EntranceItem key={item.id} entering={entering(i)}>
-            <FeedItemRenderer
-              item={item}
-              onOpen={onOpenPost}
-              onToggleLike={onToggleLike}
-              likePending={pendingLikePostId === item.id}
-              onVote={onVote}
-              votePending={item.poll ? pendingVotePollIds.includes(item.poll.id) : false}
-              onOpenStory={noOpOpenStory}
-            />
-          </EntranceItem>
-        ))}
+        <SkeletonSwap
+          loading={isLoading && !items}
+          skeleton={<FeedSkeleton testID="space-feed-loading" />}
+          style={styles.posts}
+        >
+          {items?.length
+            ? items.map((item, i) => (
+                <EntranceItem key={item.id} entering={entering(i)}>
+                  <FeedItemRenderer
+                    item={item}
+                    onOpen={onOpenPost}
+                    onToggleLike={onToggleLike}
+                    likePending={pendingLikePostId === item.id}
+                    onVote={onVote}
+                    votePending={item.poll ? pendingVotePollIds.includes(item.poll.id) : false}
+                    onOpenStory={noOpOpenStory}
+                  />
+                </EntranceItem>
+              ))
+            : null}
+        </SkeletonSwap>
       </View>
     </ScrollView>
   );
 }
+
+const styles = StyleSheet.create({ posts: { gap: 12 } });
 
 export function SpaceFeedScreen() {
   const params = useLocalSearchParams<{ 'space-id': string; 'name'?: string }>();
@@ -162,7 +164,7 @@ export function SpaceFeedScreen() {
         title={title}
         items={feed.data}
         contentState={feed.contentState}
-        isLoading={feed.isLoading}
+        isLoading={isFirstLoad(feed)}
         isRefetching={feed.isRefetching}
         onRefresh={() => void feed.refetch()}
         onOpenPost={(postSpaceId, postId) => router.push(

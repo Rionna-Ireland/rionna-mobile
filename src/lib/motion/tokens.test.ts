@@ -12,7 +12,7 @@ describe('motion tokens', () => {
   });
 
   it('has the spec timings', () => {
-    expect(durations).toEqual({ instant: 100, quick: 180, base: 280, slow: 450, draw: 900, spin: 900 });
+    expect(durations).toEqual({ instant: 100, quick: 180, base: 280, slow: 450, draw: 900, spin: 900, shimmer: 1200, breathe: 900 });
   });
 
   it('staggerDelay steps 40ms per item and caps at 6 items', () => {

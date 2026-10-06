@@ -3,11 +3,10 @@ import type { Offer } from '@/features/paddock/types';
 import Env from 'env';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
-import { RefreshControl } from 'react-native';
+import { RefreshControl, StyleSheet } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 
 import {
-  ActivityIndicator,
   EmptyState,
   ErrorState,
   FocusAwareStatusBar,
@@ -22,8 +21,9 @@ import { AnimatedScrollView, useScrollHeader } from '@/components/ui/scroll-head
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { useOffers } from '@/features/paddock/api/use-offers';
 import { OfferCard } from '@/features/paddock/components/offer-card';
+import { BenefitsSkeleton } from '@/features/paddock/components/paddock-skeletons';
 import { copyToClipboard } from '@/lib/copy-to-clipboard';
-import { EntranceItem, useFirstLoadEntrance } from '@/lib/motion';
+import { EntranceItem, isFirstLoad, SkeletonSwap, useContentEntrance } from '@/lib/motion';
 import { openExternalLink } from '@/lib/open-external-link';
 
 type BenefitsViewProps = {
@@ -43,8 +43,9 @@ export function BenefitsView({ offers, isLoading, isError, isRefetching, onRefre
   const showEmpty = !showLoading && !showUnavailable && offers?.length === 0;
   const paddingBottom = useScreenBottomPadding(24);
   const { scrollY, onScroll } = useScrollHeader();
-  // First load only; refetches and refreshes mount new offers instantly.
-  const entering = useFirstLoadEntrance(Boolean(offers?.length));
+  // First load only; refetches and refreshes mount new offers instantly. After a
+  // skeleton, its crossfade is the entrance (S14-03).
+  const entering = useContentEntrance(Boolean(offers?.length), showLoading);
 
   return (
     <View className="flex-1 bg-background">
@@ -61,27 +62,28 @@ export function BenefitsView({ offers, isLoading, isError, isRefetching, onRefre
       >
         <Text variant="display-lg" accessibilityRole="header" className="px-4">The good life, members’ rates</Text>
         <View className="gap-2 px-4">
-          {showLoading
-            ? (
-                <View testID="benefits-loading" className="items-center py-16"><ActivityIndicator /></View>
-              )
-            : null}
           {showUnavailable
             ? <ErrorState testID="benefits-unavailable" kicker="BENEFITS" title="Offers unavailable" body="Check your connection and try again." onRetry={onRefresh} retrying={isRefetching} />
             : null}
           {showEmpty
             ? <EmptyState testID="benefits-empty" kicker="BENEFITS" title="New partners are on the way" body="Partner offers will appear here as the club adds them." />
             : null}
-          {offers?.map((offer, i) => (
-            <EntranceItem key={offer.id} entering={entering(i)}>
-              <OfferCard offer={offer} onCopyCode={onCopyCode} onOpenLink={onOpenLink} />
-            </EntranceItem>
-          ))}
+          <SkeletonSwap loading={showLoading} skeleton={<BenefitsSkeleton />} style={styles.list}>
+            {offers?.length
+              ? offers.map((offer, i) => (
+                  <EntranceItem key={offer.id} entering={entering(i)}>
+                    <OfferCard offer={offer} onCopyCode={onCopyCode} onOpenLink={onOpenLink} />
+                  </EntranceItem>
+                ))
+              : null}
+          </SkeletonSwap>
         </View>
       </AnimatedScrollView>
     </View>
   );
 }
+
+const styles = StyleSheet.create({ list: { gap: 8 } });
 
 export function BenefitsScreen() {
   const router = useRouter();
@@ -103,7 +105,7 @@ export function BenefitsScreen() {
   return (
     <BenefitsView
       offers={offers.data?.offers}
-      isLoading={offers.isLoading}
+      isLoading={isFirstLoad(offers)}
       isError={offers.isError}
       isRefetching={offers.isRefetching}
       onRefresh={() => void offers.refetch()}
