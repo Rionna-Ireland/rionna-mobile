@@ -29,6 +29,11 @@ export type ScreenHeaderProps = {
   subtitle?: string;
   /** `tab-root`: show the submark instead of the title row (Home). */
   brand?: boolean;
+  /**
+   * `tab-root` + `brand`: render this in place of the default 36pt submark
+   * (Home wraps it in the Arrival hand-off slot, S14-04).
+   */
+  brandMark?: React.ReactNode;
   /** `kicker`: back handler; the chevron only renders when set. */
   onBack?: () => void;
   backLabel?: string;
@@ -110,7 +115,7 @@ function TitleBlock({ title, subtitle, tone }: Pick<ScreenHeaderProps, 'title' |
 
 /** Screen header in the two V2 patterns (S13-01 §7). Safe-area aware. */
 export function ScreenHeader(props: ScreenHeaderProps) {
-  const { variant = 'kicker', title, subtitle, brand, right, tone, safeArea = true, className, testID, scrollY } = props;
+  const { variant = 'kicker', title, subtitle, brand, brandMark, right, tone, safeArea = true, className, testID, scrollY } = props;
   const topPadding = useScreenTopPadding();
   const style = safeArea ? { paddingTop: topPadding } : undefined;
 
@@ -119,7 +124,7 @@ export function ScreenHeader(props: ScreenHeaderProps) {
       <View testID={testID} style={style} className={twMerge('gap-8 px-4', className)}>
         {(brand || right) && (
           <View className="min-h-11 flex-row items-center justify-between">
-            {brand ? <Submark width={36} color={tone === 'dark' ? colors.white : colors.ink} /> : <View />}
+            {brand ? (brandMark ?? <Submark width={36} color={tone === 'dark' ? colors.white : colors.ink} />) : <View />}
             {right}
           </View>
         )}

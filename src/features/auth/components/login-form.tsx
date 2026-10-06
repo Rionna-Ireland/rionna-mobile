@@ -10,6 +10,7 @@ import * as z from 'zod';
 import { Submark } from '@/components/brand/logo';
 import { Button, colors, Input, Text, View } from '@/components/ui';
 import { getFieldError } from '@/components/ui/form-utils';
+import { ArrivalSlot } from '@/features/arrival/arrival-slot';
 import { LoginMedia } from '@/features/arrival/login-media';
 import { client } from '@/lib/api/client';
 import { openExternalLink } from '@/lib/open-external-link';
@@ -85,7 +86,9 @@ function FormHeader() {
   const showHost = Env.EXPO_PUBLIC_APP_ENV !== 'production';
   return (
     <View className="items-center">
-      <Submark width={52} color={colors.secondaryContainer} />
+      <ArrivalSlot name="login" testID="login-brand-slot">
+        <Submark width={52} color={colors.secondaryContainer} />
+      </ArrivalSlot>
       <Text
         testID="form-title"
         variant="display-xl"

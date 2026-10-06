@@ -5,8 +5,10 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import * as React from 'react';
 import { RefreshControl, useWindowDimensions, View } from 'react-native';
 
+import { Submark } from '@/components/brand/logo';
 import {
   Avatar,
+  colors,
   FocusAwareStatusBar,
   Pressable,
   ScreenBackground,
@@ -15,6 +17,7 @@ import {
 } from '@/components/ui';
 import { AnimatedScrollView, CompactHeaderBar, useScrollHeader } from '@/components/ui/scroll-header';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
+import { ArrivalSlot, useArrivalReady } from '@/features/arrival/arrival-slot';
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { CharityCard } from '@/features/home/components/charity-card';
 import { HeroCarousel } from '@/features/home/components/hero-carousel';
@@ -40,6 +43,19 @@ function useFocusedNow(): Date {
 }
 
 type HomeQueries = ReturnType<typeof useHomeQueries>;
+
+/** S14-04: the Arrival hands off once Home's first-load queries have settled. */
+function useHomeArrival(q: HomeQueries) {
+  const loading = [q.nextRun, q.followedHorses, q.insideTrack, q.charity, q.upcomingEvents].some(x => x.isLoading);
+  useArrivalReady('home', !loading);
+}
+
+/** The header submark, wrapped as the Arrival mark's landing slot. */
+const HOME_BRAND_MARK = (
+  <ArrivalSlot name="home" testID="home-brand-slot">
+    <Submark width={36} color={colors.ink} />
+  </ArrivalSlot>
+);
 
 function useHomeModel(q: HomeQueries, now: Date) {
   const followed = q.followedHorses.data;
@@ -95,6 +111,7 @@ export function HomeScreen() {
   );
 
   const q = useHomeQueries(scope);
+  useHomeArrival(q);
   const { chips, slides } = useHomeModel(q, now);
   const { scrollY, onScroll } = useScrollHeader();
 
@@ -112,6 +129,7 @@ export function HomeScreen() {
         <ScreenHeader
           variant="tab-root"
           brand
+          brandMark={HOME_BRAND_MARK}
           testID="home-header"
           right={<HomeHeaderRight scope={scope} name={user?.name} />}
         />
