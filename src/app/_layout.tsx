@@ -28,6 +28,7 @@ import { useThemeConfig } from '@/components/ui/use-theme-config';
 import { ArrivalOverlay } from '@/features/arrival/arrival-overlay';
 import { ArrivalProvider } from '@/features/arrival/arrival-provider';
 import { hydrateAuth, useAuthStore as useAuth } from '@/features/auth/use-auth-store';
+import { useSignOutRedirect } from '@/features/auth/use-sign-out-redirect';
 import { TermsGate } from '@/features/legal/terms-gate';
 import { NOTIFICATION_CENTRE_QUERY_ROOT } from '@/features/notification-centre/types';
 import {
@@ -158,6 +159,7 @@ export default function RootLayout() {
   const fontsLoaded = jakartaLoaded && monoLoaded && eikoLoaded;
 
   useNotificationRegistration(status);
+  useSignOutRedirect(status);
   useNotificationBadgeSync(status);
   useNotificationResponseListener();
   useForegroundNotificationRefresh();
