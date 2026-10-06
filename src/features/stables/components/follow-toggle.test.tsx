@@ -5,9 +5,25 @@ import { render, screen, setup } from '@/lib/test-utils';
 
 import { FollowToggle } from './follow-toggle';
 
+const mockSuccess = jest.fn();
+jest.mock('@/lib/motion/haptics', () => ({
+  ...jest.requireActual('@/lib/motion/haptics'),
+  success: () => mockSuccess(),
+}));
+
 describe('followToggle', () => {
   afterEach(() => {
     jest.restoreAllMocks();
+    mockSuccess.mockClear();
+  });
+
+  it('plays success() only when becoming Following', async () => {
+    const { user, rerender } = setup(<FollowToggle isFollowing={false} onToggle={jest.fn()} />);
+    await user.press(screen.getByLabelText('Follow horse'));
+    expect(mockSuccess).toHaveBeenCalledTimes(1);
+    rerender(<FollowToggle isFollowing onToggle={jest.fn()} />);
+    await user.press(screen.getByLabelText('Unfollow horse'));
+    expect(mockSuccess).toHaveBeenCalledTimes(1);
   });
 
   it('toggles unfollow directly when confirmBeforeUnfollow is not set (regression)', async () => {
@@ -99,7 +115,9 @@ describe('followToggle', () => {
   it('renders Follow / Following labels', () => {
     const { rerender } = render(<FollowToggle isFollowing={false} onToggle={jest.fn()} />);
     expect(screen.getByText('Follow')).toBeOnTheScreen();
+    expect(screen.queryByText('Following')).toBeNull(); // laid out for width, hidden from a11y
     rerender(<FollowToggle isFollowing tone="hero" onToggle={jest.fn()} />);
     expect(screen.getByText('Following')).toBeOnTheScreen();
+    expect(screen.queryByText('Follow')).toBeNull();
   });
 });

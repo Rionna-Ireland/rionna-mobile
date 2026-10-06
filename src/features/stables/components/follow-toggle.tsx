@@ -1,10 +1,12 @@
 import * as React from 'react';
-import { Alert } from 'react-native';
+import { Alert, StyleSheet } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { twMerge } from 'tailwind-merge';
 
-import { Button } from '@/components/ui';
+import { colors, minHitSlop, MotionPressable, Text } from '@/components/ui';
 import { tx } from '@/features/stables/lib/tx';
-
 import { translate } from '@/lib/i18n';
+import { haptics, timings, useMotion } from '@/lib/motion';
 
 type FollowToggleProps = {
   isFollowing: boolean;
@@ -26,10 +28,44 @@ type FollowToggleProps = {
   testID?: string;
 };
 
+type Look = { fill: string; border: string; label: string };
+
+/** Fill/border/label colours per tone and state (Figma frames 6 and 7). */
+const LOOKS: Record<'card' | 'hero', { off: Look; on: Look }> = {
+  card: {
+    off: { fill: colors.white, border: colors.primary, label: 'text-ink' },
+    on: { fill: colors.primary, border: colors.primary, label: 'text-on-primary' },
+  },
+  hero: {
+    off: { fill: 'transparent', border: colors.white, label: 'text-white' },
+    on: { fill: colors.ice, border: colors.ice, label: 'text-ink' },
+  },
+};
+
+/** 0 = Follow, 1 = Following: crossfades over `base` (`quick` under Reduce Motion). */
+function useFollowingProgress(isFollowing: boolean) {
+  const { reduceMotion } = useMotion();
+  const progress = useSharedValue(isFollowing ? 1 : 0);
+  React.useEffect(() => {
+    progress.set(withTiming(isFollowing ? 1 : 0, reduceMotion ? timings.reducedFade : timings.crossfade));
+  }, [isFollowing, reduceMotion, progress]);
+  const onStyle = useAnimatedStyle(() => ({ opacity: progress.get() }));
+  const offStyle = useAnimatedStyle(() => ({ opacity: 1 - progress.get() }));
+  return { onStyle, offStyle };
+}
+
+/** The inactive label stays laid out (stable width) but hidden from accessibility. */
+function hiddenIf(hidden: boolean) {
+  return hidden
+    ? { 'aria-hidden': true, 'accessibilityElementsHidden': true, 'importantForAccessibility': 'no-hide-descendants' as const }
+    : {};
+}
+
 /**
- * Follow / Following button (S13-04). The mutation is optimistic, so the
- * label flips immediately; while it's in flight presses are ignored rather
- * than dimming the button.
+ * Follow / Following button (S13-04, S14-02 §3). The mutation is optimistic,
+ * so the state flips immediately: fill and label crossfade over `base`, and
+ * becoming Following plays `success()`. While it's in flight presses are
+ * ignored rather than dimming the button.
  */
 export function FollowToggle({
   isFollowing,
@@ -40,6 +76,7 @@ export function FollowToggle({
   className,
   testID,
 }: FollowToggleProps) {
+  const { onStyle, offStyle } = useFollowingProgress(isFollowing);
   const handlePress = () => {
     if (pending)
       return;
@@ -56,25 +93,41 @@ export function FollowToggle({
       );
       return;
     }
+    if (next)
+      haptics.success();
     onToggle(next);
   };
 
-  const hero = tone === 'hero';
-  const variant = hero
-    ? (isFollowing ? 'on-dark' : 'ghost-on-dark')
-    : (isFollowing ? 'primary' : 'secondary');
-
+  const look = LOOKS[tone];
   return (
-    <Button
+    <MotionPressable
       testID={testID}
-      size="md"
-      variant={variant}
-      label={translate(isFollowing ? 'stables.follow.following' : 'stables.follow.follow')}
-      // Ice fill for the hero's "Following" (Figma frame 7).
-      className={[hero && isFollowing ? 'bg-ice' : '', className ?? ''].join(' ').trim()}
+      accessibilityRole="button"
       accessibilityLabel={translate(isFollowing ? 'stables.follow.unfollowA11y' : 'stables.follow.followA11y')}
       accessibilityState={{ selected: isFollowing, busy: pending }}
+      hitSlop={minHitSlop(HEIGHT)}
       onPress={handlePress}
-    />
+      className={twMerge('h-[30px] items-center justify-center overflow-hidden rounded-md px-4', className)}
+    >
+      <Animated.View pointerEvents="none" style={[styles.layer, { backgroundColor: look.off.fill, borderColor: look.off.border }, offStyle]} />
+      <Animated.View pointerEvents="none" style={[styles.layer, { backgroundColor: look.on.fill, borderColor: look.on.border }, onStyle]} />
+      <Animated.View style={onStyle} {...hiddenIf(!isFollowing)}>
+        <Text variant="body-sm" className={twMerge('font-sans-semibold', look.on.label)} numberOfLines={1}>
+          {translate('stables.follow.following')}
+        </Text>
+      </Animated.View>
+      <Animated.View style={[styles.offLabel, offStyle]} {...hiddenIf(isFollowing)}>
+        <Text variant="body-sm" className={twMerge('font-sans-semibold', look.off.label)} numberOfLines={1}>
+          {translate('stables.follow.follow')}
+        </Text>
+      </Animated.View>
+    </MotionPressable>
   );
 }
+
+const HEIGHT = 30;
+
+const styles = StyleSheet.create({
+  layer: { ...StyleSheet.absoluteFillObject, borderWidth: 1, borderRadius: 6 },
+  offLabel: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
+});
