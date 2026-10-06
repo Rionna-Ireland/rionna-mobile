@@ -56,6 +56,10 @@
     "unavailableBody": "Check your connection and try again shortly.",
     "unavailableTitle": "Events unavailable"
   },
+  "home": {
+    "unavailableBody": "Check your connection and pull to refresh.",
+    "unavailableTitle": "Couldn't load your yard"
+  },
   "onboarding": {
     "message": "Welcome to obytes app site"
   },
