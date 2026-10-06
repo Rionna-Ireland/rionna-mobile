@@ -34,8 +34,12 @@ const plugins: ExpoConfig['plugins'] = [
   [
     'expo-splash-screen',
     {
-      backgroundColor: '#ffffff', // S13-02: equals the JS first frame (top of bg-welcome-light); takes effect at next native build (S14-01)
-      image: './assets/splash-icon.png',
+      // S14-04 §2: a BLANK white splash, identical to the Arrival overlay's first
+      // frame (the submark at progress 0), so the JS draw starts from nothing.
+      // The image is fully transparent: Android 12+ always shows a splash icon.
+      // Native: takes effect at the next binary build.
+      backgroundColor: '#ffffff',
+      image: './assets/splash-blank.png',
       imageWidth: 150,
     },
   ],
