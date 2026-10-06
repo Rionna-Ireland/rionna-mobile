@@ -4,6 +4,7 @@ import { withUniwind } from 'uniwind';
 
 export * from './activity-indicator';
 export * from './avatar';
+export * from './branded-refresh';
 export * from './button';
 export * from './card';
 export * from './check-square';
