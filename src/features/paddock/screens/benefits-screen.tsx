@@ -3,16 +3,19 @@ import type { Offer } from '@/features/paddock/types';
 import Env from 'env';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
-import { RefreshControl, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { showMessage } from 'react-native-flash-message';
 
 import {
+  BrandedRefreshControl,
   EmptyState,
   ErrorState,
   FocusAwareStatusBar,
+  RefreshIndicator,
   ScreenBackground,
   ScreenHeader,
   Text,
+  usePullToRefresh,
   View,
 } from '@/components/ui';
 import { useScreenBottomPadding } from '@/components/ui/screen-layout';
@@ -31,7 +34,8 @@ type BenefitsViewProps = {
   isLoading: boolean;
   isError: boolean;
   isRefetching: boolean;
-  onRefresh: () => void;
+  /** Pull-to-refresh and retry; resolve when done so the branded refresher can settle. */
+  onRefresh: () => unknown;
   onCopyCode: (code: string) => void;
   onOpenLink: (url: string) => void;
   onBack?: () => void;
@@ -43,6 +47,8 @@ export function BenefitsView({ offers, isLoading, isError, isRefetching, onRefre
   const showEmpty = !showLoading && !showUnavailable && offers?.length === 0;
   const paddingBottom = useScreenBottomPadding(24);
   const { scrollY, onScroll } = useScrollHeader();
+  // A-036: the branded refresher, like Home / Stables / Events.
+  const pull = usePullToRefresh(onRefresh);
   // First load only; refetches and refreshes mount new offers instantly. After a
   // skeleton, its crossfade is the entrance (S14-03).
   const entering = useContentEntrance(Boolean(offers?.length), showLoading);
@@ -53,32 +59,36 @@ export function BenefitsView({ offers, isLoading, isError, isRefetching, onRefre
       <FocusAwareStatusBar />
       {/* S14-02 §5: the kicker stays fixed; its hairline fades in as the page scrolls under it. */}
       <ScreenHeader kicker="BENEFITS" onBack={onBack} scrollY={scrollY} testID="benefits-header" />
-      <AnimatedScrollView
-        className="flex-1"
-        contentContainerStyle={{ paddingTop: 24, paddingBottom, gap: 32 }}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />}
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-      >
-        <Text variant="display-lg" accessibilityRole="header" className="px-4">The good life, members’ rates</Text>
-        <View className="gap-2 px-4">
-          {showUnavailable
-            ? <ErrorState testID="benefits-unavailable" kicker="BENEFITS" title="Offers unavailable" body="Check your connection and try again." onRetry={onRefresh} retrying={isRefetching} />
-            : null}
-          {showEmpty
-            ? <EmptyState testID="benefits-empty" kicker="BENEFITS" title="New partners are on the way" body="Partner offers will appear here as the club adds them." />
-            : null}
-          <SkeletonSwap loading={showLoading} skeleton={<BenefitsSkeleton />} style={styles.list}>
-            {offers?.length
-              ? offers.map((offer, i) => (
-                  <EntranceItem key={offer.id} entering={entering(i)}>
-                    <OfferCard offer={offer} onCopyCode={onCopyCode} onOpenLink={onOpenLink} />
-                  </EntranceItem>
-                ))
+      <View className="flex-1">
+        <AnimatedScrollView
+          className="flex-1"
+          contentContainerStyle={{ paddingTop: 24, paddingBottom, gap: 32 }}
+          refreshControl={<BrandedRefreshControl refreshing={pull.refreshing} onRefresh={pull.onRefresh} />}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+        >
+          {/* Frame 13 breaks after the comma (A-020). */}
+          <Text variant="display-lg" accessibilityRole="header" className="px-4">{'The good life,\nmembers’ rates'}</Text>
+          <View className="gap-2 px-4">
+            {showUnavailable
+              ? <ErrorState testID="benefits-unavailable" kicker="BENEFITS" title="Offers unavailable" body="Check your connection and try again." onRetry={onRefresh} retrying={isRefetching} />
               : null}
-          </SkeletonSwap>
-        </View>
-      </AnimatedScrollView>
+            {showEmpty
+              ? <EmptyState testID="benefits-empty" kicker="BENEFITS" title="New partners are on the way" body="Partner offers will appear here as the club adds them." />
+              : null}
+            <SkeletonSwap loading={showLoading} skeleton={<BenefitsSkeleton />} style={styles.list}>
+              {offers?.length
+                ? offers.map((offer, i) => (
+                    <EntranceItem key={offer.id} entering={entering(i)}>
+                      <OfferCard offer={offer} onCopyCode={onCopyCode} onOpenLink={onOpenLink} />
+                    </EntranceItem>
+                  ))
+                : null}
+            </SkeletonSwap>
+          </View>
+        </AnimatedScrollView>
+        <RefreshIndicator scrollY={scrollY} refreshing={pull.refreshing} top={0} />
+      </View>
     </View>
   );
 }
@@ -108,7 +118,7 @@ export function BenefitsScreen() {
       isLoading={isFirstLoad(offers)}
       isError={offers.isError}
       isRefetching={offers.isRefetching}
-      onRefresh={() => void offers.refetch()}
+      onRefresh={() => offers.refetch()}
       onCopyCode={code => void onCopyCode(code)}
       onOpenLink={openExternalLink}
       onBack={() => router.back()}
