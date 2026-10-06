@@ -89,3 +89,5 @@ export function staggerDelay(index: number): number {
 export const pressScale = 0.97;
 /** Chips, icon buttons and other small targets press deeper. */
 export const pressScaleSmall = 0.94;
+/** Like heart: pops from this scale back to 1 on the `snappy` spring. */
+export const popScale = 0.85;

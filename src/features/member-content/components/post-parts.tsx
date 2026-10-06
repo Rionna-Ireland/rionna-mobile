@@ -1,13 +1,13 @@
 import type { AuthorRole } from '@/features/member-content/types';
 
 import * as React from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { twMerge } from 'tailwind-merge';
 
-import { Avatar, MonoLabel, Text } from '@/components/ui';
+import { Avatar, MonoLabel, NumberRoll, Text } from '@/components/ui';
 import colors from '@/components/ui/colors';
-import { Heart } from '@/components/ui/icons';
 import { ChatV2 } from '@/components/ui/icons/v2';
+import { LikeToggle } from '@/features/member-content/components/like-toggle';
 import { SPACE_TAG_CLASS, spaceTagTone } from '@/features/member-content/lib/space-tag';
 import { useHorseSpaceIds } from '@/features/member-content/lib/use-horse-space-ids';
 
@@ -76,7 +76,7 @@ export function AuthorHeader({
   );
 }
 
-/** Heart (filled plum when liked) + comment count row. */
+/** Heart (filled plum when liked) + comment count row; both counts roll (S14-02). */
 export function ActivityRow({
   likeCount,
   commentCount,
@@ -92,46 +92,22 @@ export function ActivityRow({
   likePending?: boolean;
   likeKey?: string;
 }) {
-  const heartColor = isLiked ? colors.plum : colors.label;
-  const like = (
-    <>
-      <Heart width={20} height={20} filled={isLiked} color={heartColor} />
-      <Text variant="body" className={isLiked ? 'text-plum' : 'text-label'}>{likeCount}</Text>
-    </>
-  );
   return (
     <View className="flex-row items-center gap-4">
-      {onToggleLike
-        ? (
-            <Pressable
-              testID={likeKey}
-              accessibilityRole="button"
-              accessibilityLabel={isLiked ? 'Unlike post' : 'Like post'}
-              accessibilityState={{ selected: isLiked, disabled: likePending }}
-              disabled={likePending}
-              hitSlop={8}
-              onPress={onToggleLike}
-              className="flex-row items-center gap-0.5"
-            >
-              {like}
-            </Pressable>
-          )
-        : (
-            <View
-              accessible
-              accessibilityLabel={`${likeCount} ${likeCount === 1 ? 'like' : 'likes'}`}
-              className="flex-row items-center gap-0.5"
-            >
-              {like}
-            </View>
-          )}
+      <LikeToggle
+        testID={likeKey}
+        likeCount={likeCount}
+        isLiked={isLiked}
+        onToggle={onToggleLike}
+        pending={likePending}
+      />
       <View
         accessible
         accessibilityLabel={`${commentCount} ${commentCount === 1 ? 'comment' : 'comments'}`}
         className="flex-row items-center gap-0.5"
       >
         <ChatV2 size={20} color={colors.label} strokeWidth={1.2} />
-        <Text variant="body" className="text-label">{commentCount}</Text>
+        <NumberRoll variant="body" className="text-label" value={commentCount} />
       </View>
     </View>
   );
