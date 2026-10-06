@@ -146,7 +146,7 @@ describe('eventsScreen', () => {
     mockToggle.mockResolvedValueOnce('scheduled');
     fireEvent.press(screen.getByTestId('event-card-event-1-remind'));
     expect(mockToggle).toHaveBeenCalledTimes(1);
-    fireEvent.press(screen.getByLabelText('Autumn Race Day'));
+    fireEvent.press(screen.getByLabelText(/^Autumn Race Day,/));
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/event/[event-id]', params: { 'event-id': 'event-1' } });
   });
 });

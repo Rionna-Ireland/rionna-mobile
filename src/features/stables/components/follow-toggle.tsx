@@ -1,12 +1,12 @@
 import * as React from 'react';
-import { Alert, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { twMerge } from 'tailwind-merge';
 
 import { colors, minHitSlop, MotionPressable, Text } from '@/components/ui';
-import { tx } from '@/features/stables/lib/tx';
+import { pressFollowToggle } from '@/features/stables/lib/follow-press';
 import { translate } from '@/lib/i18n';
-import { haptics, timings, useMotion } from '@/lib/motion';
+import { timings, useMotion } from '@/lib/motion';
 
 type FollowToggleProps = {
   isFollowing: boolean;
@@ -77,26 +77,7 @@ export function FollowToggle({
   testID,
 }: FollowToggleProps) {
   const { onStyle, offStyle } = useFollowingProgress(isFollowing);
-  const handlePress = () => {
-    if (pending)
-      return;
-    const next = !isFollowing;
-    if (!next && confirmBeforeUnfollow) {
-      const { horseName } = confirmBeforeUnfollow;
-      Alert.alert(
-        tx('stables.follow.leaveTitle', { name: horseName }),
-        tx('stables.follow.leaveBody', { name: horseName }),
-        [
-          { text: translate('stables.follow.leaveCancel'), style: 'cancel' },
-          { text: translate('stables.follow.leaveConfirm'), style: 'destructive', onPress: () => onToggle(false) },
-        ],
-      );
-      return;
-    }
-    if (next)
-      haptics.success();
-    onToggle(next);
-  };
+  const handlePress = () => pressFollowToggle({ isFollowing, pending, onToggle, confirmBeforeUnfollow });
 
   const look = LOOKS[tone];
   return (

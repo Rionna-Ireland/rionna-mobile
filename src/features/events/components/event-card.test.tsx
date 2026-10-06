@@ -74,7 +74,30 @@ describe('eventCard', () => {
   it('opens the event when the card is tapped', () => {
     const onPress = jest.fn();
     render(<EventCard event={clubEvent()} onPress={onPress} />);
-    fireEvent.press(screen.getByLabelText('Autumn Race Day'));
+    fireEvent.press(screen.getByLabelText(/^Autumn Race Day,/));
     expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('summarises the card for VoiceOver and exposes RSVP + Remind as custom actions (A-004)', () => {
+    const onToggleRsvp = jest.fn();
+    const onToggleReminder = jest.fn();
+    render(
+      <EventCard event={clubEvent()} onPress={jest.fn()} onToggleRsvp={onToggleRsvp} onToggleReminder={onToggleReminder} />,
+    );
+    const card = screen.getByLabelText(/^Autumn Race Day, Thu 5 September/);
+    expect(card.props.accessibilityActions).toEqual([
+      { name: 'rsvp', label: 'RSVP' },
+      { name: 'remind', label: 'Remind me' },
+    ]);
+    fireEvent(card, 'accessibilityAction', { nativeEvent: { actionName: 'rsvp' } });
+    fireEvent(card, 'accessibilityAction', { nativeEvent: { actionName: 'remind' } });
+    expect(onToggleRsvp).toHaveBeenCalledWith(true);
+    expect(onToggleReminder).toHaveBeenCalledTimes(1);
+    expect(mockSuccess).toHaveBeenCalledTimes(2);
+  });
+
+  it('has no custom actions on a past card', () => {
+    render(<EventCard event={clubEvent()} onPress={jest.fn()} onToggleRsvp={jest.fn()} past />);
+    expect(screen.getByLabelText(/^Autumn Race Day, .*Past event/).props.accessibilityActions).toBeUndefined();
   });
 });

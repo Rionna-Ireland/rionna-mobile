@@ -5,10 +5,12 @@ import * as React from 'react';
 
 import { PatternFill } from '@/components/brand/pattern';
 import { Button, Card, Pressable, Text, View } from '@/components/ui';
+import { cardA11yActions, cardA11yLabel } from '@/components/ui/a11y-card';
 import { rsvpButtonState } from '@/features/events/lib/calendar-grid';
 import { eventStripColourway } from '@/features/events/lib/event-type';
 import { formatEventDateLine } from '@/features/events/lib/format-event-date';
 import { translate } from '@/lib/i18n';
+import { haptics } from '@/lib/motion';
 
 // Hoisted so PatternFill (memoised) sees stable spec/style references.
 const STRIP_STYLE = { flex: 1 } as const;
@@ -35,6 +37,39 @@ export type EventCardProps = {
   past?: boolean;
 };
 
+type CardActionsInput = Pick<EventCardProps, 'onToggleRsvp' | 'rsvpPending' | 'reminderOn' | 'onToggleReminder'> & {
+  state: ReturnType<typeof rsvpButtonState>;
+};
+
+/**
+ * RSVP and Remind as VoiceOver custom actions (A-004): the card is one
+ * element on iOS, which hides the nested buttons. Same haptics as the buttons.
+ */
+function eventCardActions({ state, onToggleRsvp, rsvpPending, reminderOn, onToggleReminder }: CardActionsInput) {
+  const going = state === 'going';
+  return cardA11yActions([
+    onToggleRsvp && {
+      name: 'rsvp',
+      label: translate(going ? 'events.detail.cancelRsvp' : 'events.rsvp'),
+      disabled: state === 'full' || rsvpPending,
+      onActivate: () => {
+        if (!going)
+          haptics.success();
+        onToggleRsvp(!going);
+      },
+    },
+    onToggleReminder && {
+      name: 'remind',
+      label: translate(reminderOn ? 'events.reminderOffA11y' : 'events.remindMe'),
+      onActivate: () => {
+        if (!reminderOn)
+          haptics.success();
+        onToggleReminder();
+      },
+    },
+  ]);
+}
+
 export function EventCard({
   event,
   onPress,
@@ -47,12 +82,23 @@ export function EventCard({
   const dateLine = formatEventDateLine(event.startsAt);
   const meta = [dateLine, event.type?.toLowerCase()].filter(Boolean).join(' · ');
   const state = rsvpButtonState(event);
+  const interactive = !past && state !== 'hidden';
+  const label = cardA11yLabel([
+    event.title,
+    meta,
+    past && translate('events.pastA11y'),
+    state === 'going' && translate('events.goingA11y'),
+    state === 'full' && translate('events.full'),
+    event.rsvp.count > 0 && translate('events.detail.attendingValue', { count: event.rsvp.count }),
+    reminderOn && translate('events.reminding'),
+  ]);
 
   return (
     <Card noPadding testID={`event-card-${event.id}`} className={past ? 'opacity-60' : undefined}>
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={event.title}
+        accessibilityLabel={label}
+        {...(interactive ? eventCardActions({ state, onToggleRsvp, rsvpPending, reminderOn, onToggleReminder }) : {})}
         onPress={onPress}
         className="flex-row"
       >
@@ -66,7 +112,7 @@ export function EventCard({
         <View className="flex-1 gap-2 p-4">
           {meta ? <Text variant="body-sm" className="text-ink-variant">{meta}</Text> : null}
           <Text variant="display-sm" numberOfLines={3}>{event.title}</Text>
-          {!past && state !== 'hidden'
+          {interactive
             ? (
                 <View className="mt-3 flex-row gap-2">
                   <Button
