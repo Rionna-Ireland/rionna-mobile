@@ -6,6 +6,7 @@ import { useWindowDimensions, View } from 'react-native';
 import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 
 import { Button, Card, Dots, MonoLabel, Text } from '@/components/ui';
+import { translate } from '@/lib/i18n';
 
 const GUTTER = 16;
 const GAP = 8;
@@ -62,7 +63,7 @@ export function AnnouncementCarousel({ announcements, onOpen }: AnnouncementCaro
             style={{ width: slideWidth, minHeight: 190 }}
           >
             <View className="gap-3">
-              <MonoLabel tone="white">Announcement</MonoLabel>
+              <MonoLabel tone="white">{translate('community.announcement.kicker')}</MonoLabel>
               <Text variant="display-md" className="text-white" numberOfLines={4}>{item.title}</Text>
             </View>
             <View className="flex-row items-end justify-between">
@@ -70,8 +71,8 @@ export function AnnouncementCarousel({ announcements, onOpen }: AnnouncementCaro
                 variant="on-dark"
                 size="md"
                 fullWidth={false}
-                label="Read"
-                accessibilityLabel={`Read ${item.title}`}
+                label={translate('community.announcement.read')}
+                accessibilityLabel={translate('community.announcement.readA11y', { title: item.title })}
                 onPress={() => onOpen(item.spaceId!, item.id)}
               />
               {announcements.length > 1

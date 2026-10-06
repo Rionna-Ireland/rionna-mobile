@@ -31,6 +31,11 @@
     "tryAgain": "Try again"
   },
   "community": {
+    "announcement": {
+      "kicker": "Announcement",
+      "read": "Read",
+      "readA11y": "Read {{title}}"
+    },
     "comment": {
       "delete": "Delete",
       "deleteAction": "Delete comment",
@@ -103,6 +108,8 @@
     "media": {
       "downloadFile": "Download file",
       "unavailable": "Media unavailable",
+      "unsupported": "Unsupported content: {{type}}",
+      "unsupportedA11y": "Unsupported Circle content: {{type}}",
       "view": "View media"
     },
     "post": {
@@ -149,6 +156,12 @@
       "kicker": "Discussion",
       "newPostA11y": "New post",
       "unavailableTitle": "Discussion unavailable"
+    },
+    "time": {
+      "daysAgo": "{{count}}d ago",
+      "hoursAgo": "{{count}}h ago",
+      "justNow": "Just now",
+      "minutesAgo": "{{count}}m ago"
     },
     "title": "Community"
   },
