@@ -122,10 +122,10 @@ export function HomeScreen() {
           <View className="gap-3">
             <YardChipsRow chips={chips} />
             <HeroCarousel slides={slides} width={width - GUTTER * 2} />
-            <MyHorsesCard horses={q.followedHorses.data} isLoading={q.followedHorses.isLoading} />
-            <InsideTrackCard data={q.insideTrack.data} now={now} />
-            <CharityCard data={q.charity.data} />
-            <UpcomingEventCard data={q.upcomingEvents.data} />
+            <MyHorsesCard horses={q.followedHorses.data} isLoading={q.followedHorses.isLoading} entranceIndex={0} />
+            <InsideTrackCard data={q.insideTrack.data} now={now} entranceIndex={1} />
+            <CharityCard data={q.charity.data} entranceIndex={2} />
+            <UpcomingEventCard data={q.upcomingEvents.data} entranceIndex={3} />
           </View>
         </View>
       </AnimatedScrollView>
