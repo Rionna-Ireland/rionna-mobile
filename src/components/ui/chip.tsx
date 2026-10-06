@@ -29,6 +29,28 @@ export type ChipProps = Omit<MotionPressableProps, 'children'> & {
   className?: string;
 };
 
+/** A leading emoji ("🐴 Stable Notes") and the rest of the label. */
+const LEADING_EMOJI = /^(\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic})*)\s*(.*)$/u;
+
+/**
+ * The label as one or two `Text`s. An emoji's taller line box shifts the
+ * baseline of text in the same `Text` (A-046: "🐴 Stable Notes" sat ~2pt high
+ * in the fixed 32pt chip), so a leading emoji gets its own `Text`, centred on
+ * its own, and the words keep the same baseline as every other chip.
+ */
+function ChipLabel({ label }: { label: string }) {
+  const match = LEADING_EMOJI.exec(label);
+  if (!match || !match[2]) {
+    return <Text variant="body-sm" className="font-sans-semibold" numberOfLines={1}>{label}</Text>;
+  }
+  return (
+    <View className="shrink flex-row items-center">
+      <Text variant="body-sm" className="font-sans-semibold">{`${match[1]} `}</Text>
+      <Text variant="body-sm" className="shrink font-sans-semibold" numberOfLines={1}>{match[2]}</Text>
+    </View>
+  );
+}
+
 /** Opacity of the lilac fill layer: crossfades on `selected` changes. */
 function useSelectedFill(selected: boolean) {
   const { reduceMotion } = useMotion();
@@ -60,9 +82,7 @@ export function Chip({ label, selected = false, count, className, testID, ...pro
         pointerEvents="none"
         style={[styles.fill, fillStyle]}
       />
-      <Text variant="body-sm" className="font-sans-semibold" numberOfLines={1}>
-        {label}
-      </Text>
+      <ChipLabel label={label} />
       {count !== undefined && (
         <View
           testID={testID ? `${testID}-count` : undefined}

@@ -21,6 +21,13 @@ describe('chip', () => {
     expect(screen.getByTestId('chip').props.accessibilityLabel).toBe('Race day, 3');
   });
 
+  it('sets a leading emoji in its own Text so the words keep the chip baseline (A-046)', () => {
+    render(<Chip testID="chip" label="🐴 Stable Notes" />);
+    expect(screen.getByText('Stable Notes')).toBeOnTheScreen();
+    expect(screen.getByText('🐴 ')).toBeOnTheScreen();
+    expect(screen.getByTestId('chip').props.accessibilityLabel).toBe('🐴 Stable Notes');
+  });
+
   it('uses lilac when selected and white otherwise, with matching badges', () => {
     render(
       <>
