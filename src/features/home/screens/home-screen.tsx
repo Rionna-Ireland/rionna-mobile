@@ -3,16 +3,20 @@ import type { HeroRunInput } from '@/features/home/lib/hero-slides';
 import Env from 'env';
 import { useFocusEffect, useRouter } from 'expo-router';
 import * as React from 'react';
-import { RefreshControl, useWindowDimensions, View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 
 import {
   Avatar,
+  BrandedRefreshControl,
   FocusAwareStatusBar,
   Pressable,
+  RefreshIndicator,
   ScreenBackground,
   ScreenHeader,
   Text,
+  usePullToRefresh,
 } from '@/components/ui';
+import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { AnimatedScrollView, CompactHeaderBar, useScrollHeader } from '@/components/ui/scroll-header';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { useAuthStore } from '@/features/auth/use-auth-store';
@@ -148,6 +152,8 @@ export function HomeScreen() {
   const q = useHomeQueries(scope);
   const { chips, slides } = useHomeModel(q, now);
   const { scrollY, onScroll } = useScrollHeader();
+  const pull = usePullToRefresh(q.refetchAll);
+  const safeTop = useScreenTopPadding(0);
 
   return (
     <View className="flex-1">
@@ -156,7 +162,7 @@ export function HomeScreen() {
       <AnimatedScrollView
         className="flex-1"
         contentContainerStyle={{ paddingBottom: contentPaddingBottom }}
-        refreshControl={<RefreshControl refreshing={q.isRefetching} onRefresh={q.refetchAll} />}
+        refreshControl={<BrandedRefreshControl refreshing={pull.refreshing} onRefresh={pull.onRefresh} />}
         onScroll={onScroll}
         scrollEventThrottle={16}
       >
@@ -176,6 +182,7 @@ export function HomeScreen() {
           </View>
         </View>
       </AnimatedScrollView>
+      <RefreshIndicator scrollY={scrollY} refreshing={pull.refreshing} top={safeTop} />
       {/* No display-lg title on Home (the submark is the header): scrim + hairline only. */}
       <CompactHeaderBar scrollY={scrollY} testID="home-compact-header" />
     </View>

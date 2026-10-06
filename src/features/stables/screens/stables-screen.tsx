@@ -5,16 +5,19 @@ import type { TxKeyPath } from '@/lib/i18n';
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
-import { RefreshControl, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import {
+  BrandedRefreshControl,
   ChipRow,
   EmptyState,
   ErrorState,
   FocusAwareStatusBar,
   MonoLabel,
+  RefreshIndicator,
   ScreenBackground,
   Text,
+  usePullToRefresh,
 } from '@/components/ui';
 import { List } from '@/components/ui/list';
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
@@ -188,7 +191,9 @@ export function StablesScreen() {
   const { data, isError, refetch, isRefetching } = query;
   const contentPaddingBottom = useTabBarContentPadding(16);
   const contentPaddingTop = useScreenTopPadding(20);
+  const safeTop = useScreenTopPadding(0);
   const { scrollY, onScrollJS } = useScrollHeader();
+  const pull = usePullToRefresh(refetch);
   const [requested, setRequested] = useRequestedFilter();
 
   const horses = React.useMemo(() => data ?? [], [data]);
@@ -218,7 +223,7 @@ export function StablesScreen() {
                 keyExtractor={(item: Horse) => item.id}
                 contentContainerStyle={{ paddingHorizontal: 16, ...pagePadding }}
                 ItemSeparatorComponent={() => <View className="h-2" />}
-                refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
+                refreshControl={<BrandedRefreshControl refreshing={pull.refreshing} onRefresh={pull.onRefresh} />}
                 // FlashList already handles scroll on JS; feed the header from there.
                 onScroll={onScrollJS}
                 scrollEventThrottle={16}
@@ -226,6 +231,7 @@ export function StablesScreen() {
             )
           : <StablesFallback isError={isError} retrying={isRefetching} onRetry={() => refetch()} pagePadding={pagePadding} />}
       </SkeletonSwap>
+      {showList ? <RefreshIndicator scrollY={scrollY} refreshing={pull.refreshing} top={safeTop} /> : null}
       {showList ? <CompactHeaderBar scrollY={scrollY} title={translate('stables.list.title')} testID="stables-compact-header" /> : null}
     </View>
   );

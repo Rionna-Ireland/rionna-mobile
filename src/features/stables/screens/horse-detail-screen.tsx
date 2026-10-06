@@ -10,13 +10,16 @@ import { ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 
 import {
+  BrandedRefreshControl,
   Button,
   ChipRow,
   EmptyState,
   ErrorState,
   FocusAwareStatusBar,
+  RefreshIndicator,
   ScreenBackground,
   ScreenHeader,
+  usePullToRefresh,
 } from '@/components/ui';
 import { useScreenBottomPadding } from '@/components/ui/screen-layout';
 import { heroHandoffProgress } from '@/components/ui/scroll-header-math';
@@ -167,7 +170,31 @@ function useHorseDetailModel(horse: HorseDetail, updates: HorseUpdate[] | undefi
   return { nextEntry, results, story, pedigree, updateList, wellbeing, visible };
 }
 
-function HorseDetailBody({ horse, updates }: { horse: HorseDetail; updates: HorseUpdate[] | undefined }) {
+/**
+ * Scroll-linked state over the hero: light status bar until the photo has
+ * scrolled away, the pinned bar's white → ink handoff (S14-02 §5) and the raw
+ * offset for the branded refresher (S14-03; negative while pulled).
+ */
+function useHeroScroll(onScroll: (event: NativeSyntheticEvent<NativeScrollEvent>) => void) {
+  const [heroHeight, setHeroHeight] = React.useState(0);
+  const [pastHero, setPastHero] = React.useState(false);
+  const { height: barHeight, top: barTop } = useHorseDetailBarMetrics();
+  const handoff = useSharedValue(0);
+  const scrollY = useSharedValue(0);
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    onScroll(event);
+    const y = event.nativeEvent.contentOffset.y;
+    scrollY.set(y);
+    const next = heroHeight > 0 && y > heroHeight - 60;
+    setPastHero(prev => (prev === next ? prev : next));
+    handoff.set(heroHandoffProgress(y, heroHeight, barHeight));
+  };
+  return { pastHero, setHeroHeight, handoff, scrollY, barTop, handleScroll };
+}
+
+type PullRefresh = { refreshing: boolean; onRefresh: () => void };
+
+function HorseDetailBody({ horse, updates, pull }: { horse: HorseDetail; updates: HorseUpdate[] | undefined; pull: PullRefresh }) {
   const { toggleFollow, pendingHorseId } = useFollowHorse();
   const router = useRouter();
   const goBack = useGoBack();
@@ -175,19 +202,7 @@ function HorseDetailBody({ horse, updates }: { horse: HorseDetail; updates: Hors
   const model = useHorseDetailModel(horse, updates);
   const { scrollRef, onSectionLayout, onScroll, scrollToSection, scrollToOffset, offsetsRef, selected } = useSectionScrollSync(model.visible);
 
-  // Light status bar over the photo; dark once the hero has scrolled away.
-  const [heroHeight, setHeroHeight] = React.useState(0);
-  const [pastHero, setPastHero] = React.useState(false);
-  // S14-02 §5: the pinned bar's white → ink handoff as the hero scrolls under it.
-  const barHeight = useHorseDetailBarMetrics().height;
-  const handoff = useSharedValue(0);
-  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-    onScroll(event);
-    const y = event.nativeEvent.contentOffset.y;
-    const next = heroHeight > 0 && y > heroHeight - 60;
-    setPastHero(prev => (prev === next ? prev : next));
-    handoff.set(heroHandoffProgress(y, heroHeight, barHeight));
-  };
+  const { pastHero, setHeroHeight, handoff, scrollY, barTop, handleScroll } = useHeroScroll(onScroll);
 
   // Wellbeing rows scroll to their update card in the Updates section.
   const updateOffsetsRef = React.useRef<Record<string, number>>({});
@@ -230,6 +245,7 @@ function HorseDetailBody({ horse, updates }: { horse: HorseDetail; updates: Hors
         onScroll={handleScroll}
         scrollEventThrottle={16}
         contentContainerStyle={{ paddingBottom: bottomPadding }}
+        refreshControl={<BrandedRefreshControl refreshing={pull.refreshing} onRefresh={pull.onRefresh} />}
       >
         <View onLayout={e => setHeroHeight(e.nativeEvent.layout.height)}>
           <HorseHero
@@ -272,6 +288,7 @@ function HorseDetailBody({ horse, updates }: { horse: HorseDetail; updates: Hors
           onDiscussion={handleDiscussion}
         />
       </ScrollView>
+      <RefreshIndicator scrollY={scrollY} refreshing={pull.refreshing} top={barTop} />
       <HorseDetailBar horseName={horse.name} progress={handoff} onBack={goBack} onShare={handleShare} />
     </View>
   );
@@ -304,8 +321,10 @@ export function HorseDetailScreen() {
   const horseId = params['horse-id'];
   const horseQuery = useHorse(horseId);
   const { data: horse, isError, refetch, isRefetching } = horseQuery;
-  const { data: updates } = useHorseUpdates(horseId);
+  const updatesQuery = useHorseUpdates(horseId);
+  const updates = updatesQuery.data;
   const loading = isFirstLoad(horseQuery);
+  const pull = usePullToRefresh(() => Promise.all([horseQuery.refetch(), updatesQuery.refetch()]));
 
   if (!loading && isError) {
     return (
@@ -330,7 +349,7 @@ export function HorseDetailScreen() {
   return (
     <View className="flex-1">
       <SkeletonSwap loading={loading} skeleton={<HorseDetailLoading />} style={styles.fill}>
-        {horse ? <HorseDetailBody horse={horse} updates={updates} /> : null}
+        {horse ? <HorseDetailBody horse={horse} updates={updates} pull={pull} /> : null}
       </SkeletonSwap>
     </View>
   );

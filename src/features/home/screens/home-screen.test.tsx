@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import * as React from 'react';
+import { RefreshControl } from 'react-native';
 
 import { HomeScreen } from '@/features/home/screens/home-screen';
 
@@ -190,5 +191,15 @@ describe('homeScreen skeletons', () => {
     render(<HomeScreen />);
     expect(screen.queryByTestId('home-my-horses-skeleton')).not.toBeOnTheScreen();
     expect(screen.getByTestId('home-my-horses')).toBeOnTheScreen();
+  });
+
+  it('wires the branded refresher: transparent native spinner + submark overlay, refetching on pull', async () => {
+    const view = render(<HomeScreen />);
+    const control = view.UNSAFE_getByType(RefreshControl);
+    expect(control.props.tintColor).toBe('transparent');
+    expect(screen.getByTestId('refresh-indicator', { includeHiddenElements: true })).toBeTruthy();
+    act(() => control.props.onRefresh());
+    expect(view.UNSAFE_getByType(RefreshControl).props.refreshing).toBe(true);
+    await waitFor(() => expect(view.UNSAFE_getByType(RefreshControl).props.refreshing).toBe(false));
   });
 });

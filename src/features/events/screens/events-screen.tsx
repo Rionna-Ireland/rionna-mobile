@@ -10,13 +10,16 @@ import * as React from 'react';
 import { StyleSheet } from 'react-native';
 
 import {
+  BrandedRefreshControl,
   ChipRow,
   EmptyState,
   ErrorState,
   FocusAwareStatusBar,
   MonoLabel,
+  RefreshIndicator,
   ScreenBackground,
   Text,
+  usePullToRefresh,
   View,
 } from '@/components/ui';
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
@@ -280,11 +283,7 @@ function useEventsData(scope: { organizationId: string; memberId: string }) {
     isLoading: noData && (isFirstLoad(upcomingQuery) || isFirstLoad(pastQuery)),
     isUnavailable: noData && (upcomingQuery.isError || pastQuery.isError),
     retrying: upcomingQuery.isFetching || pastQuery.isFetching,
-    refreshing: Boolean(upcomingQuery.isRefetching || pastQuery.isRefetching),
-    refetch: () => {
-      void upcomingQuery.refetch();
-      void pastQuery.refetch();
-    },
+    refetch: () => Promise.all([upcomingQuery.refetch(), pastQuery.refetch()]),
   };
 }
 
@@ -293,6 +292,7 @@ export function EventsScreen() {
   const user = useAuthStore.use.user();
   const contentPaddingBottom = useTabBarContentPadding(24);
   const contentPaddingTop = useScreenTopPadding();
+  const safeTop = useScreenTopPadding(0);
   const { scrollY, onScroll } = useScrollHeader();
 
   const memberScope = React.useMemo(
@@ -300,6 +300,7 @@ export function EventsScreen() {
     [user?.id],
   );
   const events = useEventsData(memberScope);
+  const pull = usePullToRefresh(events.refetch);
   const rsvp = useEventRsvp(memberScope);
 
   const [typeFilter, setTypeFilter] = React.useState(ALL);
@@ -336,6 +337,7 @@ export function EventsScreen() {
       <FocusAwareStatusBar />
       <AnimatedScrollView
         ref={scrollRef}
+        refreshControl={<BrandedRefreshControl refreshing={pull.refreshing} onRefresh={pull.onRefresh} />}
         onScroll={onScroll}
         scrollEventThrottle={16}
         contentContainerStyle={{
@@ -367,7 +369,7 @@ export function EventsScreen() {
           isLoading={events.isLoading}
           isUnavailable={events.isUnavailable}
           retrying={events.retrying}
-          onRetry={events.refetch}
+          onRetry={() => void events.refetch()}
           month={month}
           eventDays={eventDays}
           onMonthChange={goToMonth}
@@ -388,6 +390,7 @@ export function EventsScreen() {
           {past.map((event, i) => renderCard(event, upcoming.length + i, true))}
         </EventsBody>
       </AnimatedScrollView>
+      <RefreshIndicator scrollY={scrollY} refreshing={pull.refreshing} top={safeTop} />
       <CompactHeaderBar scrollY={scrollY} title={translate('events.title')} testID="events-compact-header" />
     </View>
   );

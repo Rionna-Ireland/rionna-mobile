@@ -5,9 +5,17 @@ import type { AuthUser } from '@/lib/auth/utils';
 import Env from 'env';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
-import { RefreshControl, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { EmptyState, ErrorState, Gradient, Text } from '@/components/ui';
+import {
+  BrandedRefreshControl,
+  EmptyState,
+  ErrorState,
+  Gradient,
+  RefreshIndicator,
+  Text,
+  usePullToRefresh,
+} from '@/components/ui';
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { AnimatedScrollView, CollapsingTitle, CompactHeaderBar, useScrollHeader } from '@/components/ui/scroll-header';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
@@ -100,6 +108,7 @@ export function CommunityFeedView({
 }: CommunityFeedViewProps) {
   const contentPaddingBottom = useTabBarContentPadding(24);
   const contentPaddingTop = useScreenTopPadding();
+  const safeTop = useScreenTopPadding(0);
   const announcements = React.useMemo(
     () => selectAnnouncements(items, announcementSpaceIdsFromChips(chips)),
     [items, chips],
@@ -114,7 +123,7 @@ export function CommunityFeedView({
       <AnimatedScrollView
         className="flex-1 bg-surface"
         contentContainerStyle={{ paddingBottom: contentPaddingBottom }}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />}
+        refreshControl={<BrandedRefreshControl refreshing={isRefetching} onRefresh={onRefresh} />}
         onScroll={onScroll}
         scrollEventThrottle={16}
       >
@@ -178,6 +187,7 @@ export function CommunityFeedView({
           </SkeletonSwap>
         </View>
       </AnimatedScrollView>
+      <RefreshIndicator scrollY={scrollY} refreshing={isRefetching} top={safeTop} />
       <CompactHeaderBar scrollY={scrollY} title="Community" testID="community-compact-header" />
     </View>
   );
@@ -196,6 +206,7 @@ function SignedInCommunityFeed({ member }: { member: AuthUser }) {
   const feed = useMemberFeed(scope, filter);
   const like = usePostLike(scope);
   const poll = usePollVote(scope);
+  const pull = usePullToRefresh(() => feed.refetch());
 
   return (
     <View className="flex-1">
@@ -203,8 +214,8 @@ function SignedInCommunityFeed({ member }: { member: AuthUser }) {
         items={feed.data}
         contentState={feed.contentState}
         isLoading={isFirstLoad(feed)}
-        isRefetching={feed.isRefetching}
-        onRefresh={() => void feed.refetch()}
+        isRefetching={pull.refreshing}
+        onRefresh={pull.onRefresh}
         onOpenPost={(spaceId, postId) => router.push(
           `/post/${encodeURIComponent(spaceId)}/${encodeURIComponent(postId)}`,
         )}

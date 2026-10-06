@@ -3,11 +3,18 @@ import type { InboxItem } from '@/features/notification-centre/types';
 import Env from 'env';
 import { useFocusEffect } from 'expo-router';
 import * as React from 'react';
-import { RefreshControl, SectionList, StyleSheet, View } from 'react-native';
+import { SectionList, StyleSheet, View } from 'react-native';
 
 import Animated from 'react-native-reanimated';
 
-import { ActivityIndicator, FocusAwareStatusBar, MonoLabel } from '@/components/ui';
+import {
+  ActivityIndicator,
+  BrandedRefreshControl,
+  FocusAwareStatusBar,
+  MonoLabel,
+  RefreshIndicator,
+  usePullToRefresh,
+} from '@/components/ui';
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { AnimatedScrollView, useScrollHeader } from '@/components/ui/scroll-header';
 import { useAuthStore } from '@/features/auth/use-auth-store';
@@ -65,6 +72,7 @@ export function NotificationCentreScreen() {
   );
 
   const inbox = useInbox(scope);
+  const pull = usePullToRefresh(() => inbox.refetch());
   const markRead = useMarkRead(scope);
   const markAll = useMarkAllRead(scope);
   const markSeen = useMarkSeen(scope);
@@ -116,12 +124,7 @@ export function NotificationCentreScreen() {
           </EntranceItem>
         )}
         ItemSeparatorComponent={ItemGap}
-        refreshControl={(
-          <RefreshControl
-            refreshing={inbox.isRefetching && !inbox.isFetchingNextPage}
-            onRefresh={() => void inbox.refetch()}
-          />
-        )}
+        refreshControl={<BrandedRefreshControl refreshing={pull.refreshing} onRefresh={pull.onRefresh} />}
         onEndReached={() => {
           if (inbox.hasNextPage && !inbox.isFetchingNextPage)
             void inbox.fetchNextPage();
@@ -138,6 +141,7 @@ export function NotificationCentreScreen() {
       />
     );
   }
+  const isList = !isUnavailable && items.length > 0;
 
   return (
     <View className="flex-1 bg-secondary-container">
@@ -149,6 +153,8 @@ export function NotificationCentreScreen() {
       />
       <SkeletonSwap loading={isLoading} skeleton={<InboxLoading />} style={styles.fill}>
         {body}
+        {/* Pinned to the list's top edge, under the fixed page header. */}
+        {isList ? <RefreshIndicator scrollY={scrollY} refreshing={pull.refreshing} top={0} /> : null}
       </SkeletonSwap>
       {menuOpen && hasUnread
         ? (

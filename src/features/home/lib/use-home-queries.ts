@@ -28,9 +28,6 @@ export function useHomeQueries(scope: MemberContentScope) {
   const all = Object.values(queries);
   return {
     ...queries,
-    isRefetching: all.some(q => q.isRefetching),
-    refetchAll: () => {
-      for (const q of all) void q.refetch();
-    },
+    refetchAll: () => Promise.all(all.map(q => q.refetch())),
   };
 }

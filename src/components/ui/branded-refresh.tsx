@@ -55,6 +55,28 @@ export function BrandedRefreshControl(props: RefreshControlProps) {
   return <RefreshControl colors={[colors.primary]} progressBackgroundColor={colors.white} {...props} />;
 }
 
+/**
+ * Pull-to-refresh state for a screen: `refreshing` is true only for a refresh
+ * the member pulled for (until `refresh()` settles), never for background
+ * refetches (focus, stale data), so the indicator and the held-open gap only
+ * appear when asked for.
+ */
+export function usePullToRefresh(refresh: () => unknown) {
+  const [refreshing, setRefreshing] = React.useState(false);
+  const latest = React.useRef(refresh);
+  React.useEffect(() => {
+    latest.current = refresh;
+  }, [refresh]);
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    void Promise.resolve()
+      .then(() => latest.current())
+      .catch(() => {})
+      .finally(() => setRefreshing(false));
+  }, []);
+  return { refreshing, onRefresh };
+}
+
 function fireSelection() {
   haptics.selection();
 }

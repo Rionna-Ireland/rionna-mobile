@@ -1,6 +1,6 @@
 import type * as ReactNative from 'react-native';
 import type * as BrandedRefresh from './branded-refresh';
-import { render, screen } from '@testing-library/react-native';
+import { act, render, renderHook, screen, waitFor } from '@testing-library/react-native';
 import * as React from 'react';
 import { Platform, RefreshControl } from 'react-native';
 import { useAnimatedReaction, useReducedMotion, withRepeat, withTiming } from 'react-native-reanimated';
@@ -8,7 +8,7 @@ import { useAnimatedReaction, useReducedMotion, withRepeat, withTiming } from 'r
 import { Path } from 'react-native-svg';
 
 import { timings } from '@/lib/motion';
-import { BrandedRefreshControl, RefreshIndicator } from './branded-refresh';
+import { BrandedRefreshControl, RefreshIndicator, usePullToRefresh } from './branded-refresh';
 import colors from './colors';
 import { crossThreshold, pullProgress, REFRESH_PULL_THRESHOLD } from './refresh-math';
 
@@ -102,6 +102,28 @@ describe('refreshIndicator (iOS)', () => {
     const native = view.UNSAFE_getByType(RefreshControl);
     expect(native.props.tintColor).toBe('transparent');
     expect(native.props.onRefresh).toBe(onRefresh);
+  });
+});
+
+describe('usePullToRefresh', () => {
+  it('is refreshing only from the pull until the refresh settles', async () => {
+    let resolve!: () => void;
+    const refresh = jest.fn(() => new Promise<void>((r) => {
+      resolve = r;
+    }));
+    const { result } = renderHook(() => usePullToRefresh(refresh));
+    expect(result.current.refreshing).toBe(false);
+    act(() => result.current.onRefresh());
+    expect(result.current.refreshing).toBe(true);
+    await waitFor(() => expect(refresh).toHaveBeenCalledTimes(1));
+    await act(async () => resolve());
+    expect(result.current.refreshing).toBe(false);
+  });
+
+  it('settles even when the refresh fails', async () => {
+    const { result } = renderHook(() => usePullToRefresh(() => Promise.reject(new Error('offline'))));
+    act(() => result.current.onRefresh());
+    await waitFor(() => expect(result.current.refreshing).toBe(false));
   });
 });
 
