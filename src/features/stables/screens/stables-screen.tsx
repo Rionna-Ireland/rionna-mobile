@@ -1,3 +1,4 @@
+import type { FlashListRef } from '@shopify/flash-list';
 import type { SharedValue } from 'react-native-reanimated';
 import type { StablesFilter } from '@/features/stables/lib/stables-filters';
 import type { Horse } from '@/features/stables/types';
@@ -22,6 +23,7 @@ import {
 import { List } from '@/components/ui/list';
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { CollapsingTitle, CompactHeaderBar, useScrollHeader } from '@/components/ui/scroll-header';
+import { useTabScrollToTop } from '@/components/ui/scroll-to-top';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { heroSourceKey } from '@/features/hero-transition/types';
 import { useOpenHorse } from '@/features/hero-transition/use-open-horse';
@@ -195,6 +197,8 @@ export function StablesScreen() {
   const contentPaddingTop = useScreenTopPadding(20);
   const safeTop = useScreenTopPadding(0);
   const { scrollY, onScrollJS } = useScrollHeader();
+  const listRef = React.useRef<FlashListRef<Horse>>(null);
+  useTabScrollToTop(listRef);
   const pull = usePullToRefresh(refetch);
   const [requested, setRequested] = useRequestedFilter();
 
@@ -215,6 +219,7 @@ export function StablesScreen() {
         {showList
           ? (
               <List
+                ref={listRef}
                 data={filtered}
                 extraData={filter}
                 ListHeaderComponent={(

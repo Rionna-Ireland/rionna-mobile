@@ -1,3 +1,4 @@
+import type { ScrollView } from 'react-native';
 import type { SharedValue } from 'react-native-reanimated';
 import type { HeroRunInput } from '@/features/home/lib/hero-slides';
 
@@ -21,6 +22,7 @@ import {
 } from '@/components/ui';
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { AnimatedScrollView, CompactHeaderBar, useScrollHeader } from '@/components/ui/scroll-header';
+import { useTabScrollToTop } from '@/components/ui/scroll-to-top';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { ArrivalSlot, useArrivalReady } from '@/features/arrival/arrival-slot';
 import { useAuthStore } from '@/features/auth/use-auth-store';
@@ -174,6 +176,8 @@ export function HomeScreen() {
   useHomeArrival(q);
   const { chips, slides } = useHomeModel(q, now);
   const { scrollY, onScroll } = useScrollHeader();
+  const scrollRef = React.useRef<ScrollView>(null);
+  useTabScrollToTop(scrollRef);
   const pull = usePullToRefresh(q.refetchAll);
   const safeTop = useScreenTopPadding(0);
 
@@ -182,6 +186,7 @@ export function HomeScreen() {
       <FocusAwareStatusBar barStyle="dark" />
       <ScreenBackground variant="page" />
       <AnimatedScrollView
+        ref={scrollRef}
         className="flex-1"
         contentContainerStyle={{ paddingBottom: contentPaddingBottom }}
         refreshControl={<BrandedRefreshControl refreshing={pull.refreshing} onRefresh={pull.onRefresh} />}

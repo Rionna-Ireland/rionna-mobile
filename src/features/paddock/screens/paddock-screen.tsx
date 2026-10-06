@@ -1,3 +1,4 @@
+import type { ScrollView } from 'react-native';
 import type { TileSpec } from '@/components/brand/pattern';
 import type { JourneyBadge } from '@/features/paddock/components/journey-card';
 
@@ -19,6 +20,7 @@ import {
 import { CaretRightV2 } from '@/components/ui/icons/v2';
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { AnimatedScrollView, CollapsingTitle, CompactHeaderBar, useScrollHeader } from '@/components/ui/scroll-header';
+import { useTabScrollToTop } from '@/components/ui/scroll-to-top';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { useCharity } from '@/features/paddock/api/use-charity';
@@ -107,6 +109,8 @@ export function PaddockHubView({ offersCount, charitySummary, offersLoading, cha
   const contentPaddingBottom = useTabBarContentPadding(24);
   const contentPaddingTop = useScreenTopPadding();
   const { scrollY, onScroll } = useScrollHeader();
+  const scrollRef = React.useRef<ScrollView>(null);
+  useTabScrollToTop(scrollRef);
   // The hub rows are static (subtitles fill in later), so they enter on mount.
   const entering = useFirstLoadEntrance(true);
 
@@ -115,6 +119,7 @@ export function PaddockHubView({ offersCount, charitySummary, offersLoading, cha
       <ScreenBackground />
       <FocusAwareStatusBar />
       <AnimatedScrollView
+        ref={scrollRef}
         className="flex-1"
         onScroll={onScroll}
         scrollEventThrottle={16}

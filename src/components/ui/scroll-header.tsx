@@ -28,10 +28,12 @@ import { Text } from './text';
  *   for lists that already handle scroll on JS, e.g. FlashList).
  * - Tab roots: wrap the `display-lg` title in `CollapsingTitle` and overlay a
  *   `CompactHeaderBar`. Over 0→60pt the large title fades and shrinks while
- *   the 44pt bar fades in a `surface` @90% fill, a hairline and the centred
+ *   the 44pt bar fades in a page-cream fill (A-014), a hairline and the centred
  *   `title`. The fill covers the status bar too: that's the scrim (no blur,
  *   S14-01).
  * - Kicker screens: pass `scrollY` to `ScreenHeader` for the hairline.
+ * - Tab roots also call `useTabScrollToTop(ref)` on their scroll view:
+ *   re-tapping the active tab scrolls back to the top (A-035).
  *
  * Reduce Motion: opacity only (no title scale).
  */

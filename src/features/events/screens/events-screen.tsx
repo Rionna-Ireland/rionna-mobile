@@ -24,6 +24,7 @@ import {
 } from '@/components/ui';
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { AnimatedScrollView, CollapsingTitle, CompactHeaderBar, useScrollHeader } from '@/components/ui/scroll-header';
+import { useTabScrollToTop } from '@/components/ui/scroll-to-top';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { showErrorMessage } from '@/components/ui/utils';
 import { useAuthStore } from '@/features/auth/use-auth-store';
@@ -312,6 +313,7 @@ export function EventsScreen() {
   const handleToggleRsvp = (eventId: string, going: boolean) => rsvp.mutate({ eventId, going });
 
   const { month, emptyDay, goToMonth, handleSelectDay, scrollRef, setBodyY, setListY, setCardY } = useCalendarNavigation([...upcoming, ...past]);
+  useTabScrollToTop(scrollRef);
 
   const hasEvents = upcoming.length + past.length > 0;
 
