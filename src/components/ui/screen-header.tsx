@@ -1,3 +1,5 @@
+import type { SharedValue } from 'react-native-reanimated';
+
 import * as React from 'react';
 import { Pressable, View } from 'react-native';
 import { twMerge } from 'tailwind-merge';
@@ -9,6 +11,7 @@ import colors from './colors';
 import { CaretRightV2 } from './icons/v2';
 import { MonoLabel } from './mono-label';
 import { useScreenTopPadding } from './screen-layout';
+import { ScrollHairline } from './scroll-header';
 import { Text } from './text';
 
 const BACK_ICON_STYLE = { transform: [{ rotate: '180deg' }] };
@@ -36,6 +39,12 @@ export type ScreenHeaderProps = {
   safeArea?: boolean;
   className?: string;
   testID?: string;
+  /**
+   * `kicker`: the scroll offset of the content below a fixed header. A
+   * hairline fades in along the header's bottom edge as content scrolls
+   * under it (S14-02 §5).
+   */
+  scrollY?: SharedValue<number>;
 };
 
 function BackButton({ onBack, label, color, testID }: { onBack: () => void; label: string; color: string; testID?: string }) {
@@ -101,7 +110,7 @@ function TitleBlock({ title, subtitle, tone }: Pick<ScreenHeaderProps, 'title' |
 
 /** Screen header in the two V2 patterns (S13-01 §7). Safe-area aware. */
 export function ScreenHeader(props: ScreenHeaderProps) {
-  const { variant = 'kicker', title, subtitle, brand, right, tone, safeArea = true, className, testID } = props;
+  const { variant = 'kicker', title, subtitle, brand, right, tone, safeArea = true, className, testID, scrollY } = props;
   const topPadding = useScreenTopPadding();
   const style = safeArea ? { paddingTop: topPadding } : undefined;
 
@@ -123,6 +132,7 @@ export function ScreenHeader(props: ScreenHeaderProps) {
     <View testID={testID} style={style} className={twMerge('gap-6 px-4', className)}>
       <KickerRow {...props} />
       {(title || subtitle) && <TitleBlock title={title} subtitle={subtitle} tone={tone} />}
+      {scrollY ? <ScrollHairline scrollY={scrollY} testID={testID ? `${testID}-hairline` : undefined} /> : null}
     </View>
   );
 }

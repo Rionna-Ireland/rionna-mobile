@@ -1,3 +1,4 @@
+import type { SharedValue } from 'react-native-reanimated';
 import * as React from 'react';
 
 import { cleanup, render, screen, setup } from '@/lib/test-utils';
@@ -18,6 +19,17 @@ describe('screen header', () => {
     expect(back.props.accessibilityLabel).toBe('Back');
     await user.press(back);
     expect(onBack).toHaveBeenCalledTimes(1);
+  });
+
+  it('fades a hairline in under the kicker as content scrolls', () => {
+    const scrollY = { get: () => 8 } as unknown as SharedValue<number>;
+    render(<ScreenHeader testID="h" kicker="Profile" scrollY={scrollY} />);
+    expect(screen.getByTestId('h-hairline')).toHaveStyle({ opacity: 0.5 });
+  });
+
+  it('renders no hairline without a scroll value', () => {
+    render(<ScreenHeader testID="h" kicker="Profile" />);
+    expect(screen.queryByTestId('h-hairline')).toBeNull();
   });
 
   it('hides the back button without a handler', () => {

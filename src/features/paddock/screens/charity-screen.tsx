@@ -12,10 +12,10 @@ import {
   ErrorState,
   FocusAwareStatusBar,
   ScreenHeader,
-  ScrollView,
   View,
 } from '@/components/ui';
 import { useScreenBottomPadding } from '@/components/ui/screen-layout';
+import { AnimatedScrollView, useScrollHeader } from '@/components/ui/scroll-header';
 
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { useCharity } from '@/features/paddock/api/use-charity';
@@ -60,16 +60,20 @@ export function CharityView(props: CharityViewProps) {
   const showUnavailable = !showLoading && isError && charity === undefined;
   const showEmpty = !showLoading && !showUnavailable && charity === null;
   const paddingBottom = useScreenBottomPadding(24);
+  const { scrollY, onScroll } = useScrollHeader();
 
   return (
     <View className="flex-1 bg-secondary-container">
       <FocusAwareStatusBar />
-      <ScrollView
+      {/* S14-02 §5: the kicker stays fixed; its hairline fades in as the page scrolls under it. */}
+      <ScreenHeader kicker="CHARITY" onBack={onBack} scrollY={scrollY} testID="charity-header" />
+      <AnimatedScrollView
         className="flex-1"
-        contentContainerStyle={{ paddingBottom, gap: 32 }}
+        contentContainerStyle={{ paddingTop: 32, paddingBottom, gap: 32 }}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
       >
-        <ScreenHeader kicker="CHARITY" onBack={onBack} />
         <View className="px-4">
           {showLoading ? <View testID="charity-loading" className="items-center py-16"><ActivityIndicator /></View> : null}
           {showUnavailable
@@ -80,7 +84,7 @@ export function CharityView(props: CharityViewProps) {
             : null}
           {charity ? <CharityBody {...props} charity={charity} /> : null}
         </View>
-      </ScrollView>
+      </AnimatedScrollView>
     </View>
   );
 }

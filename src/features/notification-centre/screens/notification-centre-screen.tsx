@@ -5,8 +5,11 @@ import { useFocusEffect } from 'expo-router';
 import * as React from 'react';
 import { RefreshControl, SectionList, View } from 'react-native';
 
-import { ActivityIndicator, FocusAwareStatusBar, MonoLabel, ScrollView } from '@/components/ui';
+import Animated from 'react-native-reanimated';
+
+import { ActivityIndicator, FocusAwareStatusBar, MonoLabel } from '@/components/ui';
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
+import { AnimatedScrollView, useScrollHeader } from '@/components/ui/scroll-header';
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { useInbox } from '@/features/notification-centre/api/use-inbox';
 import { useMarkAllRead, useMarkRead, useMarkSeen } from '@/features/notification-centre/api/use-inbox-actions';
@@ -17,6 +20,8 @@ import { PreferencesCard } from '@/features/notification-centre/components/prefe
 import { groupInboxSections } from '@/features/notification-centre/lib/sections';
 import { isPushData, routeToTarget } from '@/features/notifications/deep-link';
 import { PageHeader } from '@/features/settings/components/page-header';
+
+const AnimatedSectionList = Animated.createAnimatedComponent(SectionList<InboxItem>);
 
 // ScreenHeader's kicker row is 44pt tall.
 const HEADER_ROW_HEIGHT = 44;
@@ -33,6 +38,7 @@ export function NotificationCentreScreen() {
   const user = useAuthStore.use.user();
   const topPadding = useScreenTopPadding();
   const [menuOpen, setMenuOpen] = React.useState(false);
+  const { scrollY, onScroll } = useScrollHeader();
   const scope = React.useMemo(
     () => ({ organizationId: Env.EXPO_PUBLIC_CLUB_ID, memberId: user?.id ?? '' }),
     [user?.id],
@@ -69,18 +75,20 @@ export function NotificationCentreScreen() {
   }
   else if (isUnavailable || items.length === 0) {
     body = (
-      <ScrollView contentContainerClassName="gap-4 px-4 pt-6 pb-10">
+      <AnimatedScrollView contentContainerClassName="gap-4 px-4 pt-6 pb-10" onScroll={onScroll} scrollEventThrottle={16}>
         {isUnavailable
           ? <InboxUnavailable onRetry={() => void inbox.refetch()} retrying={inbox.isRefetching} />
           : <InboxEmpty />}
         {isUnavailable ? null : <PreferencesCard />}
-      </ScrollView>
+      </AnimatedScrollView>
     );
   }
   else {
     body = (
-      <SectionList
+      <AnimatedSectionList
         className="flex-1"
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         sections={sections}
         keyExtractor={item => item.id}
         renderSectionHeader={({ section }) => <SectionHeader title={section.title} />}
@@ -118,6 +126,7 @@ export function NotificationCentreScreen() {
       <FocusAwareStatusBar />
       <PageHeader
         kicker="Notifications"
+        scrollY={scrollY}
         right={hasUnread ? <MenuButton onPress={toggleMenu} expanded={menuOpen} /> : undefined}
       />
       {body}

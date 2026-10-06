@@ -1,3 +1,4 @@
+import type { SharedValue } from 'react-native-reanimated';
 import type { StablesFilter } from '@/features/stables/lib/stables-filters';
 import type { Horse } from '@/features/stables/types';
 import type { TxKeyPath } from '@/lib/i18n';
@@ -18,6 +19,7 @@ import {
 } from '@/components/ui';
 import { List } from '@/components/ui/list';
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
+import { CollapsingTitle, CompactHeaderBar, useScrollHeader } from '@/components/ui/scroll-header';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { useFollowHorse } from '@/features/stables/api/use-horse-follow';
 import { useHorses } from '@/features/stables/api/use-horses';
@@ -43,10 +45,12 @@ function StablesHeader({
   horses,
   filter,
   onFilterChange,
+  scrollY,
 }: {
   horses: Horse[];
   filter: StablesFilter;
   onFilterChange: (filter: StablesFilter) => void;
+  scrollY: SharedValue<number>;
 }) {
   const chips = buildStablesFilterChips(horses).map(chip => ({
     key: chip.key,
@@ -56,7 +60,9 @@ function StablesHeader({
   return (
     <View className="gap-8 pb-3">
       <View className="gap-2">
-        <Text variant="display-lg" accessibilityRole="header">{translate('stables.list.title')}</Text>
+        <CollapsingTitle scrollY={scrollY}>
+          <Text variant="display-lg" accessibilityRole="header">{translate('stables.list.title')}</Text>
+        </CollapsingTitle>
         <Text variant="body">{translate('stables.list.subtitle')}</Text>
       </View>
       <View className="gap-2.5">
@@ -105,6 +111,7 @@ export function StablesScreen() {
   const params = useLocalSearchParams<{ filter?: string }>();
   const contentPaddingBottom = useTabBarContentPadding(16);
   const contentPaddingTop = useScreenTopPadding(20);
+  const { scrollY, onScrollJS } = useScrollHeader();
 
   // The tab stays mounted, so a later navigation with a new `filter` param
   // must re-apply it (state adjusted during render, not in an effect).
@@ -188,7 +195,7 @@ export function StablesScreen() {
         data={filtered}
         extraData={filter}
         ListHeaderComponent={(
-          <StablesHeader horses={horses} filter={filter} onFilterChange={setRequested} />
+          <StablesHeader horses={horses} filter={filter} onFilterChange={setRequested} scrollY={scrollY} />
         )}
         ListEmptyComponent={<FilterEmpty filter={filter} />}
         renderItem={renderItem}
@@ -196,7 +203,11 @@ export function StablesScreen() {
         contentContainerStyle={{ paddingHorizontal: 16, ...pagePadding }}
         ItemSeparatorComponent={() => <View className="h-2" />}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
+        // FlashList already handles scroll on JS; feed the header from there.
+        onScroll={onScrollJS}
+        scrollEventThrottle={16}
       />
+      <CompactHeaderBar scrollY={scrollY} title={translate('stables.list.title')} testID="stables-compact-header" />
     </View>
   );
 }

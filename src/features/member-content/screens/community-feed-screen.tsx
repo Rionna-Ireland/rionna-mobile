@@ -5,10 +5,11 @@ import type { AuthUser } from '@/lib/auth/utils';
 import Env from 'env';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
-import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { RefreshControl, StyleSheet, View } from 'react-native';
 
 import { ActivityIndicator, EmptyState, ErrorState, Gradient, Text } from '@/components/ui';
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
+import { AnimatedScrollView, CollapsingTitle, CompactHeaderBar, useScrollHeader } from '@/components/ui/scroll-header';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { NewPostButton } from '@/features/community-posting/components/new-post-button';
@@ -101,74 +102,82 @@ export function CommunityFeedView({
     () => selectAnnouncements(items, announcementSpaceIdsFromChips(chips)),
     [items, chips],
   );
+  const { scrollY, onScroll } = useScrollHeader();
 
   return (
-    <ScrollView
-      className="flex-1 bg-surface"
-      contentContainerStyle={{ paddingBottom: contentPaddingBottom }}
-      refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />}
-    >
-      {/* The gradient covers the header + featured area only; posts sit on plain surface. */}
-      <View className="gap-4 pb-6" style={{ paddingTop: contentPaddingTop }}>
-        <Gradient variant="page" pointerEvents="none" style={StyleSheet.absoluteFill} />
-        <View className="flex-row items-center justify-between px-4">
-          <Text variant="display-lg" accessibilityRole="header">Community</Text>
-          {headerRight}
+    <View className="flex-1">
+      <AnimatedScrollView
+        className="flex-1 bg-surface"
+        contentContainerStyle={{ paddingBottom: contentPaddingBottom }}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+      >
+        {/* The gradient covers the header + featured area only; posts sit on plain surface. */}
+        <View className="gap-4 pb-6" style={{ paddingTop: contentPaddingTop }}>
+          <Gradient variant="page" pointerEvents="none" style={StyleSheet.absoluteFill} />
+          <View className="flex-row items-center justify-between px-4">
+            <CollapsingTitle scrollY={scrollY}>
+              <Text variant="display-lg" accessibilityRole="header">Community</Text>
+            </CollapsingTitle>
+            {headerRight}
+          </View>
+          <FeedChipRow chips={chips} selectedId={selectedChipId} onSelect={onSelectChip} contentInset={16} />
+          <AnnouncementCarousel announcements={announcements} onOpen={onOpenPost} />
+          {featuredCard
+            ? (
+                <View className="px-4">
+                  <FeaturedCard card={featuredCard} onPress={onOpenFeaturedCard} />
+                </View>
+              )
+            : null}
         </View>
-        <FeedChipRow chips={chips} selectedId={selectedChipId} onSelect={onSelectChip} contentInset={16} />
-        <AnnouncementCarousel announcements={announcements} onOpen={onOpenPost} />
-        {featuredCard
-          ? (
-              <View className="px-4">
-                <FeaturedCard card={featuredCard} onPress={onOpenFeaturedCard} />
-              </View>
-            )
-          : null}
-      </View>
 
-      <View className="gap-3 px-4">
-        {contentState === 'saved'
-          ? (
-              <View className="rounded-lg bg-primary-fixed px-4 py-3">
-                <Text variant="body-sm" className="font-sans-medium">Showing saved content</Text>
-              </View>
-            )
-          : null}
-        {isLoading && !items
-          ? (
-              <View testID="member-feed-loading" className="items-center py-16">
-                <ActivityIndicator />
-                <Text variant="body" className="mt-3 text-ink-variant">Loading your feed…</Text>
-              </View>
-            )
-          : null}
-        {!isLoading && contentState === 'empty'
-          ? <EmptyState testID="member-feed-empty" title={emptyCopy.title} body={emptyCopy.message || undefined} />
-          : null}
-        {!isLoading && contentState === 'unavailable'
-          ? (
-              <ErrorState
-                testID="member-feed-unavailable"
-                title="Feed unavailable"
-                body="Check your connection and try again."
-                onRetry={onRefresh}
-              />
-            )
-          : null}
-        {items?.map(item => (
-          <FeedItemRenderer
-            key={item.id}
-            item={item}
-            onOpen={onOpenPost}
-            onToggleLike={onToggleLike}
-            likePending={pendingLikePostId === item.id}
-            onVote={onVote}
-            votePending={item.poll ? pendingVotePollIds.includes(item.poll.id) : false}
-            onOpenStory={onOpenStory}
-          />
-        ))}
-      </View>
-    </ScrollView>
+        <View className="gap-3 px-4">
+          {contentState === 'saved'
+            ? (
+                <View className="rounded-lg bg-primary-fixed px-4 py-3">
+                  <Text variant="body-sm" className="font-sans-medium">Showing saved content</Text>
+                </View>
+              )
+            : null}
+          {isLoading && !items
+            ? (
+                <View testID="member-feed-loading" className="items-center py-16">
+                  <ActivityIndicator />
+                  <Text variant="body" className="mt-3 text-ink-variant">Loading your feed…</Text>
+                </View>
+              )
+            : null}
+          {!isLoading && contentState === 'empty'
+            ? <EmptyState testID="member-feed-empty" title={emptyCopy.title} body={emptyCopy.message || undefined} />
+            : null}
+          {!isLoading && contentState === 'unavailable'
+            ? (
+                <ErrorState
+                  testID="member-feed-unavailable"
+                  title="Feed unavailable"
+                  body="Check your connection and try again."
+                  onRetry={onRefresh}
+                />
+              )
+            : null}
+          {items?.map(item => (
+            <FeedItemRenderer
+              key={item.id}
+              item={item}
+              onOpen={onOpenPost}
+              onToggleLike={onToggleLike}
+              likePending={pendingLikePostId === item.id}
+              onVote={onVote}
+              votePending={item.poll ? pendingVotePollIds.includes(item.poll.id) : false}
+              onOpenStory={onOpenStory}
+            />
+          ))}
+        </View>
+      </AnimatedScrollView>
+      <CompactHeaderBar scrollY={scrollY} title="Community" testID="community-compact-header" />
+    </View>
   );
 }
 

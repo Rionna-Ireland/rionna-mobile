@@ -1,15 +1,27 @@
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import * as React from 'react';
 
+import { selection } from '@/lib/motion/haptics';
+
 import { cleanup, render, screen, setup } from '@/lib/test-utils';
 
 import colors from './colors';
 import { CustomTabBar } from './tab-bar';
+import { TAB_CENTRE_SIZE, TAB_SIZE, tabIndicatorOffsets } from './tab-bar-layout';
 
 jest.mock('./tab-bar-layout', () => ({
   ...jest.requireActual('./tab-bar-layout'),
   useTabBarBottomOffset: jest.fn(() => 34),
 }));
+
+jest.mock('@/lib/motion/haptics', () => ({
+  ...jest.requireActual('@/lib/motion/haptics'),
+  selection: jest.fn(),
+}));
+
+const OFFSETS = tabIndicatorOffsets(350, [TAB_SIZE, TAB_SIZE, TAB_CENTRE_SIZE, TAB_SIZE, TAB_SIZE]);
+
+beforeEach(() => jest.mocked(selection).mockClear());
 
 afterEach(cleanup);
 
@@ -49,11 +61,23 @@ describe('custom tab bar', () => {
     }
   });
 
-  it('fills the active tab navy and leaves inactive tabs clear', () => {
+  it('parks the single navy circle under the active tab', () => {
     const { props } = makeProps(1);
     render(<CustomTabBar {...props} />);
-    expect(screen.getByTestId('tab-stables')).toHaveStyle({ backgroundColor: colors.primary, width: 44, height: 44 });
+    const indicator = screen.getByTestId('tab-bar-indicator');
+    expect(indicator).toHaveStyle({ backgroundColor: colors.primary, width: 44, height: 44, borderRadius: 22 });
+    expect(indicator).toHaveStyle({ transform: [{ translateX: OFFSETS[1] }] });
+    expect(screen.getByTestId('tab-stables')).toHaveStyle({ width: 44, height: 44 });
     expect(screen.getByTestId('tab-index')).not.toHaveStyle({ backgroundColor: colors.primary });
+  });
+
+  it('slides the circle to the new tab when the active index changes', () => {
+    const first = makeProps(0);
+    const { rerender } = render(<CustomTabBar {...first.props} />);
+    expect(screen.getByTestId('tab-bar-indicator')).toHaveStyle({ transform: [{ translateX: OFFSETS[0] }] });
+    const next = makeProps(4);
+    rerender(<CustomTabBar {...next.props} />);
+    expect(screen.getByTestId('tab-bar-indicator')).toHaveStyle({ transform: [{ translateX: OFFSETS[4] }] });
   });
 
   it('always renders Community as the 52pt lilac circle, ringed when active', () => {
@@ -83,6 +107,7 @@ describe('custom tab bar', () => {
     await user.press(screen.getByTestId('tab-events'));
     expect(emit).toHaveBeenCalledWith(expect.objectContaining({ type: 'tabPress', target: 'events-key' }));
     expect(navigate).toHaveBeenCalledWith('events', undefined);
+    expect(selection).toHaveBeenCalledTimes(1);
   });
 
   it('does not navigate for the focused tab', async () => {
@@ -90,6 +115,7 @@ describe('custom tab bar', () => {
     const { user } = setup(<CustomTabBar {...focused.props} />);
     await user.press(screen.getByTestId('tab-index'));
     expect(focused.navigate).not.toHaveBeenCalled();
+    expect(selection).not.toHaveBeenCalled();
   });
 
   it('does not navigate when the press is prevented', async () => {
@@ -97,5 +123,6 @@ describe('custom tab bar', () => {
     const second = setup(<CustomTabBar {...prevented.props} />);
     await second.user.press(screen.getByTestId('tab-stables'));
     expect(prevented.navigate).not.toHaveBeenCalled();
+    expect(selection).not.toHaveBeenCalled();
   });
 });

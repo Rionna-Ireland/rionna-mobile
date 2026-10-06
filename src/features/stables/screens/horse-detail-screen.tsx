@@ -7,6 +7,7 @@ import Env from 'env';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
 import { ScrollView, Share, View } from 'react-native';
+import { useSharedValue } from 'react-native-reanimated';
 
 import {
   ActivityIndicator,
@@ -19,9 +20,11 @@ import {
   ScreenHeader,
 } from '@/components/ui';
 import { useScreenBottomPadding } from '@/components/ui/screen-layout';
+import { heroHandoffProgress } from '@/components/ui/scroll-header-math';
 import { useHorse } from '@/features/stables/api/use-horse';
 import { useFollowHorse } from '@/features/stables/api/use-horse-follow';
 import { useHorseUpdates } from '@/features/stables/api/use-horse-updates';
+import { HorseDetailBar, useHorseDetailBarMetrics } from '@/features/stables/components/horse-detail-bar';
 import { HorseHero } from '@/features/stables/components/horse-hero';
 import { HorseUpdatesTimeline } from '@/features/stables/components/horse-updates-timeline';
 import { RacingSection } from '@/features/stables/components/racing-section';
@@ -174,10 +177,15 @@ function HorseDetailBody({ horse, updates }: { horse: HorseDetail; updates: Hors
   // Light status bar over the photo; dark once the hero has scrolled away.
   const [heroHeight, setHeroHeight] = React.useState(0);
   const [pastHero, setPastHero] = React.useState(false);
+  // S14-02 §5: the pinned bar's white → ink handoff as the hero scrolls under it.
+  const barHeight = useHorseDetailBarMetrics().height;
+  const handoff = useSharedValue(0);
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     onScroll(event);
-    const next = heroHeight > 0 && event.nativeEvent.contentOffset.y > heroHeight - 60;
+    const y = event.nativeEvent.contentOffset.y;
+    const next = heroHeight > 0 && y > heroHeight - 60;
     setPastHero(prev => (prev === next ? prev : next));
+    handoff.set(heroHandoffProgress(y, heroHeight, barHeight));
   };
 
   // Wellbeing rows scroll to their update card in the Updates section.
@@ -230,6 +238,7 @@ function HorseDetailBody({ horse, updates }: { horse: HorseDetail; updates: Hors
             onToggleFollow={following => toggleFollow({ horseId: horse.id, following })}
             onBack={goBack}
             onShare={handleShare}
+            navBar={false}
           />
         </View>
 
@@ -262,6 +271,7 @@ function HorseDetailBody({ horse, updates }: { horse: HorseDetail; updates: Hors
           onDiscussion={handleDiscussion}
         />
       </ScrollView>
+      <HorseDetailBar horseName={horse.name} progress={handoff} onBack={goBack} onShare={handleShare} />
     </View>
   );
 }
