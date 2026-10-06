@@ -29,6 +29,12 @@ export type HorseHeroProps = {
   onToggleFollow: (following: boolean) => void;
   onBack: () => void;
   onShare: () => void;
+  /**
+   * Render the back/share row inside the hero (default). Horse detail passes
+   * `false` and pins its own `HorseDetailBar` over the hero instead (S14-02
+   * §5); the row's 44pt stays as a spacer so the layout doesn't move.
+   */
+  navBar?: boolean;
 };
 
 const BACK_ICON_STYLE = { transform: [{ rotate: '180deg' }] };
@@ -55,13 +61,43 @@ function HeroPhoto({ horse, onIndexChange }: { horse: HorseDetail; onIndexChange
   );
 }
 
+/** The white back/share row at the top of the hero. */
+function HeroNavRow({ horse, onBack, onShare }: Pick<HorseHeroProps, 'horse' | 'onBack' | 'onShare'>) {
+  return (
+    <View pointerEvents="box-none" className="h-11 flex-row items-center justify-between">
+      <Pressable
+        testID="horse-hero-back"
+        onPress={onBack}
+        accessibilityRole="button"
+        accessibilityLabel={translate('stables.detail.backA11y')}
+        hitSlop={12}
+        className="-ml-1 flex-row items-center gap-1.5"
+        style={({ pressed }) => (pressed ? styles.pressed : null)}
+      >
+        <CaretRightV2 size={18} color={colors.white} style={BACK_ICON_STYLE} />
+        <Text variant="body-sm" className="text-white">{translate('stables.detail.back')}</Text>
+      </Pressable>
+      <Pressable
+        testID="horse-hero-share"
+        onPress={onShare}
+        accessibilityRole="button"
+        accessibilityLabel={tx('stables.detail.shareA11y', { name: horse.name })}
+        hitSlop={12}
+        style={({ pressed }) => (pressed ? styles.pressed : null)}
+      >
+        <MonoLabel tone="white">{translate('stables.detail.share')}</MonoLabel>
+      </Pressable>
+    </View>
+  );
+}
+
 /**
  * Horse detail hero (S13-04 detail §1, Figma frame 7): full-bleed photo
  * under a light status bar with a navy scrim, white back/share bar, name,
  * ⏳profile line, trainer(, ⏳location), then the Declared/status pill and
  * the Follow toggle. Isolated so S14-05 can animate it.
  */
-export function HorseHero({ horse, declaredEntry, followPending = false, onToggleFollow, onBack, onShare }: HorseHeroProps) {
+export function HorseHero({ horse, declaredEntry, followPending = false, onToggleFollow, onBack, onShare, navBar = true }: HorseHeroProps) {
   const { width } = useWindowDimensions();
   const topPadding = useScreenTopPadding(4);
   const [photoIndex, setPhotoIndex] = React.useState(0);
@@ -78,30 +114,7 @@ export function HorseHero({ horse, declaredEntry, followPending = false, onToggl
         style={{ paddingTop: topPadding, minHeight: width }}
         className="justify-between gap-8 px-4 pb-8"
       >
-        <View pointerEvents="box-none" className="h-11 flex-row items-center justify-between">
-          <Pressable
-            testID="horse-hero-back"
-            onPress={onBack}
-            accessibilityRole="button"
-            accessibilityLabel={translate('stables.detail.backA11y')}
-            hitSlop={12}
-            className="-ml-1 flex-row items-center gap-1.5"
-            style={({ pressed }) => (pressed ? styles.pressed : null)}
-          >
-            <CaretRightV2 size={18} color={colors.white} style={BACK_ICON_STYLE} />
-            <Text variant="body-sm" className="text-white">{translate('stables.detail.back')}</Text>
-          </Pressable>
-          <Pressable
-            testID="horse-hero-share"
-            onPress={onShare}
-            accessibilityRole="button"
-            accessibilityLabel={tx('stables.detail.shareA11y', { name: horse.name })}
-            hitSlop={12}
-            style={({ pressed }) => (pressed ? styles.pressed : null)}
-          >
-            <MonoLabel tone="white">{translate('stables.detail.share')}</MonoLabel>
-          </Pressable>
-        </View>
+        {navBar ? <HeroNavRow horse={horse} onBack={onBack} onShare={onShare} /> : <View className="h-11" />}
 
         <View pointerEvents="box-none" className="gap-6">
           <View pointerEvents="none" className="gap-2">

@@ -76,6 +76,8 @@ type CompactHeaderBarProps = {
   title?: string;
   /** Interactive content in the 44pt row (e.g. Horse detail's back/share). */
   children?: React.ReactNode;
+  /** Top of the 44pt row; defaults to the status-bar inset. */
+  topInset?: number;
   testID?: string;
 };
 
@@ -87,8 +89,9 @@ function barProgress(progress?: SharedValue<number>, scrollY?: SharedValue<numbe
 }
 
 /** Fixed compact bar over the top of a scrolling screen: status-bar scrim + 44pt row. */
-export function CompactHeaderBar({ progress, scrollY, title, children, testID }: CompactHeaderBarProps) {
-  const top = useScreenTopPadding(0);
+export function CompactHeaderBar({ progress, scrollY, title, children, topInset, testID }: CompactHeaderBarProps) {
+  const safeTop = useScreenTopPadding(0);
+  const top = topInset ?? safeTop;
   const chromeStyle = useAnimatedStyle(() => ({ opacity: barProgress(progress, scrollY) }));
   const titleStyle = useAnimatedStyle(() => ({ opacity: compactTitleOpacity(barProgress(progress, scrollY)) }));
 
