@@ -18,15 +18,25 @@ import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { CharityCard } from '@/features/home/components/charity-card';
 import { HeroCarousel } from '@/features/home/components/hero-carousel';
+import {
+  CharitySkeleton,
+  HeroSkeleton,
+  HomeBlock,
+  InsideTrackSkeleton,
+  MyHorsesSkeleton,
+  UpcomingEventSkeleton,
+} from '@/features/home/components/home-skeletons';
 import { InsideTrackCard } from '@/features/home/components/inside-track-card';
 import { MyHorsesCard } from '@/features/home/components/my-horses-card';
 import { NotificationsBell } from '@/features/home/components/notifications-bell';
 import { UpcomingEventCard } from '@/features/home/components/upcoming-event-card';
 import { YardChipsRow } from '@/features/home/components/yard-chips-row';
+import { pickInsideTrackTeaser } from '@/features/home/lib/card-helpers';
 import { greeting } from '@/features/home/lib/greeting';
 import { buildHeroSlides } from '@/features/home/lib/hero-slides';
 import { useHomeQueries } from '@/features/home/lib/use-home-queries';
 import { buildYardChips, countEventsThisWeek, raceDayHorseIds } from '@/features/home/lib/yard-chips';
+import { isFirstLoad, SkeletonSwap } from '@/lib/motion';
 
 const GUTTER = 16;
 
@@ -83,6 +93,47 @@ function HomeHeaderRight({ scope, name }: { scope: { organizationId: string; mem
   );
 }
 
+type HomeBlocksProps = {
+  q: HomeQueries;
+  slides: ReturnType<typeof useHomeModel>['slides'];
+  now: Date;
+  heroWidth: number;
+};
+
+/** The Home cards, each skeleton-first on a cold start (S14-03 §1), cached data straight away. */
+function HomeBlocks({ q, slides, now, heroWidth }: HomeBlocksProps) {
+  const heroLoading = slides.length === 0 && [q.nextRun, q.news, q.results].some(isFirstLoad);
+  return (
+    <>
+      <SkeletonSwap loading={heroLoading} skeleton={<HeroSkeleton width={heroWidth} />}>
+        {slides.length > 0 ? <HeroCarousel slides={slides} width={heroWidth} /> : null}
+      </SkeletonSwap>
+      <HomeBlock loading={isFirstLoad(q.followedHorses)} skeleton={<MyHorsesSkeleton />} visible entranceIndex={0}>
+        {i => <MyHorsesCard horses={q.followedHorses.data} isLoading={q.followedHorses.isLoading} entranceIndex={i} />}
+      </HomeBlock>
+      <HomeBlock
+        loading={isFirstLoad(q.insideTrack)}
+        skeleton={<InsideTrackSkeleton />}
+        visible={Boolean(pickInsideTrackTeaser(q.insideTrack.data))}
+        entranceIndex={1}
+      >
+        {i => <InsideTrackCard data={q.insideTrack.data} now={now} entranceIndex={i} />}
+      </HomeBlock>
+      <HomeBlock loading={isFirstLoad(q.charity)} skeleton={<CharitySkeleton />} visible={Boolean(q.charity.data?.charity)} entranceIndex={2}>
+        {i => <CharityCard data={q.charity.data} entranceIndex={i} />}
+      </HomeBlock>
+      <HomeBlock
+        loading={isFirstLoad(q.upcomingEvents)}
+        skeleton={<UpcomingEventSkeleton />}
+        visible={Boolean(q.upcomingEvents.data?.events[0])}
+        entranceIndex={3}
+      >
+        {i => <UpcomingEventCard data={q.upcomingEvents.data} entranceIndex={i} />}
+      </HomeBlock>
+    </>
+  );
+}
+
 export function HomeScreen() {
   const user = useAuthStore.use.user();
   const { width } = useWindowDimensions();
@@ -121,11 +172,7 @@ export function HomeScreen() {
           </Text>
           <View className="gap-3">
             <YardChipsRow chips={chips} />
-            <HeroCarousel slides={slides} width={width - GUTTER * 2} />
-            <MyHorsesCard horses={q.followedHorses.data} isLoading={q.followedHorses.isLoading} entranceIndex={0} />
-            <InsideTrackCard data={q.insideTrack.data} now={now} entranceIndex={1} />
-            <CharityCard data={q.charity.data} entranceIndex={2} />
-            <UpcomingEventCard data={q.upcomingEvents.data} entranceIndex={3} />
+            <HomeBlocks q={q} slides={slides} now={now} heroWidth={width - GUTTER * 2} />
           </View>
         </View>
       </AnimatedScrollView>

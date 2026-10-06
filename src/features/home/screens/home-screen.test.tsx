@@ -31,8 +31,18 @@ jest.mock('@/features/auth/use-auth-store', () => ({
   useAuthStore: { use: { user: () => mockUser } },
 }));
 
+const mockPending = new Set<unknown>();
+/** A query whose `data` is in `mockPending` is a cold first load: pending AND fetching, no data. */
 function mockQuery(data: unknown) {
-  return { data, isLoading: false, isRefetching: false, refetch: jest.fn() };
+  const cold = mockPending.has(data);
+  return {
+    data: cold ? undefined : data,
+    isPending: cold || data === undefined,
+    isFetching: cold,
+    isLoading: cold,
+    isRefetching: false,
+    refetch: jest.fn(),
+  };
 }
 
 const mockData: Record<string, unknown> = {};
@@ -63,6 +73,7 @@ describe('homeScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     reset();
+    mockPending.clear();
     mockUser = { id: 'member-1', email: 'jane@example.com', name: 'Jane Member' };
   });
 
@@ -145,5 +156,39 @@ describe('homeScreen', () => {
     expect(screen.getByTestId('home-inside-track-new')).toBeOnTheScreen();
     fireEvent.press(screen.getByTestId('home-inside-track'));
     expect(mockPush).toHaveBeenCalledWith('/post/s1/p1');
+  });
+});
+
+describe('homeScreen skeletons', () => {
+  beforeEach(() => {
+    reset();
+    mockPending.clear();
+  });
+
+  it('shows block skeletons only on a cold first load, then crossfades in the cards', () => {
+    const followed = [{ id: 'h1', name: 'Ashfield Rose', photos: [] }];
+    mockData.followed = followed;
+    mockData.news = news;
+    mockPending.add(followed);
+    mockPending.add(news);
+    const { rerender } = render(<HomeScreen />);
+    expect(screen.getByTestId('home-my-horses-skeleton')).toBeOnTheScreen();
+    expect(screen.getByTestId('home-hero-skeleton')).toBeOnTheScreen();
+    expect(screen.queryByTestId('home-my-horses')).not.toBeOnTheScreen();
+    // Not loading (no fetch running) → no skeleton for charity/events/inside track.
+    expect(screen.queryByTestId('home-charity-skeleton')).not.toBeOnTheScreen();
+
+    mockPending.clear();
+    rerender(<HomeScreen />);
+    expect(screen.queryByTestId('home-my-horses-skeleton')).not.toBeOnTheScreen();
+    expect(screen.getByTestId('home-my-horses')).toBeOnTheScreen();
+    expect(screen.getByTestId('home-hero')).toBeOnTheScreen();
+  });
+
+  it('cached data renders straight away with no skeleton', () => {
+    mockData.followed = [{ id: 'h1', name: 'Ashfield Rose', photos: [] }];
+    render(<HomeScreen />);
+    expect(screen.queryByTestId('home-my-horses-skeleton')).not.toBeOnTheScreen();
+    expect(screen.getByTestId('home-my-horses')).toBeOnTheScreen();
   });
 });
