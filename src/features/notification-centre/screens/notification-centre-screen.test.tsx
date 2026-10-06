@@ -13,6 +13,8 @@ const mockRouteToTarget = jest.fn();
 let mockInbox: {
   data: { pages: { items: InboxItem[] }[] } | undefined;
   isLoading: boolean;
+  isPending?: boolean;
+  isFetching?: boolean;
   isError: boolean;
   isRefetching: boolean;
   isFetchingNextPage: boolean;
@@ -105,9 +107,10 @@ describe('notificationCentreScreen', () => {
   });
 
   it('shows the loading state', () => {
-    mockInbox = baseInbox({ isLoading: true, data: undefined });
+    mockInbox = baseInbox({ isLoading: true, isPending: true, isFetching: true, data: undefined });
     render(<NotificationCentreScreen />);
     expect(screen.getByTestId('inbox-loading')).toBeOnTheScreen();
+    expect(screen.queryByTestId('inbox-empty')).toBeNull();
   });
 
   it('shows the unavailable state on error without data', () => {

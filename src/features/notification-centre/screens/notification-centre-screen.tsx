@@ -3,7 +3,7 @@ import type { InboxItem } from '@/features/notification-centre/types';
 import Env from 'env';
 import { useFocusEffect } from 'expo-router';
 import * as React from 'react';
-import { RefreshControl, SectionList, View } from 'react-native';
+import { RefreshControl, SectionList, StyleSheet, View } from 'react-native';
 
 import Animated from 'react-native-reanimated';
 
@@ -20,7 +20,9 @@ import { PreferencesCard } from '@/features/notification-centre/components/prefe
 import { groupInboxSections } from '@/features/notification-centre/lib/sections';
 import { isPushData, routeToTarget } from '@/features/notifications/deep-link';
 import { PageHeader } from '@/features/settings/components/page-header';
-import { EntranceItem, useFirstLoadEntrance } from '@/lib/motion';
+import { EntranceItem, isFirstLoad, SkeletonSwap, useContentEntrance } from '@/lib/motion';
+
+const styles = StyleSheet.create({ fill: { flex: 1 } });
 
 const AnimatedSectionList = Animated.createAnimatedComponent(SectionList<InboxItem>);
 
@@ -42,8 +44,9 @@ function ItemGap() {
  * First-load entrance keyed by row id, staggered across sections in display
  * order. Rows from later pages, refreshes or scroll-in mounts enter instantly.
  */
-function useRowEntrance(sections: { data: InboxItem[] }[]) {
-  const entering = useFirstLoadEntrance(sections.length > 0);
+function useRowEntrance(sections: { data: InboxItem[] }[], skeletonShowing: boolean) {
+  // After a skeleton, its crossfade is the entrance (S14-03).
+  const entering = useContentEntrance(sections.length > 0, skeletonShowing);
   const rowIndex = React.useMemo(
     () => new Map(sections.flatMap(section => section.data).map((item, i) => [item.id, i])),
     [sections],
@@ -68,7 +71,8 @@ export function NotificationCentreScreen() {
 
   const items = React.useMemo(() => inbox.data?.pages.flatMap(page => page.items) ?? [], [inbox.data]);
   const sections = React.useMemo(() => groupInboxSections(items, new Date()), [items]);
-  const enteringFor = useRowEntrance(sections);
+  const isLoading = isFirstLoad(inbox) && !inbox.data;
+  const enteringFor = useRowEntrance(sections, isLoading);
 
   const markSeenMutate = markSeen.mutate;
   useFocusEffect(React.useCallback(() => {
@@ -82,16 +86,12 @@ export function NotificationCentreScreen() {
       routeToTarget(item.data);
   }, [markRead]);
 
-  const isLoading = inbox.isLoading && !inbox.data;
   const isUnavailable = inbox.isError && !inbox.data;
   const hasUnread = items.some(item => item.unread);
   const toggleMenu = React.useCallback(() => setMenuOpen(open => !open), []);
 
   let body: React.ReactNode;
-  if (isLoading) {
-    body = <InboxLoading />;
-  }
-  else if (isUnavailable || items.length === 0) {
+  if (isUnavailable || items.length === 0) {
     body = (
       <AnimatedScrollView contentContainerClassName="gap-4 px-4 pt-6 pb-10" onScroll={onScroll} scrollEventThrottle={16}>
         {isUnavailable
@@ -147,7 +147,9 @@ export function NotificationCentreScreen() {
         scrollY={scrollY}
         right={hasUnread ? <MenuButton onPress={toggleMenu} expanded={menuOpen} /> : undefined}
       />
-      {body}
+      <SkeletonSwap loading={isLoading} skeleton={<InboxLoading />} style={styles.fill}>
+        {body}
+      </SkeletonSwap>
       {menuOpen && hasUnread
         ? (
             <MenuSheet
