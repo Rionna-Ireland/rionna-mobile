@@ -32,10 +32,11 @@ const TILE_PLUM: TileSpec = { kind: 'gem', colourway: 'plum', turn: 0 };
 const TILE_NAVY: TileSpec = { kind: 'gem', colourway: 'navy', turn: 0 };
 const TILE_GREEN: TileSpec = { kind: 'gem', colourway: 'green', turn: 0 };
 
+/** Frame 12: a 40pt tile, r6. */
 function RowIcon({ spec }: { spec: TileSpec }) {
   return (
-    <View className="size-12 overflow-hidden rounded-lg">
-      <PatternTile spec={spec} size={48} />
+    <View className="size-10 overflow-hidden rounded-md">
+      <PatternTile spec={spec} size={40} />
     </View>
   );
 }
@@ -52,7 +53,7 @@ type HubRowProps = {
 
 function HubRow({ title, subtitle, spec, onPress, comingSoon, subtitleLoading = false }: HubRowProps) {
   const body = (
-    <Card className="min-h-[72px] flex-row items-center gap-4" style={comingSoon ? { opacity: 0.6 } : undefined}>
+    <Card className="min-h-[72px] flex-row items-center gap-4">
       <RowIcon spec={spec} />
       <View className="flex-1">
         <View className="flex-row flex-wrap items-center gap-2">
