@@ -7,7 +7,7 @@ import { useRouter } from 'expo-router';
 import * as React from 'react';
 import { RefreshControl, StyleSheet, View } from 'react-native';
 
-import { ActivityIndicator, EmptyState, ErrorState, Gradient, Text } from '@/components/ui';
+import { EmptyState, ErrorState, Gradient, Text } from '@/components/ui';
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { AnimatedScrollView, CollapsingTitle, CompactHeaderBar, useScrollHeader } from '@/components/ui/scroll-header';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
@@ -20,11 +20,12 @@ import { AnnouncementCarousel } from '@/features/member-content/components/annou
 import { FeaturedCard } from '@/features/member-content/components/featured-card';
 import { FeedChipRow } from '@/features/member-content/components/feed-chip-row';
 import { FeedItemRenderer } from '@/features/member-content/components/feed-item-renderer';
+import { FeedSkeleton } from '@/features/member-content/components/feed-skeletons';
 import { announcementSpaceIdsFromChips, selectAnnouncements } from '@/features/member-content/lib/announcements';
 import { chipToFilter } from '@/features/member-content/lib/chip-filter';
 import { useFeedChipSelection } from '@/features/member-content/lib/use-feed-chip-selection';
 import { usePollVote } from '@/features/polls/api/use-poll-vote';
-import { EntranceItem, useFirstLoadEntrance } from '@/lib/motion';
+import { EntranceItem, isFirstLoad, SkeletonSwap, useContentEntrance } from '@/lib/motion';
 
 type CommunityFeedViewProps = {
   items: MemberFeedItem[] | undefined;
@@ -105,7 +106,8 @@ export function CommunityFeedView({
   );
   const { scrollY, onScroll } = useScrollHeader();
   // First load only; chip switches, refetches and refreshes mount rows instantly.
-  const entering = useFirstLoadEntrance(Boolean(items?.length));
+  // After a skeleton, its crossfade is the entrance (S14-03).
+  const entering = useContentEntrance(Boolean(items?.length), isLoading && !items);
 
   return (
     <View className="flex-1">
@@ -144,14 +146,6 @@ export function CommunityFeedView({
                 </View>
               )
             : null}
-          {isLoading && !items
-            ? (
-                <View testID="member-feed-loading" className="items-center py-16">
-                  <ActivityIndicator />
-                  <Text variant="body" className="mt-3 text-ink-variant">Loading your feed…</Text>
-                </View>
-              )
-            : null}
           {!isLoading && contentState === 'empty'
             ? <EmptyState testID="member-feed-empty" title={emptyCopy.title} body={emptyCopy.message || undefined} />
             : null}
@@ -165,19 +159,23 @@ export function CommunityFeedView({
                 />
               )
             : null}
-          {items?.map((item, i) => (
-            <EntranceItem key={item.id} entering={entering(i)}>
-              <FeedItemRenderer
-                item={item}
-                onOpen={onOpenPost}
-                onToggleLike={onToggleLike}
-                likePending={pendingLikePostId === item.id}
-                onVote={onVote}
-                votePending={item.poll ? pendingVotePollIds.includes(item.poll.id) : false}
-                onOpenStory={onOpenStory}
-              />
-            </EntranceItem>
-          ))}
+          <SkeletonSwap loading={isLoading && !items} skeleton={<FeedSkeleton />} style={styles.posts}>
+            {items?.length
+              ? items.map((item, i) => (
+                  <EntranceItem key={item.id} entering={entering(i)}>
+                    <FeedItemRenderer
+                      item={item}
+                      onOpen={onOpenPost}
+                      onToggleLike={onToggleLike}
+                      likePending={pendingLikePostId === item.id}
+                      onVote={onVote}
+                      votePending={item.poll ? pendingVotePollIds.includes(item.poll.id) : false}
+                      onOpenStory={onOpenStory}
+                    />
+                  </EntranceItem>
+                ))
+              : null}
+          </SkeletonSwap>
         </View>
       </AnimatedScrollView>
       <CompactHeaderBar scrollY={scrollY} title="Community" testID="community-compact-header" />
@@ -204,7 +202,7 @@ function SignedInCommunityFeed({ member }: { member: AuthUser }) {
       <CommunityFeedView
         items={feed.data}
         contentState={feed.contentState}
-        isLoading={feed.isLoading}
+        isLoading={isFirstLoad(feed)}
         isRefetching={feed.isRefetching}
         onRefresh={() => void feed.refetch()}
         onOpenPost={(spaceId, postId) => router.push(
@@ -224,6 +222,8 @@ function SignedInCommunityFeed({ member }: { member: AuthUser }) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({ posts: { gap: 12 } });
 
 export function CommunityFeedScreen() {
   const member = useAuthStore.use.user();
