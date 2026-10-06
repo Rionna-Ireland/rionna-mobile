@@ -23,7 +23,8 @@ const iconButton = tv({
       'circle': 'size-8 rounded-full bg-ice-light',
       'circle-light': 'size-11 rounded-full bg-surface',
     },
-    disabled: { true: 'opacity-40' },
+    // Disabled dimming lives in MotionPressable (A-003).
+    disabled: { true: '' },
   },
   defaultVariants: { variant: 'square', disabled: false },
 });

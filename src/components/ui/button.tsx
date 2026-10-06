@@ -45,8 +45,9 @@ const button = tv({
       md: { container: 'h-[30px] rounded-md px-4', label: 'font-sans-semibold' },
       sm: { container: 'h-[27px] rounded-sm px-3', label: 'font-sans-semibold' },
     },
+    // Disabled dimming lives in MotionPressable (A-003): one source, both platforms.
     disabled: {
-      true: { container: 'opacity-40' },
+      true: { container: '' },
     },
     fullWidth: {
       true: { container: '' },

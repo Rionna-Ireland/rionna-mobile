@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import * as React from 'react';
-import { Platform, Text } from 'react-native';
+import { Platform, StyleSheet, Text } from 'react-native';
 import { useReducedMotion, withSpring } from 'react-native-reanimated';
 
 import { springs } from '@/lib/motion';
@@ -84,5 +84,33 @@ describe('motionPressable', () => {
     expect(withSpring).not.toHaveBeenCalled();
     expect(ripples()[0]).toEqual({ color: RIPPLE_COLOR, borderless: false });
     expect(RIPPLE_COLOR).toMatch(/1f$/);
+  });
+
+  describe('disabled opacity (A-003)', () => {
+    const opacityOf = () => StyleSheet.flatten(screen.getByTestId('press').props.style)?.opacity;
+
+    it('dims to 0.4 on iOS, where the animated style sits last', () => {
+      Platform.OS = 'ios';
+      setup({ disabled: true, style: { opacity: 1 } });
+      expect(opacityOf()).toBe(0.4);
+    });
+
+    it('dims to 0.4 on Android', () => {
+      Platform.OS = 'android';
+      setup({ disabled: true });
+      expect(opacityOf()).toBe(0.4);
+    });
+
+    it('stays at full opacity when enabled', () => {
+      Platform.OS = 'ios';
+      setup({ disabled: false });
+      expect(opacityOf()).toBe(1);
+    });
+
+    it('leaves opacity to the caller when it manages neither disabled nor pressedOpacity', () => {
+      Platform.OS = 'ios';
+      setup({ style: { opacity: 0.6 } });
+      expect(opacityOf()).toBe(0.6);
+    });
   });
 });

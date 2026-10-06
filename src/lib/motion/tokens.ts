@@ -142,6 +142,11 @@ export function staggerDelay(index: number): number {
 export const pressScale = 0.97;
 /** Chips, icon buttons and other small targets press deeper. */
 export const pressScaleSmall = 0.94;
+/**
+ * Disabled controls dim to this opacity. `MotionPressable` owns it (one source:
+ * no `opacity-40` classes), fading on `timings.quick` when `disabled` flips.
+ */
+export const disabledOpacity = 0.4;
 /** Like heart: pops from this scale back to 1 on the `snappy` spring. */
 export const popScale = 0.85;
 

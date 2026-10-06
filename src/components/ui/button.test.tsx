@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
 import { cleanup, render, screen, setup } from '@/lib/test-utils';
 
@@ -167,8 +167,16 @@ describe('button v2 variants', () => {
     render(<Button testID="button" size="sm" label="Small" />);
     expect(screen.getByTestId('button').props.hitSlop).toEqual({ top: 9, bottom: 9 });
   });
-  it('dims when disabled', () => {
+  it('renders at 40% opacity when disabled (A-003: the animated style must not win)', () => {
     render(<Button testID="button" label="Submit" disabled />);
-    expect(screen.getByTestId('button').props.className).toContain('opacity-40');
+    expect(StyleSheet.flatten(screen.getByTestId('button').props.style).opacity).toBe(0.4);
+  });
+  it('renders at full opacity when enabled', () => {
+    render(<Button testID="button" label="Submit" />);
+    expect(StyleSheet.flatten(screen.getByTestId('button').props.style).opacity).toBe(1);
+  });
+  it('dims while loading', () => {
+    render(<Button testID="button" label="Submit" loading />);
+    expect(StyleSheet.flatten(screen.getByTestId('button').props.style).opacity).toBe(0.4);
   });
 });

@@ -1,10 +1,10 @@
 import type { GestureResponderEvent, PressableProps, StyleProp, View, ViewStyle } from 'react-native';
 import type { HapticIntent } from '@/lib/motion';
 import * as React from 'react';
-import { Platform, Pressable } from 'react-native';
+import { Platform, Pressable, StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
-import { durations, haptics, pressScale, pressScaleSmall, springs, useMotion } from '@/lib/motion';
+import { disabledOpacity, durations, haptics, pressScale, pressScaleSmall, springs, timings, useMotion } from '@/lib/motion';
 
 import colors from './colors';
 import { withAlpha } from './gradient-styles';
@@ -30,13 +30,31 @@ export type MotionPressableProps = Omit<PressableProps, 'style'> & {
   ref?: React.Ref<View>;
 };
 
-function usePressFeedback(enabled: boolean, scaleTo: number, pressedOpacity?: number) {
+type FeedbackOptions = {
+  enabled: boolean;
+  scaleTo: number;
+  pressedOpacity?: number;
+  /** `undefined` = the caller doesn't manage disabled: opacity stays theirs. */
+  disabled?: boolean | null;
+};
+
+/**
+ * iOS press feedback. Opacity is only emitted when the primitive owns it
+ * (`pressedOpacity` or a `disabled` prop): otherwise an animated `opacity: 1`
+ * would beat the caller's className opacity (A-003: disabled buttons looked
+ * enabled). Disabled folds into the resting opacity and fades on `quick`.
+ */
+function usePressFeedback({ enabled, scaleTo, pressedOpacity, disabled }: FeedbackOptions) {
+  const ownsOpacity = pressedOpacity !== undefined || (disabled !== undefined && disabled !== null);
+  const rest = disabled ? disabledOpacity : 1;
   const scale = useSharedValue(1);
-  const opacity = useSharedValue(1);
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.get(),
-    transform: [{ scale: scale.get() }],
-  }));
+  const opacity = useSharedValue(rest);
+  React.useEffect(() => {
+    opacity.set(withTiming(rest, timings.quick));
+  }, [rest, opacity]);
+  const animatedStyle = useAnimatedStyle(() => (ownsOpacity
+    ? { opacity: opacity.get(), transform: [{ scale: scale.get() }] }
+    : { transform: [{ scale: scale.get() }] }));
   const pressIn = React.useCallback(() => {
     if (!enabled)
       return;
@@ -48,8 +66,8 @@ function usePressFeedback(enabled: boolean, scaleTo: number, pressedOpacity?: nu
     if (!enabled)
       return;
     scale.set(withSpring(1, springs.snappy));
-    opacity.set(withTiming(1, { duration: durations.instant }));
-  }, [enabled, scale, opacity]);
+    opacity.set(withTiming(rest, { duration: durations.instant }));
+  }, [enabled, rest, scale, opacity]);
   return { animatedStyle, pressIn, pressOut };
 }
 
@@ -58,6 +76,7 @@ function usePressFeedback(enabled: boolean, scaleTo: number, pressedOpacity?: nu
  * `snappy` spring (+ optional pressed opacity); Reduce Motion drops the scale.
  * Android: a bounded `android_ripple` in ink @ 12%, no scale (Material idiom).
  * Add `overflow-hidden` + a radius for the ripple to follow rounded corners.
+ * `disabled` dims to `disabledOpacity` on both platforms (A-003).
  *
  * Exported as `MotionPressable` because `@/components/ui` already re-exports
  * RN's `Pressable`. S14-02 swaps it into Button, Chip, Card, IconButton, etc.
@@ -71,12 +90,13 @@ export function MotionPressable({
   onPressIn,
   onPressOut,
   android_ripple,
+  disabled,
   ...props
 }: MotionPressableProps) {
   const { reduceMotion } = useMotion();
   const isAndroid = Platform.OS === 'android';
   const scaleTo = reduceMotion || size === 'flat' ? 1 : size === 'small' ? pressScaleSmall : pressScale;
-  const feedback = usePressFeedback(!isAndroid, scaleTo, pressedOpacity);
+  const feedback = usePressFeedback({ enabled: !isAndroid, scaleTo, pressedOpacity, disabled });
 
   const handlePress = (e: GestureResponderEvent) => {
     if (haptic)
@@ -87,6 +107,7 @@ export function MotionPressable({
   return (
     <AnimatedPressable
       {...props}
+      disabled={disabled}
       onPress={handlePress}
       onPressIn={(e) => {
         feedback.pressIn();
@@ -97,7 +118,11 @@ export function MotionPressable({
         onPressOut?.(e);
       }}
       android_ripple={isAndroid ? (android_ripple ?? { color: RIPPLE_COLOR, borderless: false }) : undefined}
-      style={isAndroid ? style : [style, feedback.animatedStyle]}
+      style={isAndroid ? [style, disabled ? styles.disabled : null] : [style, feedback.animatedStyle]}
     />
   );
 }
+
+const styles = StyleSheet.create({
+  disabled: { opacity: disabledOpacity },
+});
