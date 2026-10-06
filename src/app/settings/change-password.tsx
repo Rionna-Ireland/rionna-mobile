@@ -1,3 +1,4 @@
+import type { TextInput, TextInputProps } from 'react-native';
 import { useForm } from '@tanstack/react-form';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
@@ -13,37 +14,47 @@ import {
   View,
 } from '@/components/ui';
 import { getFieldError } from '@/components/ui/form-utils';
+import { describeAuthError } from '@/features/auth/lib/auth-error';
 import { PageHeader } from '@/features/settings/components/page-header';
 import { client } from '@/lib/api/client';
 import { translate } from '@/lib/i18n';
 
 const schema = z
   .object({
-    currentPassword: z.string().min(1, 'Required'),
-    newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+    currentPassword: z.string().min(1, translate('auth.login.passwordRequired')),
+    newPassword: z.string().min(8, translate('settings.changePassword.tooShort')),
     confirmPassword: z.string(),
   })
   .refine(data => data.newPassword === data.confirmPassword, {
-    message: 'New passwords don\'t match',
+    message: translate('settings.changePassword.mismatch'),
     path: ['confirmPassword'],
   });
 
-function PasswordField({
-  form,
-  name,
-  labelKey,
-}: {
+type PasswordFieldProps = Pick<TextInputProps, 'returnKeyType' | 'onSubmitEditing' | 'submitBehavior'> & {
   form: any;
   name: 'currentPassword' | 'newPassword' | 'confirmPassword';
   labelKey: Parameters<typeof translate>[0];
-}) {
+  ref?: React.Ref<TextInput | null>;
+};
+
+/** iOS AutoFill: the current password fills in; the new ones get a strong-password suggestion (A-008). */
+const AUTOFILL = {
+  currentPassword: { autoComplete: 'current-password', textContentType: 'password' },
+  newPassword: { autoComplete: 'new-password', textContentType: 'newPassword', passwordRules: 'minlength: 8;' },
+  confirmPassword: { autoComplete: 'new-password', textContentType: 'newPassword', passwordRules: 'minlength: 8;' },
+} as const satisfies Record<PasswordFieldProps['name'], TextInputProps>;
+
+function PasswordField({ form, name, labelKey, ref, ...keyboard }: PasswordFieldProps) {
   return (
     <form.Field
       name={name}
       children={(field: any) => (
         <Input
+          ref={ref}
           label={translate(labelKey)}
           secureTextEntry
+          {...AUTOFILL[name]}
+          {...keyboard}
           value={field.state.value}
           onBlur={field.handleBlur}
           onChangeText={field.handleChange}
@@ -58,6 +69,8 @@ export default function ChangePasswordScreen() {
   const router = useRouter();
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState(false);
+  const newRef = React.useRef<TextInput>(null);
+  const confirmRef = React.useRef<TextInput>(null);
 
   const form = useForm({
     defaultValues: { currentPassword: '', newPassword: '', confirmPassword: '' },
@@ -73,12 +86,8 @@ export default function ChangePasswordScreen() {
         setSuccess(true);
         setTimeout(() => router.back(), 800);
       }
-      catch (e: any) {
-        const message
-          = e.response?.data?.message
-            ?? e.response?.data?.error
-            ?? 'Password change failed.';
-        setError(message);
+      catch (e) {
+        setError(describeAuthError(e, 'changePassword'));
       }
     },
   });
@@ -106,9 +115,31 @@ export default function ChangePasswordScreen() {
               )}
 
               <View>
-                <PasswordField form={form} name="currentPassword" labelKey="settings.changePassword.current" />
-                <PasswordField form={form} name="newPassword" labelKey="settings.changePassword.new" />
-                <PasswordField form={form} name="confirmPassword" labelKey="settings.changePassword.confirm" />
+                <PasswordField
+                  form={form}
+                  name="currentPassword"
+                  labelKey="settings.changePassword.current"
+                  returnKeyType="next"
+                  submitBehavior="submit"
+                  onSubmitEditing={() => newRef.current?.focus()}
+                />
+                <PasswordField
+                  ref={newRef}
+                  form={form}
+                  name="newPassword"
+                  labelKey="settings.changePassword.new"
+                  returnKeyType="next"
+                  submitBehavior="submit"
+                  onSubmitEditing={() => confirmRef.current?.focus()}
+                />
+                <PasswordField
+                  ref={confirmRef}
+                  form={form}
+                  name="confirmPassword"
+                  labelKey="settings.changePassword.confirm"
+                  returnKeyType="go"
+                  onSubmitEditing={() => void form.handleSubmit()}
+                />
                 <form.Subscribe
                   selector={state => [state.isSubmitting, state.canSubmit]}
                   children={([isSubmitting, canSubmit]) => (

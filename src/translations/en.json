@@ -1,4 +1,29 @@
 {
+  "auth": {
+    "errors": {
+      "changePasswordCredentials": "Your current password isn’t right. Try again.",
+      "deleteAccountCredentials": "That password isn’t right. Try again.",
+      "offline": "You’re offline. Check your connection and try again.",
+      "server": "Something went wrong on our side. Try again in a moment.",
+      "signInCredentials": "That email and password don’t match. Try again, or reset your password.",
+      "tooManyAttempts": "Too many attempts. Wait a minute and try again."
+    },
+    "login": {
+      "email": "Email",
+      "emailInvalid": "Invalid email format",
+      "emailRequired": "Email is required",
+      "forgotPassword": "Forgot password?",
+      "noAccount": "Don’t have an account? ",
+      "password": "Password",
+      "passwordRequired": "Password is required",
+      "passwordTooShort": "Password must be at least 6 characters",
+      "signUpLink": "Rionna.com",
+      "submit": "Sign In",
+      "titleLead": "Not ",
+      "titleRest": "just for the few.",
+      "welcome": "Welcome to Rionna, a new way into racing."
+    }
+  },
   "common": {
     "back": "Back",
     "errorTitle": "Something went wrong",
