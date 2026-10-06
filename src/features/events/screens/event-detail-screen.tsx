@@ -1,3 +1,4 @@
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import type { TileSpec } from '@/components/brand/pattern';
 import type { AddToCalendarOutcome } from '@/features/events/lib/add-to-calendar';
 import type { ReminderOutcome } from '@/features/events/lib/event-reminders';
@@ -6,11 +7,10 @@ import type { ClubEvent } from '@/features/events/types';
 import Env from 'env';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
-import { Linking, Share, StyleSheet, Switch } from 'react-native';
+import { Alert, Linking, Share, StyleSheet, Switch } from 'react-native';
 
 import { PatternFill } from '@/components/brand/pattern';
 import {
-  ActivityIndicator,
   Button,
   Card,
   FocusAwareStatusBar,
@@ -30,6 +30,7 @@ import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { RsvpError, useEventRsvp } from '@/features/events/api/use-event-rsvp';
 import { findEventById, useEvents } from '@/features/events/api/use-events';
+import { EventDetailSkeleton } from '@/features/events/components/events-skeletons';
 import { addEventToDeviceCalendar } from '@/features/events/lib/add-to-calendar';
 import { rsvpButtonState } from '@/features/events/lib/calendar-grid';
 import { useEventReminder } from '@/features/events/lib/event-reminders';
@@ -38,7 +39,7 @@ import { CircleTiptapRenderer } from '@/features/member-content/components/circl
 import { hydrateCircleDoc } from '@/features/member-content/tiptap/hydrate';
 import { circleDocHasContent } from '@/features/member-content/tiptap/native-support';
 import { translate } from '@/lib/i18n';
-import { haptics } from '@/lib/motion';
+import { haptics, SkeletonSwap } from '@/lib/motion';
 import { openExternalLink } from '@/lib/open-external-link';
 
 const CALENDAR_OUTCOME_KEY = {
@@ -57,6 +58,24 @@ const BACK_ICON_STYLE = { transform: [{ rotate: '180deg' }] };
 const HEADER_OVERLAY = { backgroundColor: colors.plumMid, opacity: 0.6 };
 const PLUM_PATTERN: TileSpec = { kind: 'harlequin', colourway: 'plum', turn: 0 };
 
+/** "‹ Events" in white over the header band (also on the loading skeleton). */
+function HeaderBack({ onBack }: { onBack?: () => void }) {
+  return (
+    <Pressable
+      testID="event-detail-back"
+      accessibilityRole="button"
+      accessibilityLabel={translate('common.back')}
+      onPress={onBack}
+      className="-ml-3 h-11 flex-row items-center pr-3"
+    >
+      <View className="size-11 items-center justify-center">
+        <CaretRightV2 size={20} color={colors.white} style={BACK_ICON_STYLE} />
+      </View>
+      <Text variant="body" className="-ml-2 text-white">{translate('events.detail.back')}</Text>
+    </Pressable>
+  );
+}
+
 /**
  * Header band (not a photo hero): plum pattern + plumMid @60% under the status
  * bar, or the cover photo with a navy scrim when one exists.
@@ -65,17 +84,24 @@ function HeaderBand({
   event,
   onBack,
   onShare,
+  onHeight,
 }: {
   event: ClubEvent;
   onBack?: () => void;
   onShare?: () => void;
+  onHeight?: (height: number) => void;
 }) {
   const topPadding = useScreenTopPadding(0);
   const dateLine = formatEventDateLine(event.startsAt);
   const subtitle = [dateLine, event.inPersonLocation].filter(Boolean).join(' · ');
 
   return (
-    <View testID="event-detail-header" className="overflow-hidden bg-plum" style={{ paddingTop: topPadding }}>
+    <View
+      testID="event-detail-header"
+      className="overflow-hidden bg-plum"
+      style={{ paddingTop: topPadding }}
+      onLayout={e => onHeight?.(e.nativeEvent.layout.height)}
+    >
       {event.coverImageUrl
         ? (
             <>
@@ -101,18 +127,7 @@ function HeaderBand({
           )}
       <View className="min-h-[210px] justify-between px-4 pb-6">
         <View className="h-11 flex-row items-center justify-between">
-          <Pressable
-            testID="event-detail-back"
-            accessibilityRole="button"
-            accessibilityLabel={translate('common.back')}
-            onPress={onBack}
-            className="-ml-3 h-11 flex-row items-center pr-3"
-          >
-            <View className="size-11 items-center justify-center">
-              <CaretRightV2 size={20} color={colors.white} style={BACK_ICON_STYLE} />
-            </View>
-            <Text variant="body" className="-ml-2 text-white">{translate('events.detail.back')}</Text>
-          </Pressable>
+          <HeaderBack onBack={onBack} />
           {event.url
             ? (
                 <Pressable
@@ -190,20 +205,11 @@ type EventDetailViewProps = {
 };
 
 /**
- * Rendered whenever there's no event to show yet -- while still loading, when
- * the backing queries errored out (e.g. cold-start offline via a push tap,
- * nothing cached), or once queries settle successfully without a match.
+ * No event to show once loading is over: the backing queries errored out
+ * (e.g. cold-start offline via a push tap, nothing cached), or they settled
+ * without a match. While loading, the skeleton shows instead (A-015).
  */
-function EventUnresolvedState({ isLoading, isError }: { isLoading: boolean; isError: boolean }) {
-  if (isLoading) {
-    return (
-      <View testID="event-detail-loading" className="flex-1 items-center justify-center bg-surface">
-        <ActivityIndicator color={colors.primary} />
-        <Text variant="body" className="mt-3 text-ink-variant">{translate('events.detail.loading')}</Text>
-      </View>
-    );
-  }
-
+function EventUnresolvedState({ isError }: { isError: boolean }) {
   return (
     <View
       testID={isError ? 'event-detail-error' : 'event-detail-unavailable'}
@@ -238,8 +244,10 @@ function RemindCard({
           testID="event-remind-switch"
           accessibilityLabel={translate('events.detail.remindMe')}
           value={reminderOn}
-          onValueChange={() => {
-            haptics.selection();
+          onValueChange={(on) => {
+            // Same intent as the card's Remind button (A-031): success() on, silent off.
+            if (on)
+              haptics.success();
             onToggleReminder?.();
           }}
           trackColor={{ false: colors.surfaceContainerHigh, true: colors.primary }}
@@ -280,26 +288,74 @@ function RemindCard({
   );
 }
 
-export function EventDetailView({
+/** Status bar flips to dark once the plum header has scrolled out from under it (A-012). */
+function usePastHeader() {
+  const topInset = useScreenTopPadding(0);
+  const headerHeight = React.useRef(0);
+  const [pastHeader, setPastHeader] = React.useState(false);
+  const onHeaderHeight = React.useCallback((height: number) => {
+    headerHeight.current = height;
+  }, []);
+  const onScroll = React.useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const height = headerHeight.current;
+    const next = height > 0 && e.nativeEvent.contentOffset.y > height - topInset;
+    setPastHeader(prev => (prev === next ? prev : next));
+  }, [topInset]);
+  return { pastHeader, onHeaderHeight, onScroll };
+}
+
+/**
+ * Going -> confirm before giving up the spot (A-045): a limited-capacity race
+ * day is costly to lose on a stray tap. Going in stays one tap.
+ */
+function confirmCancelRsvp(onConfirm: () => void) {
+  haptics.warning();
+  Alert.alert(
+    translate('events.detail.cancelConfirmTitle'),
+    translate('events.detail.cancelConfirmBody'),
+    [
+      { text: translate('events.detail.cancelConfirmKeep'), style: 'cancel' },
+      { text: translate('events.detail.cancelRsvp'), style: 'destructive', onPress: onConfirm },
+    ],
+  );
+}
+
+function RsvpCta({ state, rsvpPending, onToggleRsvp }: {
+  state: ReturnType<typeof rsvpButtonState>;
+  rsvpPending: boolean;
+  onToggleRsvp?: (going: boolean) => void;
+}) {
+  if (state === 'hidden')
+    return null;
+  const going = state === 'going';
+  return (
+    <Button
+      testID="event-rsvp-cta"
+      size="lg"
+      variant="primary"
+      label={
+        going
+          ? translate('events.detail.cancelRsvp')
+          : state === 'full' ? translate('events.detail.eventFull') : translate('events.detail.rsvpGoing')
+      }
+      disabled={state === 'full'}
+      haptic={going ? false : 'success'}
+      loading={rsvpPending}
+      onPress={() => (going ? confirmCancelRsvp(() => onToggleRsvp?.(false)) : onToggleRsvp?.(true))}
+    />
+  );
+}
+
+function EventDetailBody({
   event,
-  isLoading = false,
-  isError = false,
   onBack,
   onShare,
   onToggleRsvp,
   rsvpPending = false,
   rsvpFullError = false,
-  onAddToCalendar,
-  calendarPending = false,
-  calendarOutcome = null,
-  reminderOn = false,
-  onToggleReminder,
-  reminderNotice = null,
-}: EventDetailViewProps) {
-  if (!event) {
-    return <EventUnresolvedState isLoading={isLoading} isError={isError} />;
-  }
-
+  ...remind
+}: Omit<EventDetailViewProps, 'event' | 'isLoading' | 'isError'> & { event: ClubEvent }) {
+  const { pastHeader, onHeaderHeight, onScroll } = usePastHeader();
   const hydratedDoc = hydrateCircleDoc({
     body: event.tiptapDoc,
     sgids_to_object_map: event.embeds,
@@ -307,15 +363,13 @@ export function EventDetailView({
   });
   const hasNativeBody = circleDocHasContent(hydratedDoc);
   const { limit, count } = event.rsvp;
-  const state = rsvpButtonState(event, rsvpFullError);
   const showSpots = typeof limit === 'number' && limit > 0;
 
   return (
-    <View className="flex-1 bg-background">
-      <ScreenBackground />
-      <FocusAwareStatusBar barStyle="light" />
-      <ScrollView contentContainerStyle={{ paddingBottom: 48 }}>
-        <HeaderBand event={event} onBack={onBack} onShare={onShare} />
+    <>
+      <FocusAwareStatusBar barStyle={pastHeader ? 'dark' : 'light'} />
+      <ScrollView contentContainerStyle={{ paddingBottom: 48 }} onScroll={onScroll} scrollEventThrottle={16}>
+        <HeaderBand event={event} onBack={onBack} onShare={onShare} onHeight={onHeaderHeight} />
         <View className="gap-3 px-4 pt-4">
           <Card testID="event-detail-card" className="gap-3">
             {event.type ? <MonoLabel testID="event-detail-type">{event.type}</MonoLabel> : null}
@@ -347,39 +401,42 @@ export function EventDetailView({
             </View>
           </Card>
 
-          {state !== 'hidden'
-            ? (
-                <Button
-                  testID="event-rsvp-cta"
-                  size="lg"
-                  variant="primary"
-                  label={
-                    state === 'going'
-                      ? translate('events.detail.cancelRsvp')
-                      : state === 'full' ? translate('events.detail.eventFull') : translate('events.detail.rsvpGoing')
-                  }
-                  disabled={state === 'full'}
-                  haptic={state === 'going' ? false : 'success'}
-                  loading={rsvpPending}
-                  onPress={() => onToggleRsvp?.(state !== 'going')}
-                />
-              )
-            : null}
+          <RsvpCta state={rsvpButtonState(event, rsvpFullError)} rsvpPending={rsvpPending} onToggleRsvp={onToggleRsvp} />
 
-          <RemindCard
-            event={event}
-            reminderOn={reminderOn}
-            onToggleReminder={onToggleReminder}
-            reminderNotice={reminderNotice}
-            onAddToCalendar={onAddToCalendar}
-            calendarPending={calendarPending}
-            calendarOutcome={calendarOutcome}
-          />
+          <RemindCard event={event} {...remind} />
         </View>
       </ScrollView>
+    </>
+  );
+}
+
+/**
+ * Event detail: a cold first load (e.g. a deep link) shows the header band +
+ * card skeleton, crossfading to the event (A-015).
+ */
+export function EventDetailView({ event, isLoading = false, isError = false, ...props }: EventDetailViewProps) {
+  if (!event && !isLoading)
+    return <EventUnresolvedState isError={isError} />;
+  return (
+    <View className="flex-1 bg-background">
+      <ScreenBackground />
+      <SkeletonSwap
+        loading={!event}
+        skeleton={(
+          <>
+            <FocusAwareStatusBar barStyle="light" />
+            <EventDetailSkeleton back={<HeaderBack onBack={props.onBack} />} />
+          </>
+        )}
+        style={styles.fill}
+      >
+        {event ? <EventDetailBody event={event} {...props} /> : null}
+      </SkeletonSwap>
     </View>
   );
 }
+
+const styles = StyleSheet.create({ fill: { flex: 1 } });
 
 function SignedInEventDetail({
   memberId,

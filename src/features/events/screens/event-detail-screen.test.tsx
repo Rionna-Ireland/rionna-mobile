@@ -1,6 +1,7 @@
 /* eslint-disable react/no-unnecessary-use-prefix -- jest mock factories mirror real hook names */
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import * as React from 'react';
+import { Alert } from 'react-native';
 
 import { EventDetailScreen, EventDetailView } from '@/features/events/screens/event-detail-screen';
 
@@ -22,7 +23,21 @@ jest.mock('@/features/events/lib/add-to-calendar', () => ({
 }));
 
 jest.mock('@/components/ui/screen-layout', () => ({ useScreenTopPadding: () => 44 }));
-jest.mock('@/components/ui/focus-aware-status-bar', () => ({ FocusAwareStatusBar: () => null }));
+const mockBarStyle = jest.fn();
+jest.mock('@/components/ui/focus-aware-status-bar', () => ({
+  FocusAwareStatusBar: ({ barStyle }: { barStyle?: string }) => {
+    mockBarStyle(barStyle);
+    return null;
+  },
+}));
+
+const mockSuccess = jest.fn();
+const mockSelection = jest.fn();
+jest.mock('@/lib/motion/haptics', () => ({
+  ...jest.requireActual('@/lib/motion/haptics'),
+  success: () => mockSuccess(),
+  selection: () => mockSelection(),
+}));
 
 describe('eventDetailView', () => {
   beforeEach(() => jest.clearAllMocks());
@@ -79,8 +94,12 @@ describe('eventDetailView', () => {
   });
 
   it('shows loading / error / unavailable states', () => {
-    const { rerender } = render(<EventDetailView event={undefined} isLoading />);
+    const onBack = jest.fn();
+    const { rerender } = render(<EventDetailView event={undefined} isLoading onBack={onBack} />);
     expect(screen.getByTestId('event-detail-loading')).toBeOnTheScreen();
+    // The skeleton keeps a working back button (deep-link cold load, A-015).
+    fireEvent.press(screen.getByTestId('event-detail-back'));
+    expect(onBack).toHaveBeenCalledTimes(1);
     rerender(<EventDetailView event={undefined} isError />);
     expect(screen.getByText('Couldn\'t load this event — check your connection and try again.')).toBeOnTheScreen();
     rerender(<EventDetailView event={undefined} />);
@@ -98,11 +117,17 @@ describe('eventDetailView rsvp button', () => {
     expect(onToggleRsvp).toHaveBeenCalledWith(true);
   });
 
-  it('cancel RSVP when already going', () => {
+  it('cancel RSVP when already going confirms first (A-045)', () => {
     const onToggleRsvp = jest.fn();
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     render(<EventDetailView event={clubEvent({ rsvp: rsvp({ going: true }) })} onToggleRsvp={onToggleRsvp} />);
     fireEvent.press(screen.getByText('Cancel RSVP'));
+    expect(onToggleRsvp).not.toHaveBeenCalled();
+    expect(alertSpy).toHaveBeenCalledWith('Give up your spot?', expect.any(String), expect.any(Array));
+    const buttons = alertSpy.mock.calls[0][2] as { style?: string; onPress?: () => void }[];
+    buttons.find(b => b.style === 'destructive')?.onPress?.();
     expect(onToggleRsvp).toHaveBeenCalledWith(false);
+    alertSpy.mockRestore();
   });
 
   it('disabled "Event full" when full and not going; no waitlist button', () => {
@@ -297,5 +322,27 @@ describe('eventDetailScreen', () => {
 
     expect(await screen.findByText('Added to your calendar ✓')).toBeOnTheScreen();
     expect(mockAddEventToDeviceCalendar).toHaveBeenCalledWith(expect.objectContaining({ id: 'event-1' }));
+  });
+});
+
+describe('eventDetailView polish', () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it('flips the status bar to dark once the header scrolls away (A-012)', () => {
+    render(<EventDetailView event={clubEvent()} />);
+    expect(mockBarStyle).toHaveBeenLastCalledWith('light');
+    fireEvent(screen.getByTestId('event-detail-header'), 'layout', { nativeEvent: { layout: { height: 300 } } });
+    fireEvent.scroll(screen.getByTestId('event-detail-header').parent!.parent!, { nativeEvent: { contentOffset: { y: 400 } } });
+    expect(mockBarStyle).toHaveBeenLastCalledWith('dark');
+  });
+
+  it('remind switch: success() turning on, silent turning off (A-031)', () => {
+    const { rerender } = render(<EventDetailView event={clubEvent()} onToggleReminder={jest.fn()} />);
+    fireEvent(screen.getByTestId('event-remind-switch'), 'valueChange', true);
+    expect(mockSuccess).toHaveBeenCalledTimes(1);
+    rerender(<EventDetailView event={clubEvent()} reminderOn onToggleReminder={jest.fn()} />);
+    fireEvent(screen.getByTestId('event-remind-switch'), 'valueChange', false);
+    expect(mockSuccess).toHaveBeenCalledTimes(1);
+    expect(mockSelection).not.toHaveBeenCalled();
   });
 });
