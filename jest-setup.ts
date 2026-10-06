@@ -31,7 +31,13 @@ jest.mock('react-native-reanimated', () => {
       return sv;
     }),
     useAnimatedStyle: jest.fn(fn => fn()),
-    useAnimatedScrollHandler: jest.fn(() => jest.fn()),
+    // Runs the handler's `onScroll` with the native event, so screens that moved
+    // their scroll logic onto the UI thread still respond to fireEvent.scroll.
+    useAnimatedScrollHandler: jest.fn((handlers: any) => {
+      const onScroll = typeof handlers === 'function' ? handlers : handlers?.onScroll;
+      return jest.fn((event: any) => onScroll?.(event?.nativeEvent ?? event, {}));
+    }),
+    useFrameCallback: jest.fn(() => ({ setActive: jest.fn(), isActive: false, callbackId: 0 })),
     useAnimatedProps: jest.fn(fn => fn()),
     useAnimatedReaction: jest.fn(),
     useDerivedValue: jest.fn((fn) => {

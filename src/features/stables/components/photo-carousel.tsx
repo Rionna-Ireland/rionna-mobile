@@ -4,15 +4,21 @@ import * as React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Image } from '@/components/ui';
+import { heroPhotoUri } from '@/features/stables/lib/photo-uris';
 
 type PhotoCarouselProps = {
   photos: HorsePhoto[];
   /** Fires with the settled page index after a swipe (drives the hero's Dots). */
   onIndexChange?: (index: number) => void;
+  /**
+   * The first photo has drawn (its URL), or failed (null). The hero
+   * transition (S14-05) swaps its overlay for the hero only once it has.
+   */
+  onFirstPhotoDisplay?: (uri: string | null) => void;
 };
 
 function photoSource(url: string) {
-  return { uri: `${url}?width=1000&quality=80` };
+  return { uri: heroPhotoUri(url) };
 }
 
 /**
@@ -21,8 +27,13 @@ function photoSource(url: string) {
  * fallback), so this only renders a bare placeholder for safety. Page dots
  * are drawn by the hero so they sit above the scrim.
  */
-export function PhotoCarousel({ photos, onIndexChange }: PhotoCarouselProps) {
+export function PhotoCarousel({ photos, onIndexChange, onFirstPhotoDisplay }: PhotoCarouselProps) {
   const [width, setWidth] = React.useState(0);
+  const firstUri = photos[0] ? heroPhotoUri(photos[0].url) : null;
+  const firstPhotoEvents = {
+    onDisplay: () => onFirstPhotoDisplay?.(firstUri),
+    onError: () => onFirstPhotoDisplay?.(null),
+  };
 
   if (photos.length === 0) {
     return <View testID="photo-carousel-placeholder" className="flex-1 bg-primary" />;
@@ -35,6 +46,8 @@ export function PhotoCarousel({ photos, onIndexChange }: PhotoCarouselProps) {
         source={photoSource(photos[0].url)}
         style={StyleSheet.absoluteFill}
         contentFit="cover"
+        cachePolicy="memory-disk"
+        {...firstPhotoEvents}
         fallback={{ colourway: 'navy' }}
         accessibilityIgnoresInvertColors
       />
@@ -56,12 +69,14 @@ export function PhotoCarousel({ photos, onIndexChange }: PhotoCarouselProps) {
             onIndexChange?.(Math.round(event.nativeEvent.contentOffset.x / width));
         }}
       >
-        {photos.map(photo => (
+        {photos.map((photo, index) => (
           <View key={photo.url} style={{ width: width || undefined }} className="h-full">
             <Image
               source={photoSource(photo.url)}
               className="size-full"
               contentFit="cover"
+              cachePolicy="memory-disk"
+              {...(index === 0 ? firstPhotoEvents : null)}
               fallback={{ colourway: 'navy' }}
               accessibilityIgnoresInvertColors
             />

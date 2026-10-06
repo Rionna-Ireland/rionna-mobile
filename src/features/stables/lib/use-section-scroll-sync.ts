@@ -1,4 +1,4 @@
-import type { LayoutChangeEvent, NativeScrollEvent, NativeSyntheticEvent, ScrollView } from 'react-native';
+import type { LayoutChangeEvent, ScrollView } from 'react-native';
 import type { HorseSectionKey } from '@/features/stables/lib/horse-sections';
 
 import * as React from 'react';
@@ -11,10 +11,13 @@ const ACTIVE_LINE_FRACTION = 0.3;
 const TAP_LOCK_MS = 600;
 const END_TOLERANCE = 4;
 
+/** What the scroll handler forwards from each scroll event (the UI-thread handler sends plain numbers). */
+export type ScrollMetrics = { y: number; viewportHeight: number; contentHeight: number };
+
 /**
  * Section-chip ↔ scroll sync for Horse detail (S13-04 §2). Sections must be
  * direct children of the ScrollView's content so their `onLayout` y is a
- * content offset. No new dependencies: plain onScroll + measured offsets.
+ * content offset. Fed from the screen's scroll handler with plain metrics.
  */
 export function useSectionScrollSync(visible: readonly HorseSectionKey[]) {
   const scrollRef = React.useRef<ScrollView>(null);
@@ -35,18 +38,17 @@ export function useSectionScrollSync(visible: readonly HorseSectionKey[]) {
   );
 
   const onScroll = React.useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    ({ y, viewportHeight, contentHeight }: ScrollMetrics) => {
       if (lockRef.current)
         return;
-      const { contentOffset, layoutMeasurement, contentSize } = event.nativeEvent;
       const offsets = visible.flatMap((key) => {
         const y = offsetsRef.current[key];
         return y == null ? [] : [{ key, y }];
       });
-      const atEnd = contentSize.height > layoutMeasurement.height
-        && contentOffset.y + layoutMeasurement.height >= contentSize.height - END_TOLERANCE;
-      const next = getActiveSection(offsets, contentOffset.y, {
-        threshold: layoutMeasurement.height * ACTIVE_LINE_FRACTION,
+      const atEnd = contentHeight > viewportHeight
+        && y + viewportHeight >= contentHeight - END_TOLERANCE;
+      const next = getActiveSection(offsets, y, {
+        threshold: viewportHeight * ACTIVE_LINE_FRACTION,
         atEnd,
       });
       if (next)

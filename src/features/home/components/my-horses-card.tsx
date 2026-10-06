@@ -5,11 +5,34 @@ import * as React from 'react';
 import { Pressable, ScrollView } from 'react-native';
 
 import { Avatar, Card, EmptyState, MonoLabel } from '@/components/ui';
+import { HorsePhotoSource } from '@/features/hero-transition/horse-photo-source';
+import { heroSourceKey } from '@/features/hero-transition/types';
+import { useOpenHorse } from '@/features/hero-transition/use-open-horse';
+import { avatarPhotoUri, heroPhotoUri } from '@/features/stables/lib/photo-uris';
 import { EntranceItem, useFirstLoadEntrance } from '@/lib/motion';
 
-function avatarUri(horse: Horse): string | null {
+const AVATAR_SIZE = 41;
+
+/**
+ * A followed horse's avatar. With a photo it's a hero-transition source
+ * (S14-05): the 41pt circle expands into the detail hero. Without one it's
+ * the plain pattern avatar and the detail opens with the default push.
+ */
+function HorseAvatar({ horse }: { horse: Horse }) {
   const url = horse.photos[0]?.url;
-  return url ? `${url}?width=120&quality=80` : null;
+  if (!url)
+    return <Avatar kind="horse" size={AVATAR_SIZE} name={horse.name} uri={null} />;
+  return (
+    <HorsePhotoSource
+      sourceKey={heroSourceKey('home', horse.id)}
+      horseId={horse.id}
+      horseName={horse.name}
+      uri={avatarPhotoUri(url)}
+      heroUri={heroPhotoUri(url)}
+      radius={AVATAR_SIZE / 2}
+      style={{ width: AVATAR_SIZE, height: AVATAR_SIZE }}
+    />
+  );
 }
 
 type MyHorsesCardProps = { horses: Horse[] | undefined; isLoading: boolean; entranceIndex: number };
@@ -17,6 +40,7 @@ type MyHorsesCardProps = { horses: Horse[] | undefined; isLoading: boolean; entr
 /** S13-03 §5: white card with a row of 41pt followed-horse avatars. */
 export function MyHorsesCard({ horses, isLoading, entranceIndex }: MyHorsesCardProps) {
   const router = useRouter();
+  const openHorse = useOpenHorse();
 
   // Don't flash the empty state before the first fetch settles.
   const settled = !(!horses && isLoading);
@@ -54,10 +78,10 @@ export function MyHorsesCard({ horses, isLoading, entranceIndex }: MyHorsesCardP
               testID={`home-horse-${horse.id}`}
               accessibilityRole="button"
               accessibilityLabel={horse.name}
-              onPress={() => router.push(`/stables/${horse.id}`)}
+              onPress={() => openHorse(horse.id, heroSourceKey('home', horse.id))}
               style={({ pressed }) => (pressed ? { opacity: 0.7 } : null)}
             >
-              <Avatar kind="horse" size={41} name={horse.name} uri={avatarUri(horse)} />
+              <HorseAvatar horse={horse} />
             </Pressable>
           ))}
         </ScrollView>

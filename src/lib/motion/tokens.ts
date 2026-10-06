@@ -144,3 +144,34 @@ export const pressScale = 0.97;
 export const pressScaleSmall = 0.94;
 /** Like heart: pops from this scale back to 1 on the `snappy` spring. */
 export const popScale = 0.85;
+
+/**
+ * Horse card → Horse detail hero transition (S14-05, signature 2). The flight
+ * itself runs on the `hero` spring; these are its hand-off budgets and the
+ * scroll-linked hero (parallax, overscroll stretch).
+ */
+export const heroTransition = {
+  /** Detail content under the hero starts its fade-up this long after the push. */
+  contentDelayMs: 120,
+  /** Wait at most this long for the overlay's (cached) photo to draw before giving up → crossfade. */
+  imageWaitMs: durations.quick,
+  /** After landing, hold over the hero at most this long for its photo / data, then crossfade out. */
+  holdMaxMs: 1500,
+  /** Grace past every deadline before the overlay is force-unmounted, whatever state it's in. */
+  safetyMarginMs: 250,
+  /** The frame-drop check watches this many frame intervals once the flight starts… */
+  dropCheckFrames: 3,
+  /** …and aborts to a crossfade when every one of them is longer than this (1.5 × a 60Hz frame). */
+  droppedFrameMs: 25,
+  /** Parallax: the hero photo travels at this fraction of the scroll speed. */
+  parallax: 0.5,
+} as const;
+
+/** Worst-case lifetime (ms) of a hero flight overlay: it is always gone by then. */
+export function heroFlightCapMs(): number {
+  return heroTransition.imageWaitMs
+    + springSettleMs('hero')
+    + heroTransition.holdMaxMs
+    + durations.quick
+    + heroTransition.safetyMarginMs;
+}
