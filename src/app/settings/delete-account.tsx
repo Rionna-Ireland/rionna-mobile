@@ -19,10 +19,10 @@ import { client } from '@/lib/api/client';
 import { translate } from '@/lib/i18n';
 
 const schema = z.object({
-  password: z.string().min(1, 'Password is required'),
+  password: z.string().min(1, translate('settings.deleteAccount.passwordRequired')),
   confirmText: z
     .string()
-    .refine(v => v === 'DELETE', { message: 'Type DELETE to confirm' }),
+    .refine(v => v === 'DELETE', { message: translate('settings.deleteAccount.confirmPrompt') }),
 });
 
 export default function DeleteAccountScreen() {

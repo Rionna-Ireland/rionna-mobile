@@ -4,6 +4,7 @@
     "close": "Close",
     "errorTitle": "Something went wrong",
     "loading": "Loading",
+    "selectPlaceholder": "Select…",
     "tryAgain": "Try again"
   },
   "events": {
@@ -47,6 +48,23 @@
     "unavailableBody": "Check your connection and try again shortly.",
     "unavailableTitle": "Events unavailable"
   },
+  "nav": {
+    "back": "Back",
+    "cancel": "Cancel",
+    "charityImpact": "Charity impact",
+    "community": "Community",
+    "deleteAccount": "Delete Account",
+    "events": "Events",
+    "home": "Home",
+    "memberBenefits": "Member benefits",
+    "newPost": "New post",
+    "notifications": "Notifications",
+    "paddock": "The Paddock",
+    "password": "Password",
+    "profile": "Profile",
+    "pulse": "Pulse",
+    "stables": "Stables"
+  },
   "settings": {
     "about": "About",
     "account": {
@@ -61,6 +79,7 @@
       "current": "Current password",
       "mismatch": "New passwords don't match.",
       "new": "New password",
+      "required": "Required",
       "submit": "Update password",
       "success": "Password updated.",
       "title": "Change Password",
@@ -70,6 +89,7 @@
     "deleteAccount": {
       "confirmPrompt": "Type DELETE to confirm",
       "password": "Password",
+      "passwordRequired": "Password is required",
       "submit": "Delete my account",
       "success": "Account deleted.",
       "title": "Delete Account",

@@ -14,6 +14,8 @@ import { tv } from 'tailwind-variants';
 import colors from '@/components/ui/colors';
 
 import { CaretDown } from '@/components/ui/icons';
+import { translate } from '@/lib/i18n';
+
 import { Modal, useModal } from './modal';
 import { MotionPressable } from './pressable';
 import { Text } from './text';
@@ -147,7 +149,7 @@ export function Select(props: SelectProps) {
     value,
     error,
     options = [],
-    placeholder = 'select...',
+    placeholder = translate('common.selectPlaceholder'),
     disabled = false,
     onSelect,
     testID,

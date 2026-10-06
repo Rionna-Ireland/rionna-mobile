@@ -19,12 +19,12 @@ import { translate } from '@/lib/i18n';
 
 const schema = z
   .object({
-    currentPassword: z.string().min(1, 'Required'),
-    newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+    currentPassword: z.string().min(1, translate('settings.changePassword.required')),
+    newPassword: z.string().min(8, translate('settings.changePassword.tooShort')),
     confirmPassword: z.string(),
   })
   .refine(data => data.newPassword === data.confirmPassword, {
-    message: 'New passwords don\'t match',
+    message: translate('settings.changePassword.mismatch'),
     path: ['confirmPassword'],
   });
 
