@@ -57,7 +57,7 @@ export function ListRow({
 
   const rowClass = twMerge(
     'min-h-11 flex-row items-center gap-3 py-3',
-    divider && 'border-b border-outline-variant',
+    divider && 'border-b border-ice',
     className,
   );
 

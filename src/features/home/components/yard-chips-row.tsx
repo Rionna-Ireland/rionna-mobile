@@ -5,6 +5,7 @@ import * as React from 'react';
 import { View } from 'react-native';
 
 import { ChipRow, MonoLabel } from '@/components/ui';
+import { translate } from '@/lib/i18n';
 
 /**
  * "Today at the yard" (S13-03 §3). Chips are navigational shortcuts, not
@@ -20,7 +21,7 @@ export function YardChipsRow({ chips }: { chips: YardChips }) {
   };
   return (
     <View className="gap-2.5">
-      <MonoLabel>Today at the yard</MonoLabel>
+      <MonoLabel>{translate('home.yardKicker')}</MonoLabel>
       <View className="-mx-4">
         <ChipRow
           testID="home-chips"

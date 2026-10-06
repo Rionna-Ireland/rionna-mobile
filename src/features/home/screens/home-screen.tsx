@@ -12,6 +12,7 @@ import {
   Avatar,
   BrandedRefreshControl,
   colors,
+  ErrorState,
   FocusAwareStatusBar,
   MotionPressable,
   RefreshIndicator,
@@ -46,6 +47,7 @@ import { greeting } from '@/features/home/lib/greeting';
 import { buildHeroSlides } from '@/features/home/lib/hero-slides';
 import { useHomeQueries } from '@/features/home/lib/use-home-queries';
 import { buildYardChips, countEventsThisWeek, raceDayHorseIds } from '@/features/home/lib/yard-chips';
+import { translate } from '@/lib/i18n';
 import { isFirstLoad, SkeletonSwap } from '@/lib/motion';
 
 const GUTTER = 16;
@@ -109,7 +111,7 @@ function HomeHeaderRight({ scope, name }: { scope: { organizationId: string; mem
         hitSlop={2}
         className="rounded-full"
         accessibilityRole="button"
-        accessibilityLabel="Open profile"
+        accessibilityLabel={translate('home.openProfile')}
         testID="home-avatar"
         onPress={() => router.push('/profile')}
       >
@@ -127,17 +129,43 @@ type HomeBlocksProps = {
   scrollY: SharedValue<number>;
 };
 
+type QueryState = { isError: boolean; data: unknown };
+const failedCold = (x: QueryState) => x.isError && x.data === undefined;
+
+/**
+ * Cold offline / failed load (A-019): the followed horses failed with nothing
+ * cached, or two or more blocks did. Then Home says so once, with a retry,
+ * instead of an untrue "Follow a horse" over an empty page.
+ */
+function homeUnavailable(q: HomeQueries) {
+  const blocks = [q.nextRun, q.news, q.results, q.followedHorses, q.insideTrack, q.upcomingEvents, q.charity];
+  return failedCold(q.followedHorses) || blocks.filter(failedCold).length >= 2;
+}
+
 /** The Home cards, each skeleton-first on a cold start (S14-03 §1), cached data straight away. */
 function HomeBlocks({ q, slides, now, heroWidth, scrollY }: HomeBlocksProps) {
   const heroLoading = slides.length === 0 && [q.nextRun, q.news, q.results].some(isFirstLoad);
+  const unavailable = homeUnavailable(q);
   return (
     <>
       <SkeletonSwap loading={heroLoading} skeleton={<HeroSkeleton width={heroWidth} />}>
         {slides.length > 0 ? <HeroCarousel slides={slides} width={heroWidth} /> : null}
       </SkeletonSwap>
-      <HomeBlock loading={isFirstLoad(q.followedHorses)} skeleton={<MyHorsesSkeleton />} visible entranceIndex={0}>
-        {i => <MyHorsesCard horses={q.followedHorses.data} isLoading={q.followedHorses.isLoading} entranceIndex={i} />}
-      </HomeBlock>
+      {unavailable
+        ? (
+            <ErrorState
+              testID="home-unavailable"
+              title={translate('home.unavailableTitle')}
+              body={translate('home.unavailableBody')}
+              onRetry={() => void q.refetchAll()}
+              retrying={q.followedHorses.isFetching}
+            />
+          )
+        : (
+            <HomeBlock loading={isFirstLoad(q.followedHorses)} skeleton={<MyHorsesSkeleton />} visible entranceIndex={0}>
+              {i => <MyHorsesCard horses={q.followedHorses.data} isLoading={q.followedHorses.isLoading} entranceIndex={i} />}
+            </HomeBlock>
+          )}
       <HomeBlock
         loading={isFirstLoad(q.insideTrack)}
         skeleton={<InsideTrackSkeleton />}

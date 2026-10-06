@@ -11,6 +11,7 @@ import { StarV2 } from '@/components/ui/icons/v2';
 import { CharityTotalText } from '@/features/paddock/components/charity-total-text';
 import { formatEuro } from '@/features/paddock/lib/format-euro';
 import { useCharityCounter } from '@/features/paddock/lib/use-charity-counter';
+import { translate } from '@/lib/i18n';
 
 /** The forest card's green harlequin with its spurs lit cream (S14-06 wave). */
 const GREEN_LIT: TileSpec = { kind: 'harlequin', colourway: 'greenLit', turn: 0 };
@@ -58,7 +59,7 @@ export function CharityTotalCard({ charity }: { charity: Charity }) {
       patternOverlay={counter.waveArmed ? <PatternWave spec={GREEN_LIT} clock={counter.wave} borderRadius={8} testID="charity-total-wave" /> : null}
     >
       <View className="gap-2">
-        <MonoLabel tone="white">Raised together, to date</MonoLabel>
+        <MonoLabel tone="white">{translate('paddock.charity.totalKicker')}</MonoLabel>
         <CharityTotalText
           counter={counter}
           totalCents={charity.totalCents}

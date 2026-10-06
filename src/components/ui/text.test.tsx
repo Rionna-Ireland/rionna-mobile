@@ -72,4 +72,15 @@ describe('text type ramp', () => {
     expect(node.props.maxFontSizeMultiplier).toBe(2);
     expect(node).toHaveStyle({ fontSize: 14, lineHeight: 30 });
   });
+  it('balances display titles against orphans, but not body text (A-020)', () => {
+    render(
+      <>
+        <Text variant="display-lg">Title</Text>
+        <Text variant="body">Body</Text>
+      </>,
+    );
+    expect(screen.getByText('Title').props.lineBreakStrategyIOS).toBe('push-out');
+    expect(screen.getByText('Title').props.textBreakStrategy).toBe('balanced');
+    expect(screen.getByText('Body').props.lineBreakStrategyIOS).toBeUndefined();
+  });
 });

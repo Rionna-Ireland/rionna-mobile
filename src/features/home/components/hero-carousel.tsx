@@ -9,7 +9,11 @@ import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native
 import { Button, Card, Dots, Text } from '@/components/ui';
 import { splitHeadline } from '@/features/home/lib/split-headline';
 
-/** Figma "News" hero: 358×239 navy card. */
+/**
+ * Figma "News" hero: 358×239 navy card. A floor, not a fixed height (A-021):
+ * at larger Dynamic Type a 3-line headline + CTA outgrows it, so every slide
+ * grows to the tallest one and paging stays aligned.
+ */
 const HERO_HEIGHT = 239;
 
 function Headline({ title }: { title: string }) {
@@ -22,7 +26,15 @@ function Headline({ title }: { title: string }) {
   );
 }
 
-function Slide({ slide, width, index }: { slide: HeroSlide; width: number; index: number }) {
+type SlideProps = {
+  slide: HeroSlide;
+  width: number;
+  index: number;
+  minHeight: number;
+  onHeight: (height: number) => void;
+};
+
+function Slide({ slide, width, index, minHeight, onHeight }: SlideProps) {
   const router = useRouter();
   const onPress = () => router.push(slide.cta.href);
   return (
@@ -30,7 +42,8 @@ function Slide({ slide, width, index }: { slide: HeroSlide; width: number; index
       variant="navy"
       testID={`home-hero-slide-${index}`}
       className="justify-between"
-      style={{ width, height: HERO_HEIGHT }}
+      style={{ width, minHeight }}
+      onLayout={e => onHeight(e.nativeEvent.layout.height)}
     >
       <Headline title={slide.title} />
       <View className="gap-4">
@@ -59,6 +72,10 @@ function Slide({ slide, width, index }: { slide: HeroSlide; width: number; index
  */
 export function HeroCarousel({ slides, width }: { slides: HeroSlide[]; width: number }) {
   const [index, setIndex] = React.useState(0);
+  const [tallest, setTallest] = React.useState(HERO_HEIGHT);
+  const onSlideHeight = React.useCallback((height: number) => {
+    setTallest(prev => (height > prev ? height : prev));
+  }, []);
   const progress = useSharedValue(0);
   const onScrollUI = useAnimatedScrollHandler((e) => {
     progress.set(e.contentOffset.x / width);
@@ -76,7 +93,7 @@ export function HeroCarousel({ slides, width }: { slides: HeroSlide[]; width: nu
     return null;
 
   return (
-    <View testID="home-hero" style={{ width, height: HERO_HEIGHT }}>
+    <View testID="home-hero" style={{ width, minHeight: HERO_HEIGHT }}>
       <Animated.ScrollView
         horizontal
         pagingEnabled
@@ -86,7 +103,7 @@ export function HeroCarousel({ slides, width }: { slides: HeroSlide[]; width: nu
         scrollEventThrottle={16}
         testID="home-hero-scroll"
       >
-        {slides.map((slide, i) => <Slide key={slide.key} slide={slide} width={width} index={i} />)}
+        {slides.map((slide, i) => <Slide key={slide.key} slide={slide} width={width} index={i} minHeight={tallest} onHeight={onSlideHeight} />)}
       </Animated.ScrollView>
       {slides.length > 1
         ? (

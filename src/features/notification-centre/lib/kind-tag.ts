@@ -1,3 +1,5 @@
+import { translate } from '@/lib/i18n';
+
 export type InboxTag = 'racing' | 'updates' | 'community' | 'club';
 
 export type InboxTagSpec = {
@@ -22,13 +24,14 @@ export function tagForKind(kind: string): InboxTag {
   return 'club';
 }
 
-const SPECS: Record<InboxTag, InboxTagSpec> = {
-  racing: { tag: 'racing', label: 'Racing', boxClass: 'bg-sage' },
-  updates: { tag: 'updates', label: 'Updates', boxClass: 'bg-ice' },
-  community: { tag: 'community', label: 'Community', boxClass: 'bg-primary-fixed' },
-  club: { tag: 'club', label: 'Club', boxClass: 'bg-secondary-container' },
-};
+const SPECS = {
+  racing: { tag: 'racing', labelKey: 'notificationCentre.tags.racing', boxClass: 'bg-sage' },
+  updates: { tag: 'updates', labelKey: 'notificationCentre.tags.updates', boxClass: 'bg-ice' },
+  community: { tag: 'community', labelKey: 'notificationCentre.tags.community', boxClass: 'bg-primary-fixed' },
+  club: { tag: 'club', labelKey: 'notificationCentre.tags.club', boxClass: 'bg-secondary-container' },
+} as const satisfies Record<InboxTag, { tag: InboxTag; labelKey: string; boxClass: string }>;
 
 export function tagSpecForKind(kind: string): InboxTagSpec {
-  return SPECS[tagForKind(kind)];
+  const { labelKey, ...spec } = SPECS[tagForKind(kind)];
+  return { ...spec, label: translate(labelKey) };
 }

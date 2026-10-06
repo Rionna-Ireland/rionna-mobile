@@ -9,6 +9,7 @@ import { HorsePhotoSource } from '@/features/hero-transition/horse-photo-source'
 import { heroSourceKey } from '@/features/hero-transition/types';
 import { useOpenHorse } from '@/features/hero-transition/use-open-horse';
 import { avatarPhotoUri, heroPhotoUri } from '@/features/stables/lib/photo-uris';
+import { translate } from '@/lib/i18n';
 import { EntranceItem, useFirstLoadEntrance } from '@/lib/motion';
 
 const AVATAR_SIZE = 41;
@@ -54,9 +55,9 @@ export function MyHorsesCard({ horses, isLoading, entranceIndex }: MyHorsesCardP
       <EntranceItem entering={entering}>
         <EmptyState
           testID="home-my-horses-empty"
-          kicker="My horses"
-          title="Follow a horse to see it here"
-          actionLabel="Go to Stables"
+          kicker={translate('home.myHorses.kicker')}
+          title={translate('home.myHorses.emptyTitle')}
+          actionLabel={translate('home.myHorses.emptyAction')}
           onAction={() => router.push('/stables')}
         />
       </EntranceItem>
@@ -66,7 +67,7 @@ export function MyHorsesCard({ horses, isLoading, entranceIndex }: MyHorsesCardP
   return (
     <EntranceItem entering={entering}>
       <Card testID="home-my-horses" className="gap-2.5">
-        <MonoLabel>My horses</MonoLabel>
+        <MonoLabel>{translate('home.myHorses.kicker')}</MonoLabel>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}

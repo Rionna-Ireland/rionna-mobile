@@ -4,13 +4,15 @@ import type { Poll } from '@/features/polls/types';
 import Env from 'env';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
-import { RefreshControl } from 'react-native';
 
 import {
+  BrandedRefreshControl,
   EmptyState,
   ErrorState,
   FocusAwareStatusBar,
+  RefreshIndicator,
   ScreenHeader,
+  usePullToRefresh,
   View,
 } from '@/components/ui';
 import { useScreenBottomPadding } from '@/components/ui/screen-layout';
@@ -26,6 +28,7 @@ import { CharitySkeleton } from '@/features/paddock/components/paddock-skeletons
 import { currentCharities } from '@/features/paddock/lib/current-charities';
 import { useActivePolls } from '@/features/polls/api/use-active-polls';
 import { usePollVote } from '@/features/polls/api/use-poll-vote';
+import { translate } from '@/lib/i18n';
 import { isFirstLoad, SkeletonSwap } from '@/lib/motion';
 import { openExternalLink } from '@/lib/open-external-link';
 
@@ -35,7 +38,8 @@ type CharityViewProps = {
   isLoading: boolean;
   isError: boolean;
   isRefetching: boolean;
-  onRefresh: () => void;
+  /** Pull-to-refresh and retry; resolve when done so the branded refresher can settle. */
+  onRefresh: () => unknown;
   onOpenStory: (slug: string) => void;
   onOpenWebsite: (url: string) => void;
   onVote: (pollId: string, optionId: string) => void;
@@ -62,31 +66,36 @@ export function CharityView(props: CharityViewProps) {
   const showEmpty = !showLoading && !showUnavailable && charity === null;
   const paddingBottom = useScreenBottomPadding(24);
   const { scrollY, onScroll } = useScrollHeader();
+  // A-036: the branded refresher, like Home / Stables / Events.
+  const pull = usePullToRefresh(onRefresh);
 
   return (
     <View className="flex-1 bg-secondary-container">
       <FocusAwareStatusBar />
       {/* S14-02 §5: the kicker stays fixed; its hairline fades in as the page scrolls under it. */}
-      <ScreenHeader kicker="CHARITY" onBack={onBack} scrollY={scrollY} testID="charity-header" />
-      <AnimatedScrollView
-        className="flex-1"
-        contentContainerStyle={{ paddingTop: 32, paddingBottom, gap: 32 }}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />}
-        onScroll={onScroll}
-        scrollEventThrottle={16}
-      >
-        <View className="px-4">
-          {showUnavailable
-            ? <ErrorState testID="charity-unavailable" kicker="CHARITY" title="Charity impact unavailable" body="Check your connection and try again." onRetry={onRefresh} retrying={isRefetching} />
-            : null}
-          {showEmpty
-            ? <EmptyState testID="charity-empty" kicker="CHARITY" title="Coming soon" body="The club will announce its charity partner here." />
-            : null}
-          <SkeletonSwap loading={showLoading} skeleton={<CharitySkeleton />}>
-            {charity ? <CharityBody {...props} charity={charity} /> : null}
-          </SkeletonSwap>
-        </View>
-      </AnimatedScrollView>
+      <ScreenHeader kicker={translate('paddock.charity.kicker')} onBack={onBack} scrollY={scrollY} testID="charity-header" />
+      <View className="flex-1">
+        <AnimatedScrollView
+          className="flex-1"
+          contentContainerStyle={{ paddingTop: 32, paddingBottom, gap: 32 }}
+          refreshControl={<BrandedRefreshControl refreshing={pull.refreshing} onRefresh={pull.onRefresh} />}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+        >
+          <View className="px-4">
+            {showUnavailable
+              ? <ErrorState testID="charity-unavailable" kicker={translate('paddock.charity.kicker')} title={translate('paddock.charity.unavailableTitle')} body={translate('paddock.checkConnection')} onRetry={onRefresh} retrying={isRefetching} />
+              : null}
+            {showEmpty
+              ? <EmptyState testID="charity-empty" kicker={translate('paddock.charity.kicker')} title={translate('paddock.comingSoon')} body={translate('paddock.charity.emptyBody')} />
+              : null}
+            <SkeletonSwap loading={showLoading} skeleton={<CharitySkeleton />}>
+              {charity ? <CharityBody {...props} charity={charity} /> : null}
+            </SkeletonSwap>
+          </View>
+        </AnimatedScrollView>
+        <RefreshIndicator scrollY={scrollY} refreshing={pull.refreshing} top={0} />
+      </View>
     </View>
   );
 }
@@ -111,10 +120,7 @@ export function CharityScreen() {
       isLoading={isFirstLoad(charity)}
       isError={charity.isError}
       isRefetching={charity.isRefetching}
-      onRefresh={() => {
-        void charity.refetch();
-        void polls.refetch();
-      }}
+      onRefresh={() => Promise.all([charity.refetch(), polls.refetch()])}
       onOpenStory={slug => router.push(`/news/${slug}`)}
       onOpenWebsite={openExternalLink}
       onVote={(id, optionId) => vote({ pollId: id, optionId })}

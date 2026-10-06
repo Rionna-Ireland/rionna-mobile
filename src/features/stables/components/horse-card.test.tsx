@@ -146,4 +146,24 @@ describe('horseCard', () => {
 
     alertSpy.mockRestore();
   });
+  it('summarises the card for VoiceOver and exposes Follow as a custom action (A-004)', () => {
+    const onToggleFollow = jest.fn();
+    render(
+      <HorseCard
+        horse={makeHorse({ isFollowing: true, name: 'Laska' })}
+        onPress={jest.fn()}
+        onToggleFollow={onToggleFollow}
+      />,
+    );
+    const card = screen.getByTestId('horse-card-horse-1');
+    expect(card.props.accessibilityLabel).toBe('Laska, In Training, following');
+    expect(card.props.accessibilityActions).toEqual([{ name: 'follow', label: 'Unfollow horse' }]);
+    fireEvent(card, 'accessibilityAction', { nativeEvent: { actionName: 'follow' } });
+    expect(onToggleFollow).toHaveBeenCalledWith('horse-1', false);
+  });
+
+  it('has no custom actions on a read-only card', () => {
+    render(<HorseCard horse={makeHorse()} onPress={jest.fn()} />);
+    expect(screen.getByTestId('horse-card-horse-1').props.accessibilityActions).toBeUndefined();
+  });
 });

@@ -8,6 +8,7 @@ import { Card, IconButton, MonoLabel, Tag, Text } from '@/components/ui';
 import colors from '@/components/ui/colors';
 import { PlayV2 } from '@/components/ui/icons/v2';
 import { isNewItem, pickInsideTrackTeaser } from '@/features/home/lib/card-helpers';
+import { translate } from '@/lib/i18n';
 import { EntranceItem, useFirstLoadEntrance } from '@/lib/motion';
 
 const INSIDE_TRACK_HEIGHT = 183;
@@ -40,7 +41,7 @@ export function InsideTrackCard({ data, now, entranceIndex }: InsideTrackCardPro
     <EntranceItem entering={entering}>
       <Card
         testID="home-inside-track"
-        accessibilityLabel={`Inside Track: ${teaser.title}`}
+        accessibilityLabel={translate('home.insideTrack.a11y', { title: teaser.title })}
         onPress={open}
         variant="photo"
         image={INSIDE_TRACK_BACKGROUND}
@@ -48,15 +49,15 @@ export function InsideTrackCard({ data, now, entranceIndex }: InsideTrackCardPro
         style={{ height: INSIDE_TRACK_HEIGHT }}
       >
         <View className="gap-2.5 pr-20">
-          <MonoLabel tone="white">Inside Track</MonoLabel>
+          <MonoLabel tone="white">{translate('home.insideTrack.kicker')}</MonoLabel>
           <Text variant="display-md" className="text-white" numberOfLines={2}>{teaser.title}</Text>
         </View>
         <View className="flex-row items-end justify-between">
-          <IconButton variant="circle" accessibilityLabel="Play" onPress={open} testID="home-inside-track-play">
+          <IconButton variant="circle" accessibilityLabel={translate('home.insideTrack.play')} onPress={open} testID="home-inside-track-play">
             <PlayV2 size={12} color={colors.ink} />
           </IconButton>
           <View className="flex-row gap-1.5">
-            {isNewItem(teaser.createdAt, now) ? <Tag variant="ice" label="NEW" testID="home-inside-track-new" /> : null}
+            {isNewItem(teaser.createdAt, now) ? <Tag variant="ice" label={translate('home.insideTrack.new')} testID="home-inside-track-new" /> : null}
           </View>
         </View>
       </Card>

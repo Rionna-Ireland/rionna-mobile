@@ -1,4 +1,5 @@
 import { EmptyState, ErrorState, Skeleton, SkeletonGroup, SkeletonText, View } from '@/components/ui';
+import { translate } from '@/lib/i18n';
 
 /** Mirrors `InboxRow`: white r8 row, tag box, two-line title, time. */
 function InboxRowSkeleton() {
@@ -29,8 +30,8 @@ export function InboxEmpty() {
   return (
     <EmptyState
       testID="inbox-empty"
-      title="You're all caught up"
-      body="New activity from the club and your horses will show up here."
+      title={translate('notificationCentre.emptyTitle')}
+      body={translate('notificationCentre.emptyBody')}
     />
   );
 }
@@ -39,8 +40,8 @@ export function InboxUnavailable({ onRetry, retrying }: { onRetry: () => void; r
   return (
     <ErrorState
       testID="inbox-unavailable"
-      title="Notifications unavailable"
-      body="Check your connection and try again shortly."
+      title={translate('notificationCentre.unavailableTitle')}
+      body={translate('notificationCentre.unavailableBody')}
       onRetry={onRetry}
       retrying={retrying}
     />

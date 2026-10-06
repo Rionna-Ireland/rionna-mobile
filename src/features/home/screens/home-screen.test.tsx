@@ -34,7 +34,10 @@ jest.mock('@/features/auth/use-auth-store', () => ({
 
 const mockPending = new Set<unknown>();
 /** A query whose `data` is in `mockPending` is a cold first load: pending AND fetching, no data. */
+const mockFailed = Symbol('failed');
 function mockQuery(data: unknown) {
+  if (data === mockFailed)
+    return { data: undefined, isPending: true, isFetching: false, isLoading: false, isError: true, isRefetching: false, refetch: jest.fn() };
   const cold = mockPending.has(data);
   return {
     data: cold ? undefined : data,
@@ -141,6 +144,10 @@ describe('homeScreen', () => {
     expect(screen.getByText('raised for Womens Health')).toBeOnTheScreen();
     fireEvent.press(screen.getByTestId('home-charity-open'));
     expect(mockPush).toHaveBeenCalledWith('/paddock/charity');
+    // A-041: the whole card opens Charity too, with one summary label.
+    mockPush.mockClear();
+    fireEvent.press(screen.getByLabelText('Charity snapshot, €24,500 raised for Womens Health'));
+    expect(mockPush).toHaveBeenCalledWith('/paddock/charity');
 
     expect(screen.getByText('12/20 slots remaining')).toBeOnTheScreen();
     fireEvent.press(screen.getByTestId('home-event'));
@@ -202,5 +209,28 @@ describe('homeScreen skeletons', () => {
     act(() => control.props.onRefresh());
     expect(view.UNSAFE_getByType(RefreshControl).props.refreshing).toBe(true);
     await waitFor(() => expect(view.UNSAFE_getByType(RefreshControl).props.refreshing).toBe(false));
+  });
+});
+
+describe('homeScreen offline', () => {
+  beforeEach(() => {
+    reset();
+    mockPending.clear();
+  });
+
+  it('cold offline: one error state with retry, not a false "Follow a horse" (A-019)', () => {
+    mockData.followed = mockFailed;
+    mockData.news = mockFailed;
+    render(<HomeScreen />);
+    expect(screen.getByTestId('home-unavailable')).toBeOnTheScreen();
+    expect(screen.queryByText('Follow a horse to see it here')).not.toBeOnTheScreen();
+  });
+
+  it('one non-horse block failing leaves the rest of Home alone', () => {
+    mockData.charity = mockFailed;
+    mockData.followed = [];
+    render(<HomeScreen />);
+    expect(screen.queryByTestId('home-unavailable')).not.toBeOnTheScreen();
+    expect(screen.getByText('Follow a horse to see it here')).toBeOnTheScreen();
   });
 });

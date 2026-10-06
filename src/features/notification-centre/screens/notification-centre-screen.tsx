@@ -27,6 +27,7 @@ import { PreferencesCard } from '@/features/notification-centre/components/prefe
 import { groupInboxSections } from '@/features/notification-centre/lib/sections';
 import { isPushData, routeToTarget } from '@/features/notifications/deep-link';
 import { PageHeader } from '@/features/settings/components/page-header';
+import { translate } from '@/lib/i18n';
 import { EntranceItem, isFirstLoad, SkeletonSwap, useContentEntrance } from '@/lib/motion';
 
 const styles = StyleSheet.create({ fill: { flex: 1 } });
@@ -147,7 +148,7 @@ export function NotificationCentreScreen() {
     <View className="flex-1 bg-secondary-container">
       <FocusAwareStatusBar />
       <PageHeader
-        kicker="Notifications"
+        kicker={translate('notificationCentre.title')}
         scrollY={scrollY}
         right={hasUnread ? <MenuButton onPress={toggleMenu} expanded={menuOpen} /> : undefined}
       />

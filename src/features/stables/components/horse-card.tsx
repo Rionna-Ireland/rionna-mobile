@@ -1,13 +1,16 @@
 import type { Horse } from '@/features/stables/types';
+import type { TxKeyPath } from '@/lib/i18n';
 
 import * as React from 'react';
 import { View } from 'react-native';
 
 import { Card, Tag, Text } from '@/components/ui';
+import { a11yCardProps, a11ySummary } from '@/components/ui/a11y-card';
 import { HorsePhotoSource } from '@/features/hero-transition/horse-photo-source';
 import { heroSourceKey } from '@/features/hero-transition/types';
 import { FollowToggle } from '@/features/stables/components/follow-toggle';
 import { DeclaredPill, EntryUpcomingPill, StatusPill } from '@/features/stables/components/status-pill';
+import { pressFollowToggle } from '@/features/stables/lib/follow-press';
 import {
   formatDeclaredDate,
   getDeclaredEntry,
@@ -15,7 +18,16 @@ import {
   getTrainerLine,
 } from '@/features/stables/lib/horse-facts';
 import { cardPhotoUri, heroPhotoUri } from '@/features/stables/lib/photo-uris';
+import { tx } from '@/features/stables/lib/tx';
 import { translate } from '@/lib/i18n';
+
+const STATUS_LABEL: Record<Horse['status'], TxKeyPath> = {
+  IN_TRAINING: 'stables.status.inTraining',
+  PRE_TRAINING: 'stables.status.preTraining',
+  REHAB: 'stables.status.rehab',
+  RETIRED: 'stables.status.retired',
+  SOLD: 'stables.status.sold',
+};
 
 /** `rounded-lg`: the photo's corner radius, which the hero transition morphs to 0. */
 const CARD_PHOTO_RADIUS = 8;
@@ -27,6 +39,25 @@ type HorseCardProps = {
   onToggleFollow?: (horseId: string, following: boolean) => void;
   followPending?: boolean;
 };
+
+/**
+ * One VoiceOver summary for the card (A-004), e.g. "Laska du Breuil, In
+ * Training, following": the nested Follow button is hidden inside the card
+ * element on iOS, so it's exposed as a custom action instead.
+ */
+function horseCardA11yLabel(horse: Horse, declaredDate: string | null, showFollow: boolean) {
+  const pill = declaredDate
+    ? tx('stables.declaredOn', { date: declaredDate })
+    : horse.nextEntryId ? translate('stables.entryUpcoming') : translate(STATUS_LABEL[horse.status]);
+  return a11ySummary([
+    horse.name,
+    getProfileLine(horse),
+    getTrainerLine(horse),
+    horse.inviteOnly && translate('stables.card.private'),
+    pill,
+    showFollow && horse.isFollowing && translate('stables.follow.followingA11y'),
+  ]);
+}
 
 /**
  * Stables list card (S13-04 §3, Figma frame 6): white row card, 86×146
@@ -59,7 +90,20 @@ export function HorseCard({ horse, onPress, onToggleFollow, followPending = fals
     <Card
       testID={`horse-card-${horse.id}`}
       onPress={onPress}
-      accessibilityLabel={horse.name}
+      {...a11yCardProps({
+        label: horseCardA11yLabel(horse, declared ? formatDeclaredDate(declared.race.postTime) : null, Boolean(onToggleFollow)),
+        actions: [onToggleFollow && {
+          name: 'follow',
+          label: translate(horse.isFollowing ? 'stables.follow.unfollowA11y' : 'stables.follow.followA11y'),
+          disabled: followPending,
+          onAction: () => pressFollowToggle({
+            isFollowing: horse.isFollowing,
+            pending: followPending,
+            onToggle: following => onToggleFollow(horse.id, following),
+            confirmBeforeUnfollow: horse.inviteOnly ? { horseName: horse.name } : undefined,
+          }),
+        }],
+      })}
       className="flex-row gap-4 border border-outline-variant"
     >
       <HorsePhotoSource

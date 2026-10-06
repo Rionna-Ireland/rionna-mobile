@@ -5,35 +5,45 @@ import type { AccessibilityActionEvent, AccessibilityProps } from 'react-native'
  * (S14-08 A-004).
  *
  * On iOS an accessible wrapper hides every descendant from VoiceOver, so a
- * nested Like / Delete / Follow button can't be reached by swiping. The card
- * stays one element, the way a sighted member reads it, with:
+ * nested Like / Delete / Follow / RSVP button can't be reached by swiping. The
+ * card stays one element, the way a sighted member reads it, with:
  *
- * - a full summary label (`a11ySummary`: author, space, time, title, counts);
+ * - a full summary label (`a11ySummary`: e.g. author, space, time, counts);
  * - each nested control as a custom action (VoiceOver's Actions rotor,
  *   TalkBack's actions menu), so every intent stays reachable;
  * - double-tap still runs the card's own `onPress` (open).
  */
 export type A11yCardAction = {
-  /** Stable action id, e.g. `like`, `delete`, `report`. */
+  /** Stable action id, e.g. `like`, `delete`, `follow`, `rsvp`. */
   name: string;
-  /** What the screen reader announces, e.g. "Like" or "Delete comment". */
+  /** What the screen reader announces, e.g. "Like" or "Cancel RSVP". */
   label: string;
+  /** Same handler the visible control runs. */
   onAction: () => void;
+  /** Left out of the rotor while disabled (a full event, a pending mutation). */
+  disabled?: boolean;
 };
 
-type MaybeAction = A11yCardAction | null | undefined | false;
+export type MaybeA11yCardAction = A11yCardAction | null | undefined | false;
 
-/** Joins the non-empty parts with ", " (the screen-reader pause). */
-export function a11ySummary(parts: Array<string | null | undefined | false>): string {
+/** Joins the non-blank parts with ", " (the screen-reader pause). */
+export function a11ySummary(parts: ReadonlyArray<string | null | undefined | false>): string {
   return parts
     .map(part => (typeof part === 'string' ? part.trim() : ''))
     .filter(Boolean)
     .join(', ');
 }
 
-/** Spread onto the card's pressable: one accessible element plus its nested intents as actions. */
-export function a11yCardProps({ label, actions = [] }: { label: string; actions?: MaybeAction[] }): AccessibilityProps {
-  const list = actions.filter((action): action is A11yCardAction => Boolean(action));
+/**
+ * Spread onto the card's pressable (`Card onPress`, `MotionPressable`): one
+ * accessible element plus its nested intents as actions. Absent (falsy) and
+ * disabled actions are dropped.
+ */
+export function a11yCardProps({ label, actions = [] }: {
+  label: string;
+  actions?: ReadonlyArray<MaybeA11yCardAction>;
+}): AccessibilityProps {
+  const list = actions.filter((action): action is A11yCardAction => Boolean(action) && !(action as A11yCardAction).disabled);
   if (list.length === 0)
     return { accessible: true, accessibilityLabel: label };
   return {

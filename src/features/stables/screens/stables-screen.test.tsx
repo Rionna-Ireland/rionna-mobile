@@ -13,6 +13,12 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush }),
 }));
 
+const mockShowError = jest.fn();
+jest.mock('@/components/ui/utils', () => ({
+  ...jest.requireActual('@/components/ui/utils'),
+  showErrorMessage: (m: string) => mockShowError(m),
+}));
+
 jest.mock('@/components/ui', () => {
   const actual = jest.requireActual('@/components/ui');
   return { ...actual, Image: 'Image', FocusAwareStatusBar: () => null };
@@ -193,5 +199,15 @@ describe('stablesScreen', () => {
     withHorses(HORSES, { isPending: false, isFetching: true });
     render(<StablesTab />);
     expect(screen.queryByTestId('stables-skeleton')).not.toBeOnTheScreen();
+  });
+});
+
+describe('stablesTab offline', () => {
+  it('keeps the cached list when a refetch fails, with a quiet notice (A-006)', () => {
+    withHorses(HORSES, { isError: true, errorUpdatedAt: 1 });
+    render(<StablesTab />);
+    expect(screen.getByText('Ashfield Rose')).toBeOnTheScreen();
+    expect(screen.queryByTestId('stables-error')).not.toBeOnTheScreen();
+    expect(mockShowError).toHaveBeenCalledWith('Couldn\'t refresh the stables. Showing what we had.');
   });
 });

@@ -28,9 +28,9 @@ function ProfileIdentity({ name, email }: { name: string; email: string }) {
   const router = useRouter();
   return (
     <View className="flex-row items-center gap-3">
-      <Avatar ring size={56} name={name} testID="profile-avatar" />
+      <Avatar ring size={40} name={name} testID="profile-avatar" />
       <View className="flex-1 gap-1">
-        <Text variant="display-md" numberOfLines={2}>{name}</Text>
+        <Text variant="display-sm" numberOfLines={2}>{name}</Text>
         {/* ⏳ S13-12: "Founding member, since {Month YYYY}" replaces the email. */}
         <Text variant="body" className="text-ink-variant" numberOfLines={1}>
           {email}
@@ -77,6 +77,8 @@ export function ProfileScreen() {
             label={translate('settings.profile.membershipStatus')}
             value={<Tag variant="navy" label={translate('settings.profile.statusActive')} />}
             divider={false}
+            // Only row: no bottom padding, so the card's 16pt reads symmetric (A-047).
+            className="pb-0"
           />
         </SettingsCard>
 

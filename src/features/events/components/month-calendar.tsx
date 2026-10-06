@@ -19,6 +19,8 @@ export type MonthCalendarProps = {
   month: MonthRef;
   /** Day key (`YYYY-MM-DD`) -> fill colour for days with events. */
   eventDays: ReadonlyMap<string, string>;
+  /** Day key -> number of events, for the VoiceOver label ("2 events"). */
+  eventCounts?: ReadonlyMap<string, number>;
   /** Injectable for tests/stories; defaults to now. */
   today?: Date;
   onPrevMonth: () => void;
@@ -45,21 +47,39 @@ function useMonthDirection(month: MonthRef): PageDirection | null {
   return direction;
 }
 
+const WEEKDAY_NAME = new Intl.DateTimeFormat('en-IE', { weekday: 'long' });
+const MONTH_NAME = new Intl.DateTimeFormat('en-IE', { month: 'long' });
+
+/** "Saturday 18 October, today, 2 events" rather than the ISO key (A-022). */
+function dayA11yLabel(cell: CalendarCell, hasEvents: boolean, count: number | undefined) {
+  const [y, m, d] = cell.key.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  const parts = [`${WEEKDAY_NAME.format(date)} ${d} ${MONTH_NAME.format(date)}`];
+  if (cell.isToday)
+    parts.push(translate('events.calendar.today'));
+  if (count && count > 1)
+    parts.push(translate('events.calendar.manyEvents', { count }));
+  else if (hasEvents)
+    parts.push(translate('events.calendar.oneEvent'));
+  return parts.join(', ');
+}
+
 type DayCellProps = {
   cell: CalendarCell;
   fill: string | undefined;
+  count: number | undefined;
   onSelectDay: (dayKey: string) => void;
   testID: string;
 };
 
 /** One day square: pulses (pressScaleSmall → 1, snappy) with a selection tick on tap (S14-02 §10). */
-function DayCell({ cell, fill, onSelectDay, testID }: DayCellProps) {
+function DayCell({ cell, fill, count, onSelectDay, testID }: DayCellProps) {
   return (
     <View className="flex-1 items-center py-1">
       <MotionPressable
         testID={`${testID}-day-${cell.key}`}
         accessibilityRole="button"
-        accessibilityLabel={`${cell.key}${fill ? ', has events' : ''}${cell.isToday ? ', today' : ''}`}
+        accessibilityLabel={dayA11yLabel(cell, Boolean(fill), count)}
         size="small"
         haptic="selection"
         onPress={() => onSelectDay(cell.key)}
@@ -78,6 +98,7 @@ type MonthGridProps = {
   month: MonthRef;
   weeks: CalendarCell[][];
   eventDays: ReadonlyMap<string, string>;
+  eventCounts?: ReadonlyMap<string, number>;
   onSelectDay: (dayKey: string) => void;
   testID: string;
 };
@@ -86,7 +107,7 @@ type MonthGridProps = {
  * The day grid, re-keyed per month so each new month slides in from the side
  * it came from (`gentle`); Reduce Motion crossfades it on `quick`.
  */
-function MonthGrid({ month, weeks, eventDays, onSelectDay, testID }: MonthGridProps) {
+function MonthGrid({ month, weeks, eventDays, eventCounts, onSelectDay, testID }: MonthGridProps) {
   const { reduceMotion } = useMotion();
   const direction = useMonthDirection(month);
   return (
@@ -99,7 +120,7 @@ function MonthGrid({ month, weeks, eventDays, onSelectDay, testID }: MonthGridPr
         {weeks.map(week => (
           <View key={week[0].key} className="flex-row">
             {week.map(cell => (
-              <DayCell key={cell.key} cell={cell} fill={eventDays.get(cell.key)} onSelectDay={onSelectDay} testID={testID} />
+              <DayCell key={cell.key} cell={cell} fill={eventDays.get(cell.key)} count={eventCounts?.get(cell.key)} onSelectDay={onSelectDay} testID={testID} />
             ))}
           </View>
         ))}
@@ -116,6 +137,7 @@ function MonthGrid({ month, weeks, eventDays, onSelectDay, testID }: MonthGridPr
 export function MonthCalendar({
   month,
   eventDays,
+  eventCounts,
   today,
   onPrevMonth,
   onNextMonth,
@@ -163,7 +185,7 @@ export function MonthCalendar({
         ))}
       </View>
 
-      <MonthGrid month={month} weeks={weeks} eventDays={eventDays} onSelectDay={onSelectDay} testID={testID} />
+      <MonthGrid month={month} weeks={weeks} eventDays={eventDays} eventCounts={eventCounts} onSelectDay={onSelectDay} testID={testID} />
     </Card>
   );
 }

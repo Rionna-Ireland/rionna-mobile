@@ -9,6 +9,7 @@ import { Card, CheckSquare, colors, MonoLabel, MotionPressable, Text, View, with
 import { PollResultBar } from '@/features/polls/components/poll-result-bar';
 import { castVote } from '@/features/polls/lib/cast-vote';
 import { percentagesFor } from '@/features/polls/lib/percentages';
+import { translate } from '@/lib/i18n';
 import { playWave, staggerDelay, useMotion, WAVE_BARS_DELAY } from '@/lib/motion';
 
 const VOTE_PATTERN: TileSpec = { kind: 'harlequin', colourway: 'green', turn: 0 };
@@ -24,7 +25,7 @@ type Props = {
 };
 
 function formatVotes(total: number) {
-  return `${total} ${total === 1 ? 'vote' : 'votes'}`;
+  return total === 1 ? translate('paddock.vote.one') : translate('paddock.vote.many', { count: total });
 }
 
 /**
@@ -59,7 +60,7 @@ export function CharityVoteCard({ poll, pending, onVote }: Props) {
       testID={`poll-card-${poll.id}`}
       className="gap-6"
     >
-      <MonoLabel className="text-forest">Member vote</MonoLabel>
+      <MonoLabel className="text-forest">{translate('paddock.vote.kicker')}</MonoLabel>
       <Text variant="display-md" className="text-forest">{poll.question}</Text>
 
       {results
@@ -119,10 +120,10 @@ export function CharityVoteCard({ poll, pending, onVote }: Props) {
 
       <Text variant="body-sm" className="text-forest">
         {pending
-          ? 'Saving your vote…'
+          ? translate('paddock.vote.saving')
           : results
             ? formatVotes(results.total)
-            : 'Tap an option to vote. You can change your mind while the vote is open.'}
+            : translate('paddock.vote.hint')}
       </Text>
     </Card>
   );

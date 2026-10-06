@@ -37,6 +37,7 @@ import {
   parseStablesFilterParam,
   resolveStablesFilter,
 } from '@/features/stables/lib/stables-filters';
+import { useRefetchFailureNotice } from '@/features/stables/lib/use-refetch-failure-notice';
 import { translate } from '@/lib/i18n';
 import { EntranceItem, isFirstLoad, SkeletonSwap, useContentEntrance } from '@/lib/motion';
 
@@ -208,7 +209,10 @@ export function StablesScreen() {
 
   const loading = isFirstLoad(query);
   const renderItem = useHorseRenderItem(horses.length > 0, loading);
-  const showList = !isError && horses.length > 0;
+  // A failed refetch keeps the cached list (A-006); the error page is only for no data.
+  const unavailable = isError && !data;
+  const showList = horses.length > 0;
+  useRefetchFailureNotice(query, translate('stables.list.refreshFailed'));
   const pagePadding = { paddingTop: contentPaddingTop, paddingBottom: contentPaddingBottom };
 
   return (
@@ -236,7 +240,7 @@ export function StablesScreen() {
                 scrollEventThrottle={16}
               />
             )
-          : <StablesFallback isError={isError} retrying={isRefetching} onRetry={() => refetch()} pagePadding={pagePadding} />}
+          : <StablesFallback isError={unavailable} retrying={isRefetching} onRetry={() => refetch()} pagePadding={pagePadding} />}
       </SkeletonSwap>
       {showList ? <RefreshIndicator scrollY={scrollY} refreshing={pull.refreshing} top={safeTop} /> : null}
       {showList ? <CompactHeaderBar scrollY={scrollY} title={translate('stables.list.title')} testID="stables-compact-header" /> : null}

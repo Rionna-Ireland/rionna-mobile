@@ -2,6 +2,7 @@ import type { CurrentCharity } from '@/features/paddock/types';
 
 import { Card, MonoLabel, View } from '@/components/ui';
 import { ListRow } from '@/components/ui/list-row';
+import { translate } from '@/lib/i18n';
 
 /** Sage card of current charities. Rows link out only when a url exists. */
 export function CurrentCharitiesCard({ charities, onOpen }: { charities: CurrentCharity[]; onOpen: (url: string) => void }) {
@@ -9,7 +10,7 @@ export function CurrentCharitiesCard({ charities, onOpen }: { charities: Current
     return null;
   return (
     <Card variant="sage" testID="current-charities" className="gap-4">
-      <MonoLabel>Current charities</MonoLabel>
+      <MonoLabel>{translate('paddock.charity.current')}</MonoLabel>
       <View>
         {charities.map((c, i) => (
           <ListRow

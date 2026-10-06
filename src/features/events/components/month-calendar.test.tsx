@@ -40,7 +40,20 @@ describe('monthCalendar', () => {
     render(<MonthCalendar {...base} eventDays={new Map([['2026-07-04', colors.onPrimaryContainer]])} />);
     expect(screen.getByTestId('month-calendar-day-2026-07-04')).toHaveStyle({ backgroundColor: colors.onPrimaryContainer });
     expect(screen.getByTestId('month-calendar-day-2026-07-03')).not.toHaveStyle({ backgroundColor: colors.onPrimaryContainer });
-    expect(screen.getByLabelText('2026-07-02, today')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Thursday 2 July, today')).toBeOnTheScreen();
+  });
+
+  it('reads days as human dates with their event count (A-022)', () => {
+    const fill = colors.onPrimaryContainer;
+    render(
+      <MonthCalendar
+        {...base}
+        eventDays={new Map([['2026-07-04', fill], ['2026-07-18', fill]])}
+        eventCounts={new Map([['2026-07-04', 1], ['2026-07-18', 2]])}
+      />,
+    );
+    expect(screen.getByLabelText('Saturday 4 July, 1 event')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Saturday 18 July, 2 events')).toBeOnTheScreen();
   });
 
   it('pages months and reports day taps', () => {

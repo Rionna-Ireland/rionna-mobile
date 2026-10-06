@@ -30,6 +30,14 @@
     "errorTitle": "Something went wrong",
     "loading": "Loading",
     "selectPlaceholder": "Select…",
+    "time": {
+      "daysAgo": "{{count}} days ago",
+      "hourAgo": "1 hour ago",
+      "hoursAgo": "{{count}} hours ago",
+      "justNow": "Just now",
+      "minutesAgo": "{{count}} min ago",
+      "yesterday": "Yesterday"
+    },
     "tryAgain": "Try again"
   },
   "community": {
@@ -169,6 +177,11 @@
   },
   "events": {
     "all": "All",
+    "calendar": {
+      "manyEvents": "{{count}} events",
+      "oneEvent": "1 event",
+      "today": "today"
+    },
     "detail": {
       "addToCalendar": "Add to calendar",
       "addingToCalendar": "Adding…",
@@ -178,11 +191,13 @@
       "calendarAdded": "Added to your calendar ✓",
       "calendarDenied": "Calendar permission denied",
       "calendarFailed": "Couldn't add to calendar",
+      "cancelConfirmBody": "Places are limited, so it may go to another member.",
+      "cancelConfirmKeep": "Keep my spot",
+      "cancelConfirmTitle": "Give up your spot?",
       "cancelRsvp": "Cancel RSVP",
       "eventFull": "Event full",
       "joinOnline": "Join online",
       "loadError": "Couldn't load this event — check your connection and try again.",
-      "loading": "Loading event…",
       "remindMe": "Remind me",
       "reminderDenied": "Allow notifications in Settings to get reminders.",
       "reminderFailed": "Couldn't set the reminder.",
@@ -197,16 +212,67 @@
     "emptyTitle": "Nothing on the calendar yet",
     "full": "Full",
     "going": "Going ✓",
+    "goingA11y": "You are going",
+    "location": {
+      "online": "Online",
+      "tbc": "Location TBC"
+    },
     "nextMonth": "Next month",
     "nothingThisDay": "Nothing on this day",
+    "pastA11y": "Past event",
     "pastEvents": "Past events",
     "prevMonth": "Previous month",
     "remindMe": "Remind me",
+    "reminder": {
+      "tomorrow": "Starts tomorrow",
+      "tomorrowAt": "Tomorrow at {{place}}"
+    },
+    "reminderOffA11y": "Turn off reminder",
     "reminding": "Reminder on",
     "rsvp": "RSVP",
     "title": "Events",
     "unavailableBody": "Check your connection and try again shortly.",
     "unavailableTitle": "Events unavailable"
+  },
+  "home": {
+    "bell": {
+      "label": "Notifications",
+      "unread": "Notifications, {{count}} unread"
+    },
+    "charityA11y": "Charity snapshot, {{amount}} raised for {{name}}",
+    "charityKicker": "Charity snapshot",
+    "chips": {
+      "events": "Events",
+      "raceDay": "Race day",
+      "unread": "Unread"
+    },
+    "greeting": {
+      "afternoon": "Good afternoon",
+      "evening": "Good evening",
+      "morning": "Good morning",
+      "named": "{{greeting}}, {{name}}"
+    },
+    "insideTrack": {
+      "a11y": "Inside Track: {{title}}",
+      "kicker": "Inside Track",
+      "new": "NEW",
+      "play": "Play"
+    },
+    "myHorses": {
+      "emptyAction": "Go to Stables",
+      "emptyTitle": "Follow a horse to see it here",
+      "kicker": "My horses"
+    },
+    "openCharity": "Open charity",
+    "openProfile": "Open profile",
+    "raisedFor": "raised for {{name}}",
+    "unavailableBody": "Check your connection and pull to refresh.",
+    "unavailableTitle": "Couldn't load your yard",
+    "upcoming": {
+      "dateTbc": "Date to be confirmed",
+      "kicker": "Upcoming events"
+    },
+    "yardKicker": "Today at the yard"
   },
   "nav": {
     "back": "Back",
@@ -230,6 +296,86 @@
     "kicker": "News",
     "notFoundBody": "It may have been removed, or your connection dropped.",
     "notFoundTitle": "Article not found"
+  },
+  "notificationCentre": {
+    "emptyBody": "New activity from the club and your horses will show up here.",
+    "emptyTitle": "You're all caught up",
+    "menu": {
+      "close": "Close menu",
+      "markAllRead": "Mark all as read",
+      "more": "More actions"
+    },
+    "sections": {
+      "earlier": "Earlier",
+      "today": "Today",
+      "week": "This week"
+    },
+    "tags": {
+      "club": "Club",
+      "community": "Community",
+      "racing": "Racing",
+      "updates": "Updates"
+    },
+    "title": "Notifications",
+    "unavailableBody": "Check your connection and try again shortly.",
+    "unavailableTitle": "Notifications unavailable",
+    "unreadHint": "Unread"
+  },
+  "paddock": {
+    "benefits": {
+      "codeCopied": "Code copied",
+      "copyUnavailable": "Copy unavailable — long-press the code to select it",
+      "emptyBody": "Partner offers will appear here as the club adds them.",
+      "emptyTitle": "New partners are on the way",
+      "kicker": "BENEFITS",
+      "title": "The good life,\nmembers’ rates",
+      "unavailableTitle": "Offers unavailable"
+    },
+    "charity": {
+      "current": "Current charities",
+      "emptyBody": "The club will announce its charity partner here.",
+      "kicker": "CHARITY",
+      "totalKicker": "Raised together, to date",
+      "unavailableTitle": "Charity impact unavailable"
+    },
+    "checkConnection": "Check your connection and try again.",
+    "comingSoon": "Coming soon",
+    "hub": {
+      "benefitsFallback": "Restaurants, hotels, lifestyle partners",
+      "charityFallback": "Total donated, voting and impact stories",
+      "manyOffers": "{{count}} offers",
+      "oneOffer": "1 offer",
+      "raised": "{{amount}} raised to date",
+      "raisedVote": "{{raised}}. Vote on what’s next"
+    },
+    "journey": {
+      "founding": "Founding Member",
+      "kicker": "My Rionna journey"
+    },
+    "offer": {
+      "copyCode": "Copy code",
+      "open": "Open offer"
+    },
+    "rows": {
+      "benefits": "Membership Benefits",
+      "charity": "Charity Snapshot",
+      "merch": "Merchandise",
+      "merchSubtitle": "Caps, jackets, polos, accessories"
+    },
+    "story": {
+      "kicker": "Impact story",
+      "read": "Read story"
+    },
+    "subtitleAccent": "one of us.",
+    "subtitleLead": "Everything that comes with being ",
+    "title": "Paddock",
+    "vote": {
+      "hint": "Tap an option to vote. You can change your mind while the vote is open.",
+      "kicker": "Member vote",
+      "many": "{{count}} votes",
+      "one": "1 vote",
+      "saving": "Saving your vote…"
+    }
   },
   "polls": {
     "closed": "Closed",
@@ -358,6 +504,7 @@
       "racingLabel": "Racing",
       "racingNext": "Next — {{race}}",
       "readMore": "Read more",
+      "refreshFailed": "Couldn't refresh. Showing what we had.",
       "sections": {
         "racing": "Racing",
         "story": "Story",
@@ -384,6 +531,7 @@
       "follow": "Follow",
       "followA11y": "Follow horse",
       "following": "Following",
+      "followingA11y": "following",
       "leaveBody": "You'll lose access to {{name}}. Only a club admin can add you back.",
       "leaveCancel": "Cancel",
       "leaveConfirm": "Leave",
@@ -401,6 +549,7 @@
       "filterAll": "All",
       "filterFollowing": "Following",
       "kicker": "Today at the yard",
+      "refreshFailed": "Couldn't refresh the stables. Showing what we had.",
       "subtitle": "Every horse in our club, follow the ones you love.",
       "title": "Our Stables"
     },

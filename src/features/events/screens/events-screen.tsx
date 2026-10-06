@@ -117,15 +117,17 @@ function useEventsModel(
   const upcoming = React.useMemo(() => (upcomingAll ?? []).filter(matches).sort(byStart), [upcomingAll, matches]);
   const past = React.useMemo(() => (pastAll ?? []).filter(matches).sort((a, b) => byStart(b, a)), [pastAll, matches]);
 
-  const eventDays = React.useMemo(() => {
-    const map = new Map<string, string>();
+  const { eventDays, eventCounts } = React.useMemo(() => {
+    const fills = new Map<string, string>();
+    const counts = new Map<string, number>();
     for (const [key, list] of groupEventsByDay([...upcoming, ...past])) {
-      map.set(key, eventDayColour(list[0].type));
+      fills.set(key, eventDayColour(list[0].type));
+      counts.set(key, list.length);
     }
-    return map;
+    return { eventDays: fills, eventCounts: counts };
   }, [upcoming, past]);
 
-  return { typeChips, upcoming, past, eventDays };
+  return { typeChips, upcoming, past, eventDays, eventCounts };
 }
 
 type TrackedCardProps = React.ComponentProps<typeof ConnectedEventCard> & {
@@ -148,6 +150,7 @@ type EventsBodyProps = {
   onRetry: () => void;
   month: MonthRef;
   eventDays: ReadonlyMap<string, string>;
+  eventCounts: ReadonlyMap<string, number>;
   onMonthChange: (delta: number) => void;
   onSelectDay: (key: string) => void;
   emptyDay: string | null;
@@ -164,6 +167,7 @@ function EventsContent({
   onRetry,
   month,
   eventDays,
+  eventCounts,
   onMonthChange,
   onSelectDay,
   emptyDay,
@@ -187,6 +191,7 @@ function EventsContent({
       <MonthCalendar
         month={month}
         eventDays={eventDays}
+        eventCounts={eventCounts}
         onPrevMonth={() => onMonthChange(-1)}
         onNextMonth={() => onMonthChange(1)}
         onSelectDay={onSelectDay}
@@ -288,6 +293,36 @@ function useEventsData(scope: { organizationId: string; memberId: string }) {
   };
 }
 
+/** Upcoming cards, then past ones under their label; nothing upcoming says so first (A-011). */
+function EventLists({ upcoming, past, renderCard }: {
+  upcoming: ClubEvent[];
+  past: ClubEvent[];
+  renderCard: (event: ClubEvent, index: number, isPast: boolean) => React.ReactNode;
+}) {
+  return (
+    <>
+      {upcoming.map((event, i) => renderCard(event, i, false))}
+      {upcoming.length === 0 && past.length > 0
+        ? (
+            <EmptyState
+              testID="events-upcoming-empty"
+              title={translate('events.emptyTitle')}
+              body={translate('events.emptyBody')}
+            />
+          )
+        : null}
+      {past.length > 0
+        ? (
+            <View className="mt-2">
+              <MonoLabel>{translate('events.pastEvents')}</MonoLabel>
+            </View>
+          )
+        : null}
+      {past.map((event, i) => renderCard(event, upcoming.length + i, true))}
+    </>
+  );
+}
+
 export function EventsScreen() {
   const router = useRouter();
   const user = useAuthStore.use.user();
@@ -305,7 +340,7 @@ export function EventsScreen() {
   const rsvp = useEventRsvp(memberScope);
 
   const [typeFilter, setTypeFilter] = React.useState(ALL);
-  const { typeChips, upcoming, past, eventDays } = useEventsModel(events.upcomingAll, events.pastAll, typeFilter);
+  const { typeChips, upcoming, past, eventDays, eventCounts } = useEventsModel(events.upcomingAll, events.pastAll, typeFilter);
 
   const openEvent = (id: string) =>
     router.push({ pathname: '/event/[event-id]', params: { 'event-id': id } });
@@ -374,6 +409,7 @@ export function EventsScreen() {
           onRetry={() => void events.refetch()}
           month={month}
           eventDays={eventDays}
+          eventCounts={eventCounts}
           onMonthChange={goToMonth}
           onSelectDay={handleSelectDay}
           emptyDay={emptyDay}
@@ -381,15 +417,7 @@ export function EventsScreen() {
           onListLayout={setListY}
           onBodyLayout={setBodyY}
         >
-          {upcoming.map((event, i) => renderCard(event, i, false))}
-          {past.length > 0
-            ? (
-                <View className="mt-2">
-                  <MonoLabel>{translate('events.pastEvents')}</MonoLabel>
-                </View>
-              )
-            : null}
-          {past.map((event, i) => renderCard(event, upcoming.length + i, true))}
+          <EventLists upcoming={upcoming} past={past} renderCard={renderCard} />
         </EventsBody>
       </AnimatedScrollView>
       <RefreshIndicator scrollY={scrollY} refreshing={pull.refreshing} top={safeTop} />

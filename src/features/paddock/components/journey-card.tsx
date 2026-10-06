@@ -1,5 +1,6 @@
 import { Card, colors, MonoLabel, Text, View } from '@/components/ui';
 import { StarV2 } from '@/components/ui/icons/v2';
+import { translate } from '@/lib/i18n';
 
 export type JourneyBadge = 'founding-member';
 
@@ -9,7 +10,7 @@ export function JourneyCard({ badges }: { badges: JourneyBadge[] }) {
     return null;
   return (
     <Card variant="plum" testID="journey-card" className="gap-8">
-      <MonoLabel tone="dark">My Rionna journey</MonoLabel>
+      <MonoLabel tone="dark">{translate('paddock.journey.kicker')}</MonoLabel>
       <View className="flex-row flex-wrap gap-1">
         {badges.includes('founding-member')
           ? (
@@ -18,7 +19,7 @@ export function JourneyCard({ badges }: { badges: JourneyBadge[] }) {
                 className="flex-row items-center gap-2 rounded-md border border-on-primary-container bg-primary-fixed px-4 py-2 pl-2"
               >
                 <StarV2 size={13} color={colors.plumMid} />
-                <Text variant="body-sm" className="font-sans-semibold text-plum">Founding Member</Text>
+                <Text variant="body-sm" className="font-sans-semibold text-plum">{translate('paddock.journey.founding')}</Text>
               </View>
             )
           : null}

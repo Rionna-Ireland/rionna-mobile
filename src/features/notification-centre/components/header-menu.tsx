@@ -2,6 +2,7 @@ import * as React from 'react';
 import { StyleSheet, TouchableWithoutFeedback, View } from 'react-native';
 
 import { colors, MotionPressable, Text } from '@/components/ui';
+import { translate } from '@/lib/i18n';
 
 const DOTS = [0, 1, 2];
 
@@ -12,7 +13,7 @@ export function MenuButton({ onPress, expanded }: { onPress: () => void; expande
       size="small"
       testID="inbox-menu"
       accessibilityRole="button"
-      accessibilityLabel="More actions"
+      accessibilityLabel={translate('notificationCentre.menu.more')}
       accessibilityState={{ expanded }}
       onPress={onPress}
       className="size-11 items-center justify-center gap-[3px]"
@@ -33,7 +34,7 @@ type MenuSheetProps = {
 export function MenuSheet({ top, onDismiss, onMarkAllRead }: MenuSheetProps) {
   return (
     <>
-      <TouchableWithoutFeedback testID="inbox-menu-backdrop" accessibilityLabel="Close menu" onPress={onDismiss}>
+      <TouchableWithoutFeedback testID="inbox-menu-backdrop" accessibilityLabel={translate('notificationCentre.menu.close')} onPress={onDismiss}>
         <View style={StyleSheet.absoluteFill} />
       </TouchableWithoutFeedback>
       <View
@@ -51,7 +52,7 @@ export function MenuSheet({ top, onDismiss, onMarkAllRead }: MenuSheetProps) {
           }}
           className="px-4 py-3"
         >
-          <Text variant="body-lg">Mark all as read</Text>
+          <Text variant="body-lg">{translate('notificationCentre.menu.markAllRead')}</Text>
         </MotionPressable>
       </View>
     </>
