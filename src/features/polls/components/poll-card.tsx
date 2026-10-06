@@ -2,6 +2,7 @@ import type { Poll } from '@/features/polls/types';
 
 import { Card, CheckSquare, MonoLabel, Pressable, Text, View } from '@/components/ui';
 import { PollResultBar } from '@/features/polls/components/poll-result-bar';
+import { castVote } from '@/features/polls/lib/cast-vote';
 import { percentagesFor } from '@/features/polls/lib/percentages';
 
 type PollCardProps = {
@@ -46,7 +47,7 @@ export function PollCard({ poll, onVote, pending, variant }: PollCardProps) {
                 accessibilityLabel={option.label}
                 accessibilityState={{ selected: mine, disabled: !canVote }}
                 disabled={!canVote}
-                onPress={() => onVote(poll.id, option.id)}
+                onPress={() => castVote(poll, option.id, onVote)}
               >
                 <PollResultBar
                   label={option.label}
@@ -65,7 +66,7 @@ export function PollCard({ poll, onVote, pending, variant }: PollCardProps) {
               accessibilityLabel={option.label}
               accessibilityState={{ selected: mine, disabled: !canVote }}
               disabled={!canVote}
-              onPress={() => onVote(poll.id, option.id)}
+              onPress={() => castVote(poll, option.id, onVote)}
               className="flex-row items-center gap-3 rounded-lg border border-outline-variant bg-white p-3"
             >
               <CheckSquare checked={mine} testID={`poll-option-${option.id}-check`} />

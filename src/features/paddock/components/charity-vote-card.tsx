@@ -3,6 +3,7 @@ import type { Poll } from '@/features/polls/types';
 
 import { Card, CheckSquare, colors, MonoLabel, Pressable, Text, View, withAlpha } from '@/components/ui';
 import { PollResultBar } from '@/features/polls/components/poll-result-bar';
+import { castVote } from '@/features/polls/lib/cast-vote';
 import { percentagesFor } from '@/features/polls/lib/percentages';
 
 const VOTE_PATTERN: TileSpec = { kind: 'harlequin', colourway: 'green', turn: 0 };
@@ -45,7 +46,7 @@ export function CharityVoteCard({ poll, pending, onVote }: Props) {
                   accessibilityLabel={option.label}
                   accessibilityState={{ selected: poll.myVoteOptionId === option.id, disabled: !canVote }}
                   disabled={!canVote}
-                  onPress={() => onVote(poll.id, option.id)}
+                  onPress={() => castVote(poll, option.id, onVote)}
                   className="rounded-md bg-white px-4 py-3"
                 >
                   <PollResultBar
@@ -70,7 +71,7 @@ export function CharityVoteCard({ poll, pending, onVote }: Props) {
                     accessibilityLabel={option.label}
                     accessibilityState={{ selected: mine, disabled: !canVote }}
                     disabled={!canVote}
-                    onPress={() => onVote(poll.id, option.id)}
+                    onPress={() => castVote(poll, option.id, onVote)}
                     className="min-w-[48%] flex-1 flex-row items-center gap-3 rounded-md bg-white py-2 pr-4 pl-2"
                   >
                     <CheckSquare checked={mine} size={15} fill={colors.forest} track={FOREST_TRACK} />
