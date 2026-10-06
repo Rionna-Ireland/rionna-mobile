@@ -8,12 +8,12 @@ import {
   FocusAwareStatusBar,
   IconButton,
   ListRow,
-  ScrollView,
   Text,
   View,
 } from '@/components/ui';
 import { PencilV2 } from '@/components/ui/icons/v2';
 import { Tag } from '@/components/ui/mono-label';
+import { AnimatedScrollView, useScrollHeader } from '@/components/ui/scroll-header';
 import { signOut, useAuthStore } from '@/features/auth/use-auth-store';
 import { PageHeader } from '@/features/settings/components/page-header';
 import { SettingsCard } from '@/features/settings/components/settings-card';
@@ -52,6 +52,7 @@ export function ProfileScreen() {
   const router = useRouter();
   const user = useAuthStore.use.user();
   const displayName = user?.name?.trim() || translate('settings.profile.fallbackName');
+  const { scrollY, onScroll } = useScrollHeader();
 
   const openSupport = () => {
     const subject = encodeURIComponent(translate('settings.profile.helpSubject'));
@@ -61,10 +62,12 @@ export function ProfileScreen() {
   return (
     <View className="flex-1 bg-secondary-container">
       <FocusAwareStatusBar />
-      <PageHeader kicker={translate('settings.profile.title')} />
-      <ScrollView
+      <PageHeader kicker={translate('settings.profile.title')} scrollY={scrollY} />
+      <AnimatedScrollView
         className="flex-1"
         contentContainerClassName="gap-4 px-4 pt-6 pb-10"
+        onScroll={onScroll}
+        scrollEventThrottle={16}
       >
         <ProfileIdentity name={displayName} email={user?.email ?? ''} />
 
@@ -139,7 +142,7 @@ export function ProfileScreen() {
         <Text variant="body-sm" className="text-center text-ink-muted">
           {`${Env.EXPO_PUBLIC_CLUB_NAME} · ${translate('settings.version')} ${Env.EXPO_PUBLIC_VERSION}`}
         </Text>
-      </ScrollView>
+      </AnimatedScrollView>
     </View>
   );
 }
