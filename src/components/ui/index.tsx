@@ -23,6 +23,8 @@ export * from './list';
 export * from './list-row';
 export * from './modal';
 export * from './mono-label';
+export * from './morph-label';
+export * from './number-roll';
 export * from './photo-fallback';
 export * from './pressable';
 export * from './progress-bar';
