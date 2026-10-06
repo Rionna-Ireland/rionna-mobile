@@ -43,6 +43,10 @@ export const durations = {
   draw: 900,
   /** Indeterminate loaders: one full linear revolution of a ring spinner. */
   spin: 900,
+  /** Skeleton shimmer: one slow linear sweep of the lighter band (S14-03). */
+  shimmer: 1200,
+  /** Refresher breathing loop: one half-cycle of the 0.6 ↔ 1 opacity pulse (S14-03). */
+  breathe: 900,
 } as const;
 
 export type DurationToken = keyof typeof durations;
@@ -68,6 +72,10 @@ export const timings = {
   crossfade: { duration: durations.base, easing: easings.enter },
   /** Indeterminate spinner revolution: constant speed, no easing. */
   spin: { duration: durations.spin, easing: Easing.linear },
+  /** Skeleton shimmer sweep: constant speed, so the band never seems to pause. */
+  shimmer: { duration: durations.shimmer, easing: Easing.linear },
+  /** Refresher breathing: a soft in-out so the pulse has no hard turn-around. */
+  breathe: { duration: durations.breathe, easing: Easing.inOut(Easing.sin) },
 };
 
 /** List entrance stagger: 40ms per item, capped so item 7+ arrives with item 6. */

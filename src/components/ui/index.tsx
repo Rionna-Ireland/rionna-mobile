@@ -31,6 +31,7 @@ export * from './pressable';
 export * from './progress-bar';
 export * from './screen-header';
 export * from './select';
+export * from './skeleton';
 export * from './text';
 export * from './text-variants';
 export * from './utils';
