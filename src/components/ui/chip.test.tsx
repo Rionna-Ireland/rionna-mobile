@@ -3,6 +3,13 @@ import * as React from 'react';
 import { cleanup, render, screen, setup } from '@/lib/test-utils';
 
 import { Chip, ChipRow } from './chip';
+import colors from './colors';
+
+const mockSelection = jest.fn();
+jest.mock('@/lib/motion/haptics', () => ({
+  ...jest.requireActual('@/lib/motion/haptics'),
+  selection: () => mockSelection(),
+}));
 
 afterEach(cleanup);
 
@@ -14,6 +21,13 @@ describe('chip', () => {
     expect(screen.getByTestId('chip').props.accessibilityLabel).toBe('Race day, 3');
   });
 
+  it('sets a leading emoji in its own Text so the words keep the chip baseline (A-046)', () => {
+    render(<Chip testID="chip" label="🐴 Stable Notes" />);
+    expect(screen.getByText('Stable Notes')).toBeOnTheScreen();
+    expect(screen.getByText('🐴 ')).toBeOnTheScreen();
+    expect(screen.getByTestId('chip').props.accessibilityLabel).toBe('🐴 Stable Notes');
+  });
+
   it('uses lilac when selected and white otherwise, with matching badges', () => {
     render(
       <>
@@ -21,11 +35,20 @@ describe('chip', () => {
         <Chip testID="off" label="B" count={1} />
       </>,
     );
-    expect(screen.getByTestId('on').props.className).toContain('bg-primary-fixed');
+    expect(screen.getByTestId('on-fill')).toHaveStyle({ backgroundColor: colors.primaryFixed, opacity: 1 });
     expect(screen.getByTestId('on').props.accessibilityState).toEqual({ selected: true });
     expect(screen.getByTestId('on-count').props.className).toContain('bg-white');
+    expect(screen.getByTestId('off-fill')).toHaveStyle({ opacity: 0 });
     expect(screen.getByTestId('off').props.className).toContain('bg-white');
     expect(screen.getByTestId('off-count').props.className).toContain('bg-secondary-container');
+  });
+
+  it('fires a selection() haptic on press', async () => {
+    const onPress = jest.fn();
+    const { user } = setup(<Chip testID="chip" label="A" onPress={onPress} />);
+    await user.press(screen.getByTestId('chip'));
+    expect(mockSelection).toHaveBeenCalledTimes(1);
+    expect(onPress).toHaveBeenCalledTimes(1);
   });
 
   it('pads the 32pt chip to a 44pt hit target', () => {

@@ -13,6 +13,12 @@ jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush }),
 }));
 
+const mockShowError = jest.fn();
+jest.mock('@/components/ui/utils', () => ({
+  ...jest.requireActual('@/components/ui/utils'),
+  showErrorMessage: (m: string) => mockShowError(m),
+}));
+
 jest.mock('@/components/ui', () => {
   const actual = jest.requireActual('@/components/ui');
   return { ...actual, Image: 'Image', FocusAwareStatusBar: () => null };
@@ -175,5 +181,33 @@ describe('stablesScreen', () => {
     rerender(<StablesTab />);
     fireEvent.press(screen.getByText('Try again'));
     expect(refetch).toHaveBeenCalled();
+  });
+
+  it('shows the skeleton list on a cold first load, then the cards', () => {
+    withHorses(undefined, { isPending: true, isFetching: true });
+    const { rerender } = render(<StablesTab />);
+    expect(screen.getByTestId('stables-skeleton')).toBeOnTheScreen();
+    expect(screen.queryByTestId('stables-empty')).not.toBeOnTheScreen();
+
+    withHorses(HORSES, { isPending: false, isFetching: false });
+    rerender(<StablesTab />);
+    expect(screen.queryByTestId('stables-skeleton')).not.toBeOnTheScreen();
+    expect(screen.getByText('Ashfield Rose')).toBeOnTheScreen();
+  });
+
+  it('cached horses refetching show the list, never the skeleton', () => {
+    withHorses(HORSES, { isPending: false, isFetching: true });
+    render(<StablesTab />);
+    expect(screen.queryByTestId('stables-skeleton')).not.toBeOnTheScreen();
+  });
+});
+
+describe('stablesTab offline', () => {
+  it('keeps the cached list when a refetch fails, with a quiet notice (A-006)', () => {
+    withHorses(HORSES, { isError: true, errorUpdatedAt: 1 });
+    render(<StablesTab />);
+    expect(screen.getByText('Ashfield Rose')).toBeOnTheScreen();
+    expect(screen.queryByTestId('stables-error')).not.toBeOnTheScreen();
+    expect(mockShowError).toHaveBeenCalledWith('Couldn\'t refresh the stables. Showing what we had.');
   });
 });

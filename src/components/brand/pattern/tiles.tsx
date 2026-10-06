@@ -143,6 +143,14 @@ function Harlequin({ c }: { c: Palette }) {
     <>
       <Rect width={200} height={200} fill={c.base} />
       {lozenges}
+      <HarlequinSpurs c={c} />
+    </>
+  );
+}
+
+function HarlequinSpurs({ c }: { c: Palette }) {
+  return (
+    <>
       <Star x={50} y={50} scale={1.25} fill={c.spur} />
       <Star x={150} y={150} scale={1.25} fill={c.spur} />
     </>
@@ -160,6 +168,21 @@ export function TileShapes({ spec }: { spec: TileSpec }) {
   return (
     <G transform={`rotate(${spec.turn * 90} 100 100)`}>
       <Renderer c={COLOURWAYS[spec.colourway]} />
+    </G>
+  );
+}
+
+/**
+ * The lit layer of the S14-06 wave: for the harlequin, only its two spur
+ * stars (the only shapes a lit colourway changes), so each animated tile is
+ * two paths; other kinds draw the whole tile.
+ */
+export function TileSpurs({ spec }: { spec: TileSpec }) {
+  if (spec.kind !== 'harlequin')
+    return <TileShapes spec={spec} />;
+  return (
+    <G transform={`rotate(${spec.turn * 90} 100 100)`}>
+      <HarlequinSpurs c={COLOURWAYS[spec.colourway]} />
     </G>
   );
 }

@@ -3,10 +3,11 @@ import type { MemberContentScope } from '@/features/member-content/types';
 import { useRouter } from 'expo-router';
 import * as React from 'react';
 
-import { Pressable, Text, View } from '@/components/ui';
+import { MotionPressable, Text, View } from '@/components/ui';
 import colors from '@/components/ui/colors';
 import { BellV2 } from '@/components/ui/icons/v2';
 import { useInboxBadge } from '@/features/notification-centre/api/use-inbox-badge';
+import { translate } from '@/lib/i18n';
 
 const ICON_SIZE = 20;
 // 1.4pt rendered stroke in the icon's 24-unit viewBox (tab-bar icon style).
@@ -23,14 +24,14 @@ export function NotificationsBell({ scope }: { scope: MemberContentScope }) {
   const router = useRouter();
   const badge = formatBadge(useInboxBadge(scope).data ?? 0);
   return (
-    <Pressable
+    <MotionPressable
+      size="small"
       accessibilityRole="button"
-      accessibilityLabel={badge ? `Notifications, ${badge} unread` : 'Notifications'}
+      accessibilityLabel={badge ? translate('home.bell.unread', { count: badge }) : translate('home.bell.label')}
       testID="home-bell"
       hitSlop={2}
       onPress={() => router.push('/notifications')}
       className="size-[41px] items-center justify-center rounded-full border border-outline-variant bg-white"
-      style={({ pressed }) => (pressed ? { opacity: 0.7 } : null)}
     >
       <BellV2 size={ICON_SIZE} strokeWidth={ICON_STROKE} color={colors.ink} />
       {badge
@@ -45,6 +46,6 @@ export function NotificationsBell({ scope }: { scope: MemberContentScope }) {
             </View>
           )
         : null}
-    </Pressable>
+    </MotionPressable>
   );
 }

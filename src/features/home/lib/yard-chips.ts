@@ -1,4 +1,5 @@
 import type { Href } from 'expo-router';
+import { translate } from '@/lib/i18n';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -70,13 +71,13 @@ export function buildYardChips({ raceDayHorseIds: ids, unread, eventsThisWeek }:
   if (ids.length > 0) {
     items.push({
       key: 'raceDay',
-      label: 'Race day',
+      label: translate('home.chips.raceDay'),
       count: ids.length,
       href: ids.length === 1 ? `/stables/${ids[0]}` : '/stables',
     });
   }
-  items.push({ key: 'unread', label: 'Unread', count: positive(unread), href: '/notifications' });
-  items.push({ key: 'events', label: 'Events', count: positive(eventsThisWeek), href: '/events' });
+  items.push({ key: 'unread', label: translate('home.chips.unread'), count: positive(unread), href: '/notifications' });
+  items.push({ key: 'events', label: translate('home.chips.events'), count: positive(eventsThisWeek), href: '/events' });
 
   const selectedKey = items.find(i => (i.count ?? 0) > 0)?.key;
   return { items, selectedKey };

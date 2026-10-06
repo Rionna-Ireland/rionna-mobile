@@ -1,7 +1,8 @@
 import type { Offer } from '@/features/paddock/types';
 
-import { render, screen } from '@testing-library/react-native';
+import { act, render, screen } from '@testing-library/react-native';
 import * as React from 'react';
+import { RefreshControl } from 'react-native';
 
 import { BenefitsView } from '@/features/paddock/screens/benefits-screen';
 
@@ -47,5 +48,17 @@ describe('benefitsView', () => {
   it('shows a loading indicator before the first response', () => {
     render(<BenefitsView {...base} offers={undefined} isLoading />);
     expect(screen.getByTestId('benefits-loading')).toBeOnTheScreen();
+  });
+  it('breaks the title after the comma, as in frame 13 (A-020)', () => {
+    render(<BenefitsView {...base} offers={[]} />);
+    expect(screen.getByRole('header', { name: 'The good life,\nmembers’ rates' })).toBeOnTheScreen();
+  });
+  it('refreshes through the branded pull-to-refresh (A-036)', async () => {
+    const onRefresh = jest.fn(() => Promise.resolve());
+    render(<BenefitsView {...base} offers={[OFFER]} onRefresh={onRefresh} />);
+    await act(async () => {
+      screen.UNSAFE_getByType(RefreshControl).props.onRefresh();
+    });
+    expect(onRefresh).toHaveBeenCalledTimes(1);
   });
 });

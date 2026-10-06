@@ -4,6 +4,7 @@ import type { Poll } from '@/features/polls/types';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import * as React from 'react';
 
+import { resetCharityCounterSession } from '@/features/paddock/lib/charity-counter';
 import { CharityView } from '@/features/paddock/screens/charity-screen';
 
 jest.mock('@/components/ui', () => {
@@ -51,9 +52,12 @@ const base = {
 };
 
 describe('charityView', () => {
+  afterEach(resetCharityCounterSession);
+
   it('renders total, goal line and the single active charity', () => {
     render(<CharityView {...base} charity={CHARITY} poll={POLL} />);
-    expect(screen.getByText('\u20AC24,500')).toBeOnTheScreen();
+    // First view counts up (S14-06): the total is one accessible label.
+    expect(screen.getByLabelText('\u20AC24,500')).toBeOnTheScreen();
     expect(screen.getByText('68% of this year\u2019s \u20AC36,000 goal')).toBeOnTheScreen();
     expect(screen.getByText('Irish Injured Jockeys')).toBeOnTheScreen();
   });

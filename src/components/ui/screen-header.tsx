@@ -1,5 +1,7 @@
+import type { SharedValue } from 'react-native-reanimated';
+
 import * as React from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { twMerge } from 'tailwind-merge';
 
 import { Submark } from '@/components/brand/logo';
@@ -8,7 +10,9 @@ import { translate } from '@/lib/i18n';
 import colors from './colors';
 import { CaretRightV2 } from './icons/v2';
 import { MonoLabel } from './mono-label';
+import { MotionPressable } from './pressable';
 import { useScreenTopPadding } from './screen-layout';
+import { ScrollHairline } from './scroll-header';
 import { Text } from './text';
 
 const BACK_ICON_STYLE = { transform: [{ rotate: '180deg' }] };
@@ -26,6 +30,11 @@ export type ScreenHeaderProps = {
   subtitle?: string;
   /** `tab-root`: show the submark instead of the title row (Home). */
   brand?: boolean;
+  /**
+   * `tab-root` + `brand`: render this in place of the default 36pt submark
+   * (Home wraps it in the Arrival hand-off slot, S14-04).
+   */
+  brandMark?: React.ReactNode;
   /** `kicker`: back handler; the chevron only renders when set. */
   onBack?: () => void;
   backLabel?: string;
@@ -36,20 +45,26 @@ export type ScreenHeaderProps = {
   safeArea?: boolean;
   className?: string;
   testID?: string;
+  /**
+   * `kicker`: the scroll offset of the content below a fixed header. A
+   * hairline fades in along the header's bottom edge as content scrolls
+   * under it (S14-02 §5).
+   */
+  scrollY?: SharedValue<number>;
 };
 
 function BackButton({ onBack, label, color, testID }: { onBack: () => void; label: string; color: string; testID?: string }) {
   return (
-    <Pressable
+    <MotionPressable
       testID={testID}
       onPress={onBack}
+      size="small"
       accessibilityRole="button"
       accessibilityLabel={label}
-      className="size-11 items-center justify-center"
-      style={({ pressed }) => (pressed ? { opacity: 0.6 } : null)}
+      className="size-11 items-center justify-center overflow-hidden rounded-full"
     >
       <CaretRightV2 size={20} color={color} style={BACK_ICON_STYLE} />
-    </Pressable>
+    </MotionPressable>
   );
 }
 
@@ -101,7 +116,7 @@ function TitleBlock({ title, subtitle, tone }: Pick<ScreenHeaderProps, 'title' |
 
 /** Screen header in the two V2 patterns (S13-01 §7). Safe-area aware. */
 export function ScreenHeader(props: ScreenHeaderProps) {
-  const { variant = 'kicker', title, subtitle, brand, right, tone, safeArea = true, className, testID } = props;
+  const { variant = 'kicker', title, subtitle, brand, brandMark, right, tone, safeArea = true, className, testID, scrollY } = props;
   const topPadding = useScreenTopPadding();
   const style = safeArea ? { paddingTop: topPadding } : undefined;
 
@@ -110,7 +125,7 @@ export function ScreenHeader(props: ScreenHeaderProps) {
       <View testID={testID} style={style} className={twMerge('gap-8 px-4', className)}>
         {(brand || right) && (
           <View className="min-h-11 flex-row items-center justify-between">
-            {brand ? <Submark width={36} color={tone === 'dark' ? colors.white : colors.ink} /> : <View />}
+            {brand ? (brandMark ?? <Submark width={36} color={tone === 'dark' ? colors.white : colors.ink} />) : <View />}
             {right}
           </View>
         )}
@@ -123,6 +138,7 @@ export function ScreenHeader(props: ScreenHeaderProps) {
     <View testID={testID} style={style} className={twMerge('gap-6 px-4', className)}>
       <KickerRow {...props} />
       {(title || subtitle) && <TitleBlock title={title} subtitle={subtitle} tone={tone} />}
+      {scrollY ? <ScrollHairline scrollY={scrollY} testID={testID ? `${testID}-hairline` : undefined} /> : null}
     </View>
   );
 }

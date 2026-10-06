@@ -8,12 +8,12 @@ import {
   FocusAwareStatusBar,
   IconButton,
   ListRow,
-  ScrollView,
   Text,
   View,
 } from '@/components/ui';
 import { PencilV2 } from '@/components/ui/icons/v2';
 import { Tag } from '@/components/ui/mono-label';
+import { AnimatedScrollView, useScrollHeader } from '@/components/ui/scroll-header';
 import { signOut, useAuthStore } from '@/features/auth/use-auth-store';
 import { PageHeader } from '@/features/settings/components/page-header';
 import { SettingsCard } from '@/features/settings/components/settings-card';
@@ -28,9 +28,9 @@ function ProfileIdentity({ name, email }: { name: string; email: string }) {
   const router = useRouter();
   return (
     <View className="flex-row items-center gap-3">
-      <Avatar ring size={56} name={name} testID="profile-avatar" />
+      <Avatar ring size={40} name={name} testID="profile-avatar" />
       <View className="flex-1 gap-1">
-        <Text variant="display-md" numberOfLines={2}>{name}</Text>
+        <Text variant="display-sm" numberOfLines={2}>{name}</Text>
         {/* ⏳ S13-12: "Founding member, since {Month YYYY}" replaces the email. */}
         <Text variant="body" className="text-ink-variant" numberOfLines={1}>
           {email}
@@ -52,6 +52,7 @@ export function ProfileScreen() {
   const router = useRouter();
   const user = useAuthStore.use.user();
   const displayName = user?.name?.trim() || translate('settings.profile.fallbackName');
+  const { scrollY, onScroll } = useScrollHeader();
 
   const openSupport = () => {
     const subject = encodeURIComponent(translate('settings.profile.helpSubject'));
@@ -61,10 +62,12 @@ export function ProfileScreen() {
   return (
     <View className="flex-1 bg-secondary-container">
       <FocusAwareStatusBar />
-      <PageHeader kicker={translate('settings.profile.title')} />
-      <ScrollView
+      <PageHeader kicker={translate('settings.profile.title')} scrollY={scrollY} />
+      <AnimatedScrollView
         className="flex-1"
         contentContainerClassName="gap-4 px-4 pt-6 pb-10"
+        onScroll={onScroll}
+        scrollEventThrottle={16}
       >
         <ProfileIdentity name={displayName} email={user?.email ?? ''} />
 
@@ -74,6 +77,8 @@ export function ProfileScreen() {
             label={translate('settings.profile.membershipStatus')}
             value={<Tag variant="navy" label={translate('settings.profile.statusActive')} />}
             divider={false}
+            // Only row: no bottom padding, so the card's 16pt reads symmetric (A-047).
+            className="pb-0"
           />
         </SettingsCard>
 
@@ -139,7 +144,7 @@ export function ProfileScreen() {
         <Text variant="body-sm" className="text-center text-ink-muted">
           {`${Env.EXPO_PUBLIC_CLUB_NAME} · ${translate('settings.version')} ${Env.EXPO_PUBLIC_VERSION}`}
         </Text>
-      </ScrollView>
+      </AnimatedScrollView>
     </View>
   );
 }

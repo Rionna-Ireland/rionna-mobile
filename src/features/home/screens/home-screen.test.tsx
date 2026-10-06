@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import * as React from 'react';
+import { RefreshControl } from 'react-native';
 
 import { HomeScreen } from '@/features/home/screens/home-screen';
 
@@ -31,8 +32,21 @@ jest.mock('@/features/auth/use-auth-store', () => ({
   useAuthStore: { use: { user: () => mockUser } },
 }));
 
+const mockPending = new Set<unknown>();
+/** A query whose `data` is in `mockPending` is a cold first load: pending AND fetching, no data. */
+const mockFailed = Symbol('failed');
 function mockQuery(data: unknown) {
-  return { data, isLoading: false, isRefetching: false, refetch: jest.fn() };
+  if (data === mockFailed)
+    return { data: undefined, isPending: true, isFetching: false, isLoading: false, isError: true, isRefetching: false, refetch: jest.fn() };
+  const cold = mockPending.has(data);
+  return {
+    data: cold ? undefined : data,
+    isPending: cold || data === undefined,
+    isFetching: cold,
+    isLoading: cold,
+    isRefetching: false,
+    refetch: jest.fn(),
+  };
 }
 
 const mockData: Record<string, unknown> = {};
@@ -63,6 +77,7 @@ describe('homeScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     reset();
+    mockPending.clear();
     mockUser = { id: 'member-1', email: 'jane@example.com', name: 'Jane Member' };
   });
 
@@ -124,9 +139,14 @@ describe('homeScreen', () => {
     fireEvent.press(screen.getByTestId('home-horse-h1'));
     expect(mockPush).toHaveBeenCalledWith('/stables/h1');
 
-    expect(screen.getByText('€24,500')).toBeOnTheScreen();
+    // First view: the S14-06 count-up, read as one label.
+    expect(screen.getByLabelText('€24,500')).toBeOnTheScreen();
     expect(screen.getByText('raised for Womens Health')).toBeOnTheScreen();
     fireEvent.press(screen.getByTestId('home-charity-open'));
+    expect(mockPush).toHaveBeenCalledWith('/paddock/charity');
+    // A-041: the whole card opens Charity too, with one summary label.
+    mockPush.mockClear();
+    fireEvent.press(screen.getByLabelText('Charity snapshot, €24,500 raised for Womens Health'));
     expect(mockPush).toHaveBeenCalledWith('/paddock/charity');
 
     expect(screen.getByText('12/20 slots remaining')).toBeOnTheScreen();
@@ -145,5 +165,72 @@ describe('homeScreen', () => {
     expect(screen.getByTestId('home-inside-track-new')).toBeOnTheScreen();
     fireEvent.press(screen.getByTestId('home-inside-track'));
     expect(mockPush).toHaveBeenCalledWith('/post/s1/p1');
+  });
+});
+
+describe('homeScreen skeletons', () => {
+  beforeEach(() => {
+    reset();
+    mockPending.clear();
+  });
+
+  it('shows block skeletons only on a cold first load, then crossfades in the cards', () => {
+    const followed = [{ id: 'h1', name: 'Ashfield Rose', photos: [] }];
+    mockData.followed = followed;
+    mockData.news = news;
+    mockPending.add(followed);
+    mockPending.add(news);
+    const { rerender } = render(<HomeScreen />);
+    expect(screen.getByTestId('home-my-horses-skeleton')).toBeOnTheScreen();
+    expect(screen.getByTestId('home-hero-skeleton')).toBeOnTheScreen();
+    expect(screen.queryByTestId('home-my-horses')).not.toBeOnTheScreen();
+    // Not loading (no fetch running) → no skeleton for charity/events/inside track.
+    expect(screen.queryByTestId('home-charity-skeleton')).not.toBeOnTheScreen();
+
+    mockPending.clear();
+    rerender(<HomeScreen />);
+    expect(screen.queryByTestId('home-my-horses-skeleton')).not.toBeOnTheScreen();
+    expect(screen.getByTestId('home-my-horses')).toBeOnTheScreen();
+    expect(screen.getByTestId('home-hero')).toBeOnTheScreen();
+  });
+
+  it('cached data renders straight away with no skeleton', () => {
+    mockData.followed = [{ id: 'h1', name: 'Ashfield Rose', photos: [] }];
+    render(<HomeScreen />);
+    expect(screen.queryByTestId('home-my-horses-skeleton')).not.toBeOnTheScreen();
+    expect(screen.getByTestId('home-my-horses')).toBeOnTheScreen();
+  });
+
+  it('wires the branded refresher: transparent native spinner + submark overlay, refetching on pull', async () => {
+    const view = render(<HomeScreen />);
+    const control = view.UNSAFE_getByType(RefreshControl);
+    expect(control.props.tintColor).toBe('transparent');
+    expect(screen.getByTestId('refresh-indicator', { includeHiddenElements: true })).toBeTruthy();
+    act(() => control.props.onRefresh());
+    expect(view.UNSAFE_getByType(RefreshControl).props.refreshing).toBe(true);
+    await waitFor(() => expect(view.UNSAFE_getByType(RefreshControl).props.refreshing).toBe(false));
+  });
+});
+
+describe('homeScreen offline', () => {
+  beforeEach(() => {
+    reset();
+    mockPending.clear();
+  });
+
+  it('cold offline: one error state with retry, not a false "Follow a horse" (A-019)', () => {
+    mockData.followed = mockFailed;
+    mockData.news = mockFailed;
+    render(<HomeScreen />);
+    expect(screen.getByTestId('home-unavailable')).toBeOnTheScreen();
+    expect(screen.queryByText('Follow a horse to see it here')).not.toBeOnTheScreen();
+  });
+
+  it('one non-horse block failing leaves the rest of Home alone', () => {
+    mockData.charity = mockFailed;
+    mockData.followed = [];
+    render(<HomeScreen />);
+    expect(screen.queryByTestId('home-unavailable')).not.toBeOnTheScreen();
+    expect(screen.getByText('Follow a horse to see it here')).toBeOnTheScreen();
   });
 });

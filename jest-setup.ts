@@ -5,6 +5,8 @@
 jest.mock('react-native-worklets', () => ({
   __esModule: true,
   default: {},
+  scheduleOnRN: (fn: (...args: unknown[]) => unknown, ...args: unknown[]) => fn(...args),
+  scheduleOnUI: (fn: (...args: unknown[]) => unknown, ...args: unknown[]) => fn(...args),
 }));
 
 // Mock react-native-reanimated
@@ -18,8 +20,39 @@ jest.mock('react-native-reanimated', () => {
       ScrollView: View,
       createAnimatedComponent: (component: any) => component,
     },
-    useSharedValue: jest.fn(() => ({ value: 0 })),
+    useSharedValue: jest.fn((initial = 0) => {
+      const sv = {
+        value: initial,
+        get: () => sv.value,
+        set: (next: unknown) => {
+          sv.value = next;
+        },
+      };
+      return sv;
+    }),
     useAnimatedStyle: jest.fn(fn => fn()),
+    // Runs the handler's `onScroll` with the native event, so screens that moved
+    // their scroll logic onto the UI thread still respond to fireEvent.scroll.
+    useAnimatedScrollHandler: jest.fn((handlers: any) => {
+      const onScroll = typeof handlers === 'function' ? handlers : handlers?.onScroll;
+      return jest.fn((event: any) => onScroll?.(event?.nativeEvent ?? event, {}));
+    }),
+    useFrameCallback: jest.fn(() => ({ setActive: jest.fn(), isActive: false, callbackId: 0 })),
+    useAnimatedProps: jest.fn(fn => fn()),
+    useAnimatedReaction: jest.fn(),
+    useDerivedValue: jest.fn((fn) => {
+      const sv = {
+        value: fn(),
+        get: () => sv.value,
+        set: (next: unknown) => {
+          sv.value = next;
+        },
+      };
+      return sv;
+    }),
+    useAnimatedRef: jest.fn(() => ({ current: null })),
+    measure: jest.fn(() => null),
+    useReducedMotion: jest.fn(() => false),
     withTiming: jest.fn(value => value),
     withSpring: jest.fn(value => value),
     withDecay: jest.fn(value => value),
@@ -32,7 +65,7 @@ jest.mock('react-native-reanimated', () => {
       ease: jest.fn(),
       quad: jest.fn(),
       cubic: jest.fn(),
-      bezier: jest.fn(),
+      bezier: jest.fn(() => jest.fn()),
       in: jest.fn(fn => fn),
       out: jest.fn(fn => fn),
       inOut: jest.fn(fn => fn),

@@ -11,6 +11,7 @@ import { PatternFill } from '@/components/brand/pattern';
 import colors from './colors';
 import { Gradient } from './gradient';
 import { Image } from './image';
+import { MotionPressable } from './pressable';
 
 /**
  * Design V2 card (S13-01 §7). r8, p16, no shadow.
@@ -50,9 +51,20 @@ export type CardProps = ViewProps & {
   fallbackColourway?: FallbackColourway;
   /** `plum`/`forest`: override the pattern tile. `sage`: opt-in faint pattern. */
   pattern?: TileSpec;
+  /**
+   * Drawn over the backdrop (pattern, veil, glow) and under the content: the
+   * S14-06 charity wave's lit tiles (`PatternWave`).
+   */
+  patternOverlay?: React.ReactNode;
   /** Drop the default 16pt padding (e.g. a card whose top is a full-bleed image). */
   noPadding?: boolean;
   className?: string;
+  /**
+   * Makes the whole card tappable with the S14 press scale (`MotionPressable`,
+   * ripple on Android). Pass `accessibilityLabel` with it. No haptic: cards
+   * navigate, and navigation stays silent.
+   */
+  onPress?: () => void;
 };
 
 function CardBackdrop({ variant, image, fallbackColourway, pattern }: Pick<CardProps, 'variant' | 'image' | 'fallbackColourway' | 'pattern'>) {
@@ -106,18 +118,31 @@ export function Card({
   image,
   fallbackColourway,
   pattern,
+  patternOverlay,
   noPadding = false,
   className,
   children,
+  onPress,
   ...props
 }: CardProps) {
-  return (
-    <View
-      {...props}
-      className={twMerge('overflow-hidden rounded-lg', BG[variant], !noPadding && 'p-4', className)}
-    >
+  const cardClass = twMerge('overflow-hidden rounded-lg', BG[variant], !noPadding && 'p-4', className);
+  const content = (
+    <>
       <CardBackdrop variant={variant} image={image} fallbackColourway={fallbackColourway} pattern={pattern} />
+      {patternOverlay}
       {children}
+    </>
+  );
+  if (onPress) {
+    return (
+      <MotionPressable accessibilityRole="button" {...props} onPress={onPress} className={cardClass}>
+        {content}
+      </MotionPressable>
+    );
+  }
+  return (
+    <View {...props} className={cardClass}>
+      {content}
     </View>
   );
 }

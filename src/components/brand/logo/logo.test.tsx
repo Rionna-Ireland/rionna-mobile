@@ -4,7 +4,7 @@ import { Path } from 'react-native-svg';
 import colors from '@/components/ui/colors';
 import { cleanup, render, screen } from '@/lib/test-utils';
 
-import { Submark, Wordmark } from './index';
+import { Submark, Wordmark, WordmarkLetters } from './index';
 
 afterEach(cleanup);
 
@@ -23,5 +23,12 @@ describe('logo', () => {
   it('defaults to ink and preserves aspect ratio', () => {
     const { UNSAFE_getByType } = render(<Submark width={440.19} />);
     expect(UNSAFE_getByType(Path).props.fill).toBe(colors.ink);
+  });
+
+  it('wordmark letters drop the head and keep the letters\' aspect', () => {
+    const { UNSAFE_getByType } = render(<WordmarkLetters testID="wl" height={33.77} />);
+    const path = UNSAFE_getByType(Path);
+    expect(path.props.d.startsWith('M786.876')).toBe(true);
+    expect(screen.getByTestId('wl').props.width).toBeCloseTo(162, 0);
   });
 });

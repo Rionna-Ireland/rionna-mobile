@@ -33,6 +33,8 @@ describe('dev gallery', () => {
       'Pattern kinds × colourways',
       'Logos',
       'V2 icons',
+      'MotionPressable',
+      'LoginMedia video',
     ])
       expect(screen.getByText(title)).toBeOnTheScreen();
   });

@@ -1,5 +1,7 @@
 import type { FeedChip } from '@/features/member-content/types';
 
+import { translate } from '@/lib/i18n';
+
 /** Badge category for a space; one tone per category (S13-06, design-system.md). */
 export type SpaceTagTone = 'horses' | 'official' | 'news' | 'charity' | 'polls' | 'community' | 'unknown';
 
@@ -60,18 +62,18 @@ export function formatRelativeTime(value: string | null | undefined, now: number
   }
   const minutes = Math.floor(Math.max(0, now - then) / 60_000);
   if (minutes < 1) {
-    return 'Just now';
+    return translate('community.time.justNow');
   }
   if (minutes < 60) {
-    return `${minutes}m ago`;
+    return translate('community.time.minutesAgo', { count: minutes });
   }
   const hours = Math.floor(minutes / 60);
   if (hours < 24) {
-    return `${hours}h ago`;
+    return translate('community.time.hoursAgo', { count: hours });
   }
   const days = Math.floor(hours / 24);
   if (days < 7) {
-    return `${days}d ago`;
+    return translate('community.time.daysAgo', { count: days });
   }
   return new Date(then).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 }

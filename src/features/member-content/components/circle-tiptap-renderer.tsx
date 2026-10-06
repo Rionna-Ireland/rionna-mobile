@@ -12,6 +12,7 @@ import { CircleImageBlock } from '@/features/member-content/components/circle-im
 import { CircleUnsupportedBlock } from '@/features/member-content/components/circle-unsupported-block';
 import { nonEmptyString, safeExternalUrl } from '@/features/member-content/lib/content-format';
 import { circleDocHasContent } from '@/features/member-content/tiptap/native-support';
+import { translate } from '@/lib/i18n';
 
 export type CircleTiptapRendererProps = {
   doc: HydratedNode | null;
@@ -57,7 +58,7 @@ function renderInline(
   if (node.type !== 'text') {
     return (
       <Text key={key} style={styles.unsupportedInline}>
-        {`[Unsupported content: ${node.type ?? 'unknown'}]`}
+        {`[${translate('community.media.unsupported', { type: node.type ?? 'unknown' })}]`}
       </Text>
     );
   }

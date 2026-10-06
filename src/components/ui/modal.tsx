@@ -33,13 +33,17 @@ import type {
   BottomSheetBackdropProps,
   BottomSheetModalProps,
 } from '@gorhom/bottom-sheet';
-import { BottomSheetModal, useBottomSheet } from '@gorhom/bottom-sheet';
+import { BottomSheetModal, useBottomSheet, useBottomSheetSpringConfigs } from '@gorhom/bottom-sheet';
 import * as React from 'react';
 import { Pressable, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Path, Svg } from 'react-native-svg';
 
+import { translate } from '@/lib/i18n';
+import { durations, springs, useMotion } from '@/lib/motion';
+
 import colors from './colors';
+import { MotionPressable } from './pressable';
 import { Text } from './text';
 
 type ModalProps = BottomSheetModalProps & {
@@ -71,6 +75,8 @@ export function Modal({ ref, snapPoints: _snapPoints = ['60%'] as (string | numb
   );
   const modal = useModal();
   const snapPoints = React.useMemo(() => _snapPoints, [_snapPoints]);
+  // S14-02 §8: sheets settle on the `gentle` spring (Reanimated honours Reduce Motion).
+  const animationConfigs = useBottomSheetSpringConfigs(springs.gentle);
 
   React.useImperativeHandle(
     ref,
@@ -95,6 +101,7 @@ export function Modal({ ref, snapPoints: _snapPoints = ['60%'] as (string | numb
       index={0}
       snapPoints={snapPoints}
       backdropComponent={props.backdropComponent || renderBackdrop}
+      animationConfigs={props.animationConfigs ?? animationConfigs}
       enableDynamicSizing={false}
       handleComponent={renderHandleComponent}
       backgroundStyle={[SHEET_BACKGROUND, props.backgroundStyle]}
@@ -115,13 +122,16 @@ const SHEET_BACKGROUND = {
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
+/** Ink @ 40% (`colors.scrim`), fading in/out over `base` (`quick` under Reduce Motion). */
 function CustomBackdrop({ style }: BottomSheetBackdropProps) {
   const { close } = useBottomSheet();
+  const { reduceMotion } = useMotion();
+  const fade = reduceMotion ? durations.quick : durations.base;
   return (
     <AnimatedPressable
       onPress={() => close()}
-      entering={FadeIn.duration(50)}
-      exiting={FadeOut.duration(20)}
+      entering={FadeIn.duration(fade)}
+      exiting={FadeOut.duration(fade)}
       style={[style, { backgroundColor: colors.scrim }]}
     />
   );
@@ -175,13 +185,13 @@ const ModalHeader = React.memo(({ title, dismiss }: ModalHeaderProps) => {
 
 function CloseButton({ close }: { close: () => void }) {
   return (
-    <Pressable
+    <MotionPressable
       onPress={close}
+      size="small"
       className="absolute top-3 right-3 size-6 items-center justify-center"
       hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-      accessibilityLabel="close modal"
+      accessibilityLabel={translate('common.close')}
       accessibilityRole="button"
-      accessibilityHint="closes the modal"
     >
       <Svg
         className="fill-ink-muted"
@@ -192,6 +202,6 @@ function CloseButton({ close }: { close: () => void }) {
       >
         <Path d="M18.707 6.707a1 1 0 0 0-1.414-1.414L12 10.586 6.707 5.293a1 1 0 0 0-1.414 1.414L10.586 12l-5.293 5.293a1 1 0 1 0 1.414 1.414L12 13.414l5.293 5.293a1 1 0 0 0 1.414-1.414L13.414 12l5.293-5.293Z" />
       </Svg>
-    </Pressable>
+    </MotionPressable>
   );
 }

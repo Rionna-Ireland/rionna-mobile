@@ -3,23 +3,29 @@ import type { MemberContentState, MemberFeedItem } from '@/features/member-conte
 import Env from 'env';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
-import { RefreshControl, ScrollView, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import {
-  ActivityIndicator,
+  BrandedRefreshControl,
   EmptyState,
   ErrorState,
   IconButton,
+  RefreshIndicator,
   ScreenHeader,
-  Text,
+  usePullToRefresh,
 } from '@/components/ui';
+import { useScreenTopPadding } from '@/components/ui/screen-layout';
+import { AnimatedScrollView, useScrollHeader } from '@/components/ui/scroll-header';
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { usePostableSpaces } from '@/features/community-posting/api/use-postable-spaces';
 import { PlusGlyph } from '@/features/community-posting/components/plus-glyph';
 import { usePostLike } from '@/features/member-content/api/use-post-like';
 import { useSpaceFeed } from '@/features/member-content/api/use-space-feed';
 import { FeedItemRenderer } from '@/features/member-content/components/feed-item-renderer';
+import { FeedSkeleton } from '@/features/member-content/components/feed-skeletons';
 import { usePollVote } from '@/features/polls/api/use-poll-vote';
+import { translate } from '@/lib/i18n';
+import { EntranceItem, isFirstLoad, SkeletonSwap, useContentEntrance } from '@/lib/motion';
 
 type SpaceFeedViewProps = {
   title: string;
@@ -57,83 +63,96 @@ export function SpaceFeedView({
   onBack,
   onNewPost,
 }: SpaceFeedViewProps) {
+  // First load only; refetches and refreshes mount new rows instantly. After a
+  // skeleton, its crossfade is the entrance (S14-03).
+  const entering = useContentEntrance(Boolean(items?.length), isLoading && !items);
+  const { scrollY, onScroll } = useScrollHeader();
+  const safeTop = useScreenTopPadding(0);
   return (
-    <ScrollView
-      className="flex-1 bg-surface"
-      contentContainerStyle={{ paddingBottom: 48 }}
-      refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={onRefresh} />}
-    >
-      <ScreenHeader
-        kicker="Discussion"
-        title={title}
-        onBack={onBack}
-        right={onNewPost
-          ? (
-              <IconButton
-                testID="space-feed-new-post"
-                variant="square-accent"
-                accessibilityLabel="New post"
-                onPress={onNewPost}
-                // The header's right slot pulls 12pt outward for bare icons;
-                // a filled button must sit on the 16pt gutter like the cards.
-                className="mr-3 size-11"
-              >
-                <PlusGlyph size={20} />
-              </IconButton>
-            )
-          : undefined}
-        className="pb-6"
-      />
+    <View className="flex-1 bg-surface">
+      <AnimatedScrollView
+        className="flex-1"
+        contentContainerStyle={{ paddingBottom: 48 }}
+        refreshControl={<BrandedRefreshControl refreshing={isRefetching} onRefresh={onRefresh} />}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
+      >
+        <ScreenHeader
+          kicker={translate('community.space.kicker')}
+          title={title}
+          onBack={onBack}
+          right={onNewPost
+            ? (
+                <IconButton
+                  testID="space-feed-new-post"
+                  variant="square-accent"
+                  accessibilityLabel={translate('community.space.newPostA11y')}
+                  onPress={onNewPost}
+                  // The header's right slot pulls 12pt outward for bare icons;
+                  // a filled button must sit on the 16pt gutter like the cards.
+                  className="mr-3 size-11"
+                >
+                  <PlusGlyph size={20} />
+                </IconButton>
+              )
+            : undefined}
+          className="pb-6"
+        />
 
-      <View className="gap-3 px-4">
-        {isLoading && !items
-          ? (
-              <View testID="space-feed-loading" className="items-center py-16">
-                <ActivityIndicator />
-                <Text variant="body" className="mt-3 text-ink-variant">Loading the discussion…</Text>
-              </View>
-            )
-          : null}
-        {!isLoading && contentState === 'empty'
-          ? (
-              <EmptyState
-                testID="space-feed-empty"
-                title="No posts yet"
-                body="Updates and discussion for this horse will appear here."
-              />
-            )
-          : null}
-        {!isLoading && contentState === 'unavailable'
-          ? (
-              <ErrorState
-                testID="space-feed-unavailable"
-                title="Discussion unavailable"
-                body="Check your connection and try again."
-                onRetry={onRefresh}
-              />
-            )
-          : null}
-        {items?.map(item => (
-          <FeedItemRenderer
-            key={item.id}
-            item={item}
-            onOpen={onOpenPost}
-            onToggleLike={onToggleLike}
-            likePending={pendingLikePostId === item.id}
-            onVote={onVote}
-            votePending={item.poll ? pendingVotePollIds.includes(item.poll.id) : false}
-            onOpenStory={noOpOpenStory}
-          />
-        ))}
-      </View>
-    </ScrollView>
+        <View className="gap-3 px-4">
+          {!isLoading && contentState === 'empty'
+            ? (
+                <EmptyState
+                  testID="space-feed-empty"
+                  title={translate('community.space.emptyTitle')}
+                  body={translate('community.space.emptyBody')}
+                />
+              )
+            : null}
+          {!isLoading && contentState === 'unavailable'
+            ? (
+                <ErrorState
+                  testID="space-feed-unavailable"
+                  title={translate('community.space.unavailableTitle')}
+                  body={translate('community.post.unavailableBody')}
+                  onRetry={onRefresh}
+                />
+              )
+            : null}
+          <SkeletonSwap
+            loading={isLoading && !items}
+            skeleton={<FeedSkeleton testID="space-feed-loading" />}
+            style={styles.posts}
+          >
+            {items?.length
+              ? items.map((item, i) => (
+                  <EntranceItem key={item.id} entering={entering(i)}>
+                    <FeedItemRenderer
+                      item={item}
+                      onOpen={onOpenPost}
+                      onToggleLike={onToggleLike}
+                      likePending={pendingLikePostId === item.id}
+                      onVote={onVote}
+                      votePending={item.poll ? pendingVotePollIds.includes(item.poll.id) : false}
+                      onOpenStory={noOpOpenStory}
+                    />
+                  </EntranceItem>
+                ))
+              : null}
+          </SkeletonSwap>
+        </View>
+      </AnimatedScrollView>
+      <RefreshIndicator scrollY={scrollY} refreshing={isRefetching} top={safeTop} />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({ posts: { gap: 12 } });
 
 export function SpaceFeedScreen() {
   const params = useLocalSearchParams<{ 'space-id': string; 'name'?: string }>();
   const spaceId = params['space-id'] ?? '';
-  const title = params.name?.trim() || 'Discussion';
+  const title = params.name?.trim() || translate('community.space.kicker');
   const router = useRouter();
   const member = useAuthStore.use.user();
 
@@ -146,6 +165,7 @@ export function SpaceFeedScreen() {
   const poll = usePollVote(scope);
   const spacesQuery = usePostableSpaces(scope);
   const isPostable = (spacesQuery.data?.spaces ?? []).some(space => space.id === spaceId);
+  const pull = usePullToRefresh(() => feed.refetch());
 
   if (!member) {
     return null;
@@ -158,9 +178,9 @@ export function SpaceFeedScreen() {
         title={title}
         items={feed.data}
         contentState={feed.contentState}
-        isLoading={feed.isLoading}
-        isRefetching={feed.isRefetching}
-        onRefresh={() => void feed.refetch()}
+        isLoading={isFirstLoad(feed)}
+        isRefetching={pull.refreshing}
+        onRefresh={pull.onRefresh}
         onOpenPost={(postSpaceId, postId) => router.push(
           `/post/${encodeURIComponent(postSpaceId)}/${encodeURIComponent(postId)}`,
         )}

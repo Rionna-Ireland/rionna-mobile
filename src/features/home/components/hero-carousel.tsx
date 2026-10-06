@@ -3,12 +3,17 @@ import type { HeroSlide } from '@/features/home/lib/hero-slides';
 
 import { useRouter } from 'expo-router';
 import * as React from 'react';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 
 import { Button, Card, Dots, Text } from '@/components/ui';
 import { splitHeadline } from '@/features/home/lib/split-headline';
 
-/** Figma "News" hero: 358×239 navy card. */
+/**
+ * Figma "News" hero: 358×239 navy card. A floor, not a fixed height (A-021):
+ * at larger Dynamic Type a 3-line headline + CTA outgrows it, so every slide
+ * grows to the tallest one and paging stays aligned.
+ */
 const HERO_HEIGHT = 239;
 
 function Headline({ title }: { title: string }) {
@@ -21,7 +26,15 @@ function Headline({ title }: { title: string }) {
   );
 }
 
-function Slide({ slide, width, index }: { slide: HeroSlide; width: number; index: number }) {
+type SlideProps = {
+  slide: HeroSlide;
+  width: number;
+  index: number;
+  minHeight: number;
+  onHeight: (height: number) => void;
+};
+
+function Slide({ slide, width, index, minHeight, onHeight }: SlideProps) {
   const router = useRouter();
   const onPress = () => router.push(slide.cta.href);
   return (
@@ -29,7 +42,8 @@ function Slide({ slide, width, index }: { slide: HeroSlide; width: number; index
       variant="navy"
       testID={`home-hero-slide-${index}`}
       className="justify-between"
-      style={{ width, height: HERO_HEIGHT }}
+      style={{ width, minHeight }}
+      onLayout={e => onHeight(e.nativeEvent.layout.height)}
     >
       <Headline title={slide.title} />
       <View className="gap-4">
@@ -53,12 +67,21 @@ function Slide({ slide, width, index }: { slide: HeroSlide; width: number; index
 
 /**
  * S13-03 §4: swipeable, paged hero. Plain horizontal paging ScrollView (≤5
- * slides, no virtualisation needed); the dots follow the scroll position.
+ * slides, no virtualisation needed); native paging snap. The dots' pill tracks
+ * the scroll position on the UI thread (S14-02 §7); `index` is for a11y.
  */
 export function HeroCarousel({ slides, width }: { slides: HeroSlide[]; width: number }) {
   const [index, setIndex] = React.useState(0);
+  const [tallest, setTallest] = React.useState(HERO_HEIGHT);
+  const onSlideHeight = React.useCallback((height: number) => {
+    setTallest(prev => (height > prev ? height : prev));
+  }, []);
+  const progress = useSharedValue(0);
+  const onScrollUI = useAnimatedScrollHandler((e) => {
+    progress.set(e.contentOffset.x / width);
+  });
 
-  const onScroll = React.useCallback(
+  const onScrollEnd = React.useCallback(
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
       const next = Math.round(e.nativeEvent.contentOffset.x / width);
       setIndex(Math.max(0, Math.min(slides.length - 1, next)));
@@ -70,19 +93,28 @@ export function HeroCarousel({ slides, width }: { slides: HeroSlide[]; width: nu
     return null;
 
   return (
-    <View testID="home-hero" style={{ width, height: HERO_HEIGHT }}>
-      <ScrollView
+    <View testID="home-hero" style={{ width, minHeight: HERO_HEIGHT }}>
+      <Animated.ScrollView
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        onScroll={onScroll}
+        onScroll={onScrollUI}
+        onMomentumScrollEnd={onScrollEnd}
         scrollEventThrottle={16}
         testID="home-hero-scroll"
       >
-        {slides.map((slide, i) => <Slide key={slide.key} slide={slide} width={width} index={i} />)}
-      </ScrollView>
+        {slides.map((slide, i) => <Slide key={slide.key} slide={slide} width={width} index={i} minHeight={tallest} onHeight={onSlideHeight} />)}
+      </Animated.ScrollView>
       {slides.length > 1
-        ? <Dots testID="home-hero-dots" count={slides.length} index={index} className="absolute right-4 bottom-5" />
+        ? (
+            <Dots
+              testID="home-hero-dots"
+              count={slides.length}
+              index={index}
+              progress={progress}
+              className="absolute right-4 bottom-5"
+            />
+          )
         : null}
     </View>
   );

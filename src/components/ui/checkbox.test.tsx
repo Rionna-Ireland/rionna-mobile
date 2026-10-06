@@ -10,6 +10,11 @@ import 'react-native';
 afterEach(cleanup);
 
 describe('checkbox, Radio & Switch components ', () => {
+  it('pads the 20pt control to a 44pt hit target (A-040)', () => {
+    setup(<Checkbox testID="checkbox" onChange={jest.fn()} accessibilityLabel="agree" />);
+    expect(screen.getByTestId('checkbox').props.hitSlop).toEqual({ top: 12, bottom: 12, left: 12, right: 12 });
+  });
+
   it('<Checkbox /> renders correctly and call on change on Press', async () => {
     const mockOnChange = jest.fn(checked => checked);
     const { user } = setup(

@@ -1,11 +1,54 @@
 import * as React from 'react';
-import { Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
 import { cleanup, render, screen, setup } from '@/lib/test-utils';
 
 import { Button } from './button';
 
+const mockTap = jest.fn();
+const mockSuccess = jest.fn();
+jest.mock('@/lib/motion/haptics', () => ({
+  ...jest.requireActual('@/lib/motion/haptics'),
+  tap: () => mockTap(),
+  success: () => mockSuccess(),
+}));
+
+beforeEach(() => jest.clearAllMocks());
 afterEach(cleanup);
+
+describe('button haptics', () => {
+  it('taps on primary presses by default', async () => {
+    const { user } = setup(<Button testID="b" label="Sign in" onPress={jest.fn()} />);
+    await user.press(screen.getByTestId('b'));
+    expect(mockTap).toHaveBeenCalledTimes(1);
+  });
+
+  it('stays silent on secondary buttons', async () => {
+    const { user } = setup(<Button testID="b" variant="secondary" label="Cancel" onPress={jest.fn()} />);
+    await user.press(screen.getByTestId('b'));
+    expect(mockTap).not.toHaveBeenCalled();
+  });
+
+  it('honours an explicit haptic override, including opting out', async () => {
+    const { user } = setup(
+      <>
+        <Button testID="rsvp" variant="secondary" haptic="success" label="RSVP" onPress={jest.fn()} />
+        <Button testID="quiet" haptic={false} label="Quiet" onPress={jest.fn()} />
+      </>,
+    );
+    await user.press(screen.getByTestId('rsvp'));
+    await user.press(screen.getByTestId('quiet'));
+    expect(mockSuccess).toHaveBeenCalledTimes(1);
+    expect(mockTap).not.toHaveBeenCalled();
+  });
+
+  it('shows only the new label after a change (the old copy is hidden while it fades)', () => {
+    const { rerender } = render(<Button testID="b" label="RSVP" />);
+    rerender(<Button testID="b" label="Going" />);
+    expect(screen.getByText('Going')).toBeOnTheScreen();
+    expect(screen.queryByText('RSVP')).toBeNull();
+  });
+});
 
 describe('button component ', () => {
   it('should render correctly ', () => {
@@ -124,8 +167,16 @@ describe('button v2 variants', () => {
     render(<Button testID="button" size="sm" label="Small" />);
     expect(screen.getByTestId('button').props.hitSlop).toEqual({ top: 9, bottom: 9 });
   });
-  it('dims when disabled', () => {
+  it('renders at 40% opacity when disabled (A-003: the animated style must not win)', () => {
     render(<Button testID="button" label="Submit" disabled />);
-    expect(screen.getByTestId('button').props.className).toContain('opacity-40');
+    expect(StyleSheet.flatten(screen.getByTestId('button').props.style).opacity).toBe(0.4);
+  });
+  it('renders at full opacity when enabled', () => {
+    render(<Button testID="button" label="Submit" />);
+    expect(StyleSheet.flatten(screen.getByTestId('button').props.style).opacity).toBe(1);
+  });
+  it('dims while loading', () => {
+    render(<Button testID="button" label="Submit" loading />);
+    expect(StyleSheet.flatten(screen.getByTestId('button').props.style).opacity).toBe(0.4);
   });
 });

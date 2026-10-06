@@ -1,20 +1,22 @@
-import type { PressableProps } from 'react-native';
+import type { MotionPressableProps } from './pressable';
 import { MotiView } from 'moti';
 import * as React from 'react';
 import { useCallback } from 'react';
-import {
-  I18nManager,
-  Pressable,
-
-  View,
-} from 'react-native';
+import { I18nManager, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import colors from '@/components/ui/colors';
+import { durations, springs, useMotion } from '@/lib/motion';
 
+import { MotionPressable } from './pressable';
 import { Text } from './text';
 
+/** Colour/opacity flips on the checkbox and radio: `instant`. */
+const FLIP = { type: 'timing', duration: durations.instant } as const;
+
 const SIZE = 20;
+/** 20pt control → 44pt target on every side (A-040): it may render without a label. */
+const HIT_SLOP = { top: 12, bottom: 12, left: 12, right: 12 };
 const WIDTH = 50;
 const HEIGHT = 28;
 const THUMB_HEIGHT = 22;
@@ -26,7 +28,7 @@ export type RootProps = {
   checked?: boolean;
   className?: string;
   accessibilityLabel: string;
-} & Omit<PressableProps, 'onPress'>;
+} & Omit<MotionPressableProps, 'onPress'>;
 
 export type IconProps = {
   checked: boolean;
@@ -44,18 +46,20 @@ export function Root({
     onChange(!checked);
   }, [onChange, checked]);
 
+  // Toggles tick with a `selection()` haptic (S14-02 §9).
   return (
-    <Pressable
+    <MotionPressable
+      size="small"
+      haptic="selection"
       onPress={handleChange}
-      className={`flex-row items-center ${className} ${
-        disabled ? 'opacity-50' : ''
-      }`}
+      className={`flex-row items-center ${className}`}
       accessibilityState={{ checked }}
       disabled={disabled}
+      hitSlop={HIT_SLOP}
       {...props}
     >
       {children}
-    </Pressable>
+    </MotionPressable>
   );
 }
 
@@ -88,15 +92,12 @@ export function CheckboxIcon({ checked = false }: IconProps) {
         backgroundColor: checked ? color : 'transparent',
         borderColor: color,
       }}
-      transition={{
-        backgroundColor: { type: 'timing', duration: 100 },
-        borderColor: { type: 'timing', duration: 100 },
-      }}
+      transition={{ backgroundColor: FLIP, borderColor: FLIP }}
     >
       <MotiView
         from={{ opacity: 0 }}
         animate={{ opacity: checked ? 1 : 0 }}
-        transition={{ opacity: { type: 'timing', duration: 100 } }}
+        transition={{ opacity: FLIP }}
       >
         <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
           <Path
@@ -160,13 +161,13 @@ export function RadioIcon({ checked = false }: IconProps) {
       animate={{
         borderColor: color,
       }}
-      transition={{ borderColor: { duration: 100, type: 'timing' } }}
+      transition={{ borderColor: FLIP }}
     >
       <MotiView
         className={`size-[10px] rounded-[10px] ${checked && 'bg-primary'}`}
         from={{ opacity: 0 }}
         animate={{ opacity: checked ? 1 : 0 }}
-        transition={{ opacity: { duration: 50, type: 'timing' } }}
+        transition={{ opacity: FLIP }}
       />
     </MotiView>
   );
@@ -204,7 +205,9 @@ export const Radio = Object.assign(RadioBase, {
   Label,
 });
 
+/** Thumb slides on the `snappy` spring; Reduce Motion jumps it. */
 export function SwitchIcon({ checked = false }: IconProps) {
+  const { reduceMotion } = useMotion();
   const translateX = checked
     ? THUMB_OFFSET
     : WIDTH - THUMB_WIDTH - THUMB_OFFSET;
@@ -234,7 +237,9 @@ export function SwitchIcon({ checked = false }: IconProps) {
         animate={{
           translateX: I18nManager.isRTL ? translateX : -translateX,
         }}
-        transition={{ translateX: { overshootClamping: true } }}
+        transition={{
+          translateX: reduceMotion ? { type: 'no-animation' } : { type: 'spring', ...springs.snappy },
+        }}
       />
     </View>
   );

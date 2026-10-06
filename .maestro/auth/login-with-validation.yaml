@@ -5,10 +5,6 @@ env:
   PASSWORD: password
 ---
 - launchApp
-- runFlow:
-    when:
-      visible: Obytes Starter
-    file: ../utils/onboarding.yaml
 - assertVisible: Sign In
 - assertVisible:
     id: login-button

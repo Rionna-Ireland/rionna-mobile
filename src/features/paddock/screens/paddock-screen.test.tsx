@@ -62,4 +62,11 @@ describe('paddockHubView', () => {
     renderHub({ offersCount: null });
     expect(screen.getByText('Restaurants, hotels, lifestyle partners')).toBeOnTheScreen();
   });
+
+  it('shows a subtitle skeleton while a row\'s count is on its first load', () => {
+    renderHub({ offersCount: null, offersLoading: true });
+    expect(screen.queryByText('Restaurants, hotels, lifestyle partners')).not.toBeOnTheScreen();
+    expect(screen.getAllByLabelText('Loading')).toHaveLength(1);
+    expect(screen.getByText('\u20AC24,500 raised to date. Vote on what\u2019s next')).toBeOnTheScreen();
+  });
 });

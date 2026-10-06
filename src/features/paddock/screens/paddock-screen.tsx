@@ -1,3 +1,4 @@
+import type { ScrollView } from 'react-native';
 import type { TileSpec } from '@/components/brand/pattern';
 import type { JourneyBadge } from '@/features/paddock/components/journey-card';
 
@@ -11,29 +12,34 @@ import {
   colors,
   FocusAwareStatusBar,
   MonoLabel,
-  Pressable,
+  MotionPressable,
   ScreenBackground,
-  ScrollView,
   Text,
   View,
 } from '@/components/ui';
 import { CaretRightV2 } from '@/components/ui/icons/v2';
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
+import { AnimatedScrollView, CollapsingTitle, CompactHeaderBar, useScrollHeader } from '@/components/ui/scroll-header';
+import { useTabScrollToTop } from '@/components/ui/scroll-to-top';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { useCharity } from '@/features/paddock/api/use-charity';
 import { useOffers } from '@/features/paddock/api/use-offers';
 import { JourneyCard } from '@/features/paddock/components/journey-card';
+import { HubSubtitleSkeleton } from '@/features/paddock/components/paddock-skeletons';
 import { charitySubtitle, offersSubtitle } from '@/features/paddock/lib/hub-copy';
+import { translate } from '@/lib/i18n';
+import { EntranceItem, isFirstLoad, SkeletonSwap, useFirstLoadEntrance } from '@/lib/motion';
 
 const TILE_PLUM: TileSpec = { kind: 'gem', colourway: 'plum', turn: 0 };
 const TILE_NAVY: TileSpec = { kind: 'gem', colourway: 'navy', turn: 0 };
 const TILE_GREEN: TileSpec = { kind: 'gem', colourway: 'green', turn: 0 };
 
+/** Frame 12: a 40pt tile, r6. */
 function RowIcon({ spec }: { spec: TileSpec }) {
   return (
-    <View className="size-12 overflow-hidden rounded-lg">
-      <PatternTile spec={spec} size={48} />
+    <View className="size-10 overflow-hidden rounded-md">
+      <PatternTile spec={spec} size={40} />
     </View>
   );
 }
@@ -44,11 +50,13 @@ type HubRowProps = {
   spec: TileSpec;
   onPress?: () => void;
   comingSoon?: boolean;
+  /** The subtitle's count/total is on a cold first load: a skeleton line crossfades to it. */
+  subtitleLoading?: boolean;
 };
 
-function HubRow({ title, subtitle, spec, onPress, comingSoon }: HubRowProps) {
+function HubRow({ title, subtitle, spec, onPress, comingSoon, subtitleLoading = false }: HubRowProps) {
   const body = (
-    <Card className="min-h-[72px] flex-row items-center gap-4" style={comingSoon ? { opacity: 0.6 } : undefined}>
+    <Card className="min-h-[72px] flex-row items-center gap-4">
       <RowIcon spec={spec} />
       <View className="flex-1">
         <View className="flex-row flex-wrap items-center gap-2">
@@ -56,12 +64,14 @@ function HubRow({ title, subtitle, spec, onPress, comingSoon }: HubRowProps) {
           {comingSoon
             ? (
                 <View className="rounded-full bg-label/10 px-2 py-1">
-                  <MonoLabel size="sm">Coming soon</MonoLabel>
+                  <MonoLabel size="sm">{translate('paddock.comingSoon')}</MonoLabel>
                 </View>
               )
             : null}
         </View>
-        <Text variant="body-sm" className="text-ink-variant">{subtitle}</Text>
+        <SkeletonSwap loading={subtitleLoading} skeleton={<HubSubtitleSkeleton />}>
+          <Text variant="body-sm" className="text-ink-variant">{subtitle}</Text>
+        </SkeletonSwap>
       </View>
       {comingSoon ? null : <CaretRightV2 size={20} color={colors.ink} />}
     </Card>
@@ -75,35 +85,46 @@ function HubRow({ title, subtitle, spec, onPress, comingSoon }: HubRowProps) {
     );
   }
   return (
-    <Pressable
+    <MotionPressable
+      size="flat"
+      pressedOpacity={0.85}
       testID={`paddock-row-${title}`}
       accessibilityRole="button"
       onPress={onPress}
-      style={({ pressed }) => (pressed ? { opacity: 0.7 } : null)}
     >
       {body}
-    </Pressable>
+    </MotionPressable>
   );
 }
 
 type PaddockHubViewProps = {
   offersCount: number | null;
   charitySummary: string;
+  offersLoading?: boolean;
+  charityLoading?: boolean;
   badges?: JourneyBadge[];
   onOpenBenefits: () => void;
   onOpenCharity: () => void;
 };
 
-export function PaddockHubView({ offersCount, charitySummary, badges = [], onOpenBenefits, onOpenCharity }: PaddockHubViewProps) {
+export function PaddockHubView({ offersCount, charitySummary, offersLoading, charityLoading, badges = [], onOpenBenefits, onOpenCharity }: PaddockHubViewProps) {
   const contentPaddingBottom = useTabBarContentPadding(24);
   const contentPaddingTop = useScreenTopPadding();
+  const { scrollY, onScroll } = useScrollHeader();
+  const scrollRef = React.useRef<ScrollView>(null);
+  useTabScrollToTop(scrollRef);
+  // The hub rows are static (subtitles fill in later), so they enter on mount.
+  const entering = useFirstLoadEntrance(true);
 
   return (
     <View className="flex-1 bg-background">
       <ScreenBackground />
       <FocusAwareStatusBar />
-      <ScrollView
+      <AnimatedScrollView
+        ref={scrollRef}
         className="flex-1"
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         contentContainerStyle={{
           paddingHorizontal: 16,
           paddingTop: contentPaddingTop,
@@ -112,21 +133,42 @@ export function PaddockHubView({ offersCount, charitySummary, badges = [], onOpe
         }}
       >
         <View className="gap-2">
-          <Text variant="display-lg" accessibilityRole="header">Paddock</Text>
+          <CollapsingTitle scrollY={scrollY}>
+            <Text variant="display-lg" accessibilityRole="header">{translate('paddock.title')}</Text>
+          </CollapsingTitle>
           <Text variant="body">
-            {'Everything that comes with being '}
-            <Text variant="body" className="text-plum-mid">one of us.</Text>
+            {translate('paddock.subtitleLead')}
+            <Text variant="body" className="text-plum-mid">{translate('paddock.subtitleAccent')}</Text>
           </Text>
         </View>
         <View className="gap-3">
           <JourneyCard badges={badges} />
           <View className="gap-2">
-            <HubRow title="Membership Benefits" subtitle={offersSubtitle(offersCount)} spec={TILE_PLUM} onPress={onOpenBenefits} />
-            <HubRow title="Merchandise" subtitle="Caps, jackets, polos, accessories" spec={TILE_NAVY} comingSoon />
-            <HubRow title="Charity Snapshot" subtitle={charitySummary} spec={TILE_GREEN} onPress={onOpenCharity} />
+            <EntranceItem entering={entering(0)}>
+              <HubRow
+                title={translate('paddock.rows.benefits')}
+                subtitle={offersSubtitle(offersCount)}
+                subtitleLoading={offersLoading}
+                spec={TILE_PLUM}
+                onPress={onOpenBenefits}
+              />
+            </EntranceItem>
+            <EntranceItem entering={entering(1)}>
+              <HubRow title={translate('paddock.rows.merch')} subtitle={translate('paddock.rows.merchSubtitle')} spec={TILE_NAVY} comingSoon />
+            </EntranceItem>
+            <EntranceItem entering={entering(2)}>
+              <HubRow
+                title={translate('paddock.rows.charity')}
+                subtitle={charitySummary}
+                subtitleLoading={charityLoading}
+                spec={TILE_GREEN}
+                onPress={onOpenCharity}
+              />
+            </EntranceItem>
           </View>
         </View>
-      </ScrollView>
+      </AnimatedScrollView>
+      <CompactHeaderBar scrollY={scrollY} title={translate('paddock.title')} testID="paddock-compact-header" />
     </View>
   );
 }
@@ -147,6 +189,8 @@ export function PaddockScreen() {
     <PaddockHubView
       offersCount={offers.data ? offers.data.offers.length : null}
       charitySummary={charitySubtitle(charity.data?.charity)}
+      offersLoading={isFirstLoad(offers)}
+      charityLoading={isFirstLoad(charity)}
       badges={badges}
       onOpenBenefits={() => router.push('/paddock/benefits')}
       onOpenCharity={() => router.push('/paddock/charity')}

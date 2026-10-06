@@ -1,11 +1,11 @@
 import type { DimensionValue } from 'react-native';
 import type { HydratedNode } from '@/features/member-content/tiptap/hydrate';
 
-import { Image } from 'expo-image';
 import * as React from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import colors from '@/components/ui/colors';
+import { Image } from '@/components/ui/image';
 import { nonEmptyString } from '@/features/member-content/lib/content-format';
 
 type CircleImageBlockProps = {
@@ -26,6 +26,7 @@ function imageAlignment(value: unknown) {
   return 'center' as const;
 }
 
+/** Uses the shared Image: cream placeholder + fade-in like every remote image (A-009). */
 export function CircleImageBlock({ node }: CircleImageBlockProps) {
   const uri = nonEmptyString(node.attrs?.url) ?? nonEmptyString(node.attrs?.src);
   if (!uri)

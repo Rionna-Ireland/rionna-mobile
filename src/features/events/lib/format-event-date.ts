@@ -1,3 +1,5 @@
+import { translate } from '@/lib/i18n';
+
 /** "Sat 5 Sep, 11:00" — compact single-line card format (device locale). */
 export function formatEventDate(startsAt: string | null): string | null {
   if (!startsAt)
@@ -23,8 +25,8 @@ export function formatEventLocation(event: {
   if (event.inPersonLocation)
     return event.inPersonLocation;
   if (event.locationType === 'virtual')
-    return 'Online';
-  return 'Location TBC';
+    return translate('events.location.online');
+  return translate('events.location.tbc');
 }
 
 /** "Sat 4 July · 12:30" -- the card/detail date line (Irish format, 24h). */

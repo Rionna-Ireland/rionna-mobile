@@ -125,7 +125,7 @@ describe('eventsScreen', () => {
   });
 
   it('shows a loading state on first fetch', () => {
-    const loading = { data: undefined, isLoading: true, isError: false, refetch: jest.fn() };
+    const loading = { data: undefined, isLoading: true, isPending: true, isFetching: true, isError: false, refetch: jest.fn() };
     mockQueries = { upcoming: loading, past: loading };
     render(<EventsScreen />);
     expect(screen.getByTestId('events-loading')).toBeOnTheScreen();
@@ -146,7 +146,28 @@ describe('eventsScreen', () => {
     mockToggle.mockResolvedValueOnce('scheduled');
     fireEvent.press(screen.getByTestId('event-card-event-1-remind'));
     expect(mockToggle).toHaveBeenCalledTimes(1);
-    fireEvent.press(screen.getByLabelText('Autumn Race Day'));
+    fireEvent.press(screen.getByLabelText(/^Autumn Race Day,/));
     expect(mockPush).toHaveBeenCalledWith({ pathname: '/event/[event-id]', params: { 'event-id': 'event-1' } });
+  });
+});
+
+describe('eventsScreen with nothing upcoming', () => {
+  beforeEach(() => jest.useFakeTimers({ now: NOW, doNotFake: ['nextTick', 'setImmediate'] }));
+  afterEach(() => jest.useRealTimers());
+
+  it('shows the empty state above the past events (A-011)', () => {
+    mockQueries = {
+      upcoming: ok([]),
+      past: ok([clubEvent({ id: 'event-2', title: 'Summer Brunch', startsAt: '2030-08-10T10:00:00.000Z' })]),
+    };
+    render(<EventsScreen />);
+    expect(screen.getByTestId('events-upcoming-empty')).toBeOnTheScreen();
+    expect(screen.getByText('Summer Brunch')).toBeOnTheScreen();
+  });
+
+  it('has no upcoming empty state when something is upcoming', () => {
+    mockQueries = { upcoming: ok([clubEvent()]), past: ok([]) };
+    render(<EventsScreen />);
+    expect(screen.queryByTestId('events-upcoming-empty')).toBeNull();
   });
 });

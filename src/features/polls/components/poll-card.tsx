@@ -1,8 +1,10 @@
 import type { Poll } from '@/features/polls/types';
 
-import { Card, MonoLabel, Pressable, Text, View } from '@/components/ui';
+import { Card, CheckSquare, MonoLabel, MotionPressable, Text, View } from '@/components/ui';
 import { PollResultBar } from '@/features/polls/components/poll-result-bar';
+import { castVote } from '@/features/polls/lib/cast-vote';
 import { percentagesFor } from '@/features/polls/lib/percentages';
+import { translate } from '@/lib/i18n';
 
 type PollCardProps = {
   poll: Poll;
@@ -12,14 +14,20 @@ type PollCardProps = {
 };
 
 function formatVotes(total: number) {
-  return `${total} ${total === 1 ? 'vote' : 'votes'}`;
+  return translate(total === 1 ? 'polls.votesOne' : 'polls.votesOther', { count: total });
+}
+
+function eyebrow(poll: Poll) {
+  if (poll.status === 'closed')
+    return translate('polls.closed');
+  return translate(poll.scope === 'space' ? 'polls.stableVote' : 'polls.clubVote');
 }
 
 export function PollCard({ poll, onVote, pending, variant }: PollCardProps) {
   const closed = poll.status === 'closed';
   const showResults = poll.results !== null;
   const canVote = !closed && !pending;
-  const eyebrowText = closed ? 'Closed' : poll.scope === 'space' ? 'Stable vote' : 'Club vote';
+  const eyebrowText = eyebrow(poll);
   const showEyebrow = variant === 'card' || closed;
   const percents = showResults && poll.results ? percentagesFor(poll.options, poll.results) : null;
 
@@ -39,14 +47,18 @@ export function PollCard({ poll, onVote, pending, variant }: PollCardProps) {
           const mine = poll.myVoteOptionId === option.id;
           if (showResults && poll.results) {
             return (
-              <Pressable
+              <MotionPressable
                 key={option.id}
                 testID={`poll-option-${option.id}`}
+                size="flat"
+                pressedOpacity={0.85}
                 accessibilityRole="button"
                 accessibilityLabel={option.label}
+                accessibilityValue={{ text: `${percents?.[option.id] ?? 0}%` }}
                 accessibilityState={{ selected: mine, disabled: !canVote }}
                 disabled={!canVote}
-                onPress={() => onVote(poll.id, option.id)}
+                dimDisabled={false}
+                onPress={() => castVote(poll, option.id, onVote)}
               >
                 <PollResultBar
                   label={option.label}
@@ -54,37 +66,36 @@ export function PollCard({ poll, onVote, pending, variant }: PollCardProps) {
                   mine={mine}
                   optionId={option.id}
                 />
-              </Pressable>
+              </MotionPressable>
             );
           }
           return (
-            <Pressable
+            <MotionPressable
               key={option.id}
               testID={`poll-option-${option.id}`}
+              size="flat"
+              pressedOpacity={0.85}
               accessibilityRole="button"
               accessibilityLabel={option.label}
               accessibilityState={{ selected: mine, disabled: !canVote }}
               disabled={!canVote}
-              onPress={() => onVote(poll.id, option.id)}
-              className="flex-row items-center gap-3 rounded-lg border border-outline-variant bg-white p-3"
+              dimDisabled={false}
+              onPress={() => castVote(poll, option.id, onVote)}
+              className="flex-row items-center gap-3 overflow-hidden rounded-lg border border-outline-variant bg-white p-3"
             >
-              <View
-                className={`size-5 items-center justify-center rounded-sm ${mine ? 'bg-primary' : 'bg-secondary-container'}`}
-              >
-                {mine ? <Text className="font-sans-bold text-[12px]/[14px] text-on-primary">✓</Text> : null}
-              </View>
+              <CheckSquare checked={mine} testID={`poll-option-${option.id}-check`} />
               <Text variant="body" className={mine ? 'font-sans-semibold' : ''}>{option.label}</Text>
-            </Pressable>
+            </MotionPressable>
           );
         })}
       </View>
 
       <Text variant="body-sm" className="text-ink-variant">
         {pending
-          ? 'Saving your vote…'
+          ? translate('polls.saving')
           : showResults && poll.results
             ? formatVotes(poll.results.total)
-            : 'Tap an option to vote. You can change your mind while the vote is open.'}
+            : translate('polls.hint')}
       </Text>
     </Card>
   );

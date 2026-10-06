@@ -1,11 +1,13 @@
+import type { SharedValue } from 'react-native-reanimated';
 import * as React from 'react';
 import { useImperativeHandle } from 'react';
 import { View } from 'react-native';
 import Animated, {
-  Easing,
   useAnimatedStyle,
   withTiming,
 } from 'react-native-reanimated';
+
+import { timings, useMotion } from '@/lib/motion';
 
 import colors from './colors';
 import { withAlpha } from './gradient-styles';
@@ -32,6 +34,11 @@ type Props = {
   tone?: ProgressBarTone;
   /** Bar thickness in points (default 8). */
   height?: number;
+  /**
+   * Externally driven draw (0–1) that scales the fill and thumb, e.g. the
+   * S14-06 charity goal draw. When set, the bar doesn't animate `value` itself.
+   */
+  drawProgress?: SharedValue<number>;
   /** Optional marker centred on the fill's leading edge (e.g. the charity star). */
   renderThumb?: () => React.ReactNode;
   accessibilityLabel?: string;
@@ -44,7 +51,6 @@ export type ProgressBarRef = {
 };
 
 const clamp = (v: number) => Math.min(100, Math.max(0, v));
-const TIMING = { duration: 250, easing: Easing.inOut(Easing.quad) };
 
 export function ProgressBar({
   ref,
@@ -52,6 +58,7 @@ export function ProgressBar({
   value,
   tone = 'light',
   height = 8,
+  drawProgress,
   renderThumb,
   accessibilityLabel,
   className = '',
@@ -66,13 +73,21 @@ export function ProgressBar({
   }), []);
 
   const { track, fill } = TONES[tone];
+  // Reduce Motion: the fill jumps to its value (no growth animation).
+  const { reduceMotion } = useMotion();
   const fillStyle = useAnimatedStyle(() => ({
-    width: withTiming(`${now}%`, TIMING),
+    width: drawProgress
+      ? `${now * drawProgress.get()}%`
+      : reduceMotion ? `${now}%` : withTiming(`${now}%`, timings.enter),
     backgroundColor: fill,
     height,
     borderRadius: height / 2,
   }));
-  const thumbStyle = useAnimatedStyle(() => ({ left: withTiming(`${now}%`, TIMING) }));
+  const thumbStyle = useAnimatedStyle(() => ({
+    left: drawProgress
+      ? `${now * drawProgress.get()}%`
+      : reduceMotion ? `${now}%` : withTiming(`${now}%`, timings.enter),
+  }));
 
   return (
     <View

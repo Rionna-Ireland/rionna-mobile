@@ -4,6 +4,12 @@ import { PollCard } from '@/features/polls/components/poll-card';
 
 import { cleanup, render, screen, setup } from '@/lib/test-utils';
 
+const mockSuccess = jest.fn();
+jest.mock('@/lib/motion/haptics', () => ({
+  ...jest.requireActual('@/lib/motion/haptics'),
+  success: () => mockSuccess(),
+}));
+
 function poll(overrides: Partial<Poll> = {}): Poll {
   return {
     id: 'p1',
@@ -20,9 +26,20 @@ function poll(overrides: Partial<Poll> = {}): Poll {
   };
 }
 
+beforeEach(() => mockSuccess.mockClear());
 afterEach(cleanup);
 
 describe('pollCard', () => {
+  it('confirms a cast vote with a success haptic, but not a re-tap of the held option', async () => {
+    const onVote = jest.fn();
+    const { user } = setup(<PollCard poll={poll({ myVoteOptionId: 'o1' })} onVote={onVote} pending={false} variant="card" />);
+    await user.press(screen.getByTestId('poll-option-o1'));
+    expect(mockSuccess).not.toHaveBeenCalled();
+    await user.press(screen.getByTestId('poll-option-o2'));
+    expect(mockSuccess).toHaveBeenCalledTimes(1);
+    expect(onVote).toHaveBeenLastCalledWith('p1', 'o2');
+  });
+
   it('renders the question and tappable options before voting', async () => {
     const onVote = jest.fn();
     const { user } = setup(<PollCard poll={poll()} onVote={onVote} pending={false} variant="card" />);

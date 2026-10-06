@@ -1,3 +1,4 @@
+import type { TextInput } from 'react-native';
 import type { AuthUser } from '@/lib/auth/utils';
 import { useForm } from '@tanstack/react-form';
 import Env from 'env';
@@ -8,21 +9,24 @@ import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 import * as z from 'zod';
 
 import { Submark } from '@/components/brand/logo';
-import { Button, colors, Input, Text, View } from '@/components/ui';
+import { Button, colors, Input, minHitSlop, MotionPressable, Text, View } from '@/components/ui';
 import { getFieldError } from '@/components/ui/form-utils';
+import { ArrivalSlot } from '@/features/arrival/arrival-slot';
 import { LoginMedia } from '@/features/arrival/login-media';
+import { describeAuthError } from '@/features/auth/lib/auth-error';
 import { client } from '@/lib/api/client';
+import { translate } from '@/lib/i18n';
 import { openExternalLink } from '@/lib/open-external-link';
 
 const schema = z.object({
   email: z
-    .string({ message: 'Email is required' })
-    .min(1, 'Email is required')
-    .email('Invalid email format'),
+    .string({ message: translate('auth.login.emailRequired') })
+    .min(1, translate('auth.login.emailRequired'))
+    .email(translate('auth.login.emailInvalid')),
   password: z
-    .string({ message: 'Password is required' })
-    .min(1, 'Password is required')
-    .min(6, 'Password must be at least 6 characters'),
+    .string({ message: translate('auth.login.passwordRequired') })
+    .min(1, translate('auth.login.passwordRequired'))
+    .min(6, translate('auth.login.passwordTooShort')),
 });
 
 export type LoginFormProps = {
@@ -36,21 +40,6 @@ function apiHost(): string {
   catch {
     return Env.EXPO_PUBLIC_API_URL;
   }
-}
-
-function describeLoginError(error: any): string {
-  const status = error?.response?.status as number | undefined;
-  if (status) {
-    return (
-      error.response?.data?.message
-      ?? error.response?.data?.error
-      ?? `Sign in failed (${status})`
-    );
-  }
-  if (error?.message === 'Network Error' || error?.code === 'ERR_NETWORK') {
-    return `Can't reach ${apiHost()}. Check connection, or the API is down.`;
-  }
-  return error?.message ?? 'Sign in failed. Please check your credentials.';
 }
 
 const POSTER = require('../../../../assets/login-poster.jpg');
@@ -85,20 +74,22 @@ function FormHeader() {
   const showHost = Env.EXPO_PUBLIC_APP_ENV !== 'production';
   return (
     <View className="items-center">
-      <Submark width={52} color={colors.secondaryContainer} />
+      <ArrivalSlot name="login" testID="login-brand-slot">
+        <Submark width={52} color={colors.secondaryContainer} />
+      </ArrivalSlot>
       <Text
         testID="form-title"
         variant="display-xl"
         className="mt-6 text-center text-secondary-container"
       >
-        <Text variant="display-xl" className="text-on-primary-container">Not </Text>
-        just for the few.
+        <Text variant="display-xl" className="text-on-primary-container">{translate('auth.login.titleLead')}</Text>
+        {translate('auth.login.titleRest')}
       </Text>
       <Text
         variant="body"
         className="mt-6 text-center font-sans-medium text-on-primary-container"
       >
-        Welcome to Rionna, a new way into racing.
+        {translate('auth.login.welcome')}
       </Text>
       {showHost && (
         <Text
@@ -113,36 +104,61 @@ function FormHeader() {
   );
 }
 
+/** Body-sm line height: the links' hitSlop grows them to 44pt (A-040). */
+const LINK_HEIGHT = 16;
+
 function FormFooter() {
   return (
     <View className="mt-4 items-center gap-2">
-      <Text
+      <MotionPressable
+        size="small"
         testID="forgot-password-link"
         accessibilityRole="link"
-        variant="body-sm"
-        className="font-sans-medium text-on-primary-container"
+        hitSlop={minHitSlop(LINK_HEIGHT)}
         onPress={() => openExternalLink(forgotPasswordUrl())}
       >
-        Forgot password?
-      </Text>
-      <Text variant="body-sm" className="font-sans-medium text-white">
-        {'Don’t have an account? '}
-        <Text
+        <Text variant="body-sm" className="font-sans-medium text-on-primary-container">
+          {translate('auth.login.forgotPassword')}
+        </Text>
+      </MotionPressable>
+      <View className="flex-row items-center">
+        <Text variant="body-sm" className="font-sans-medium text-white">
+          {translate('auth.login.noAccount')}
+        </Text>
+        <MotionPressable
+          size="small"
           testID="signup-link"
           accessibilityRole="link"
-          variant="body-sm"
-          className="font-sans-medium text-on-primary-container"
+          hitSlop={minHitSlop(LINK_HEIGHT)}
           onPress={() => openExternalLink(MARKETING_URL)}
         >
-          Rionna.com
-        </Text>
-      </Text>
+          <Text variant="body-sm" className="font-sans-medium text-on-primary-container">
+            {translate('auth.login.signUpLink')}
+          </Text>
+        </MotionPressable>
+      </View>
     </View>
+  );
+}
+
+function LoginError({ error }: { error: string | null }) {
+  if (!error)
+    return null;
+  return (
+    <Text
+      testID="login-error"
+      accessibilityRole="alert"
+      variant="body-sm"
+      className="mb-2 text-center font-sans-medium text-on-primary-container"
+    >
+      {error}
+    </Text>
   );
 }
 
 export function LoginForm({ onSuccess }: LoginFormProps) {
   const [error, setError] = React.useState<string | null>(null);
+  const passwordRef = React.useRef<TextInput>(null);
   const keyboardVisible = useKeyboardVisible();
   const { height } = useWindowDimensions();
   const collapseMedia = keyboardVisible && height < SHORT_SCREEN_HEIGHT;
@@ -161,7 +177,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         await onSuccess({ token, user });
       }
       catch (e: any) {
-        setError(describeLoginError(e));
+        setError(describeAuthError(e, 'signIn'));
       }
     },
   });
@@ -182,16 +198,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
         {!collapseMedia && <LoginMedia poster={POSTER} />}
 
         <View className="w-full">
-          {error && (
-            <Text
-              testID="login-error"
-              accessibilityRole="alert"
-              variant="body-sm"
-              className="mb-2 text-center font-sans-medium text-on-primary-container"
-            >
-              {error}
-            </Text>
-          )}
+          <LoginError error={error} />
 
           <form.Field
             name="email"
@@ -199,11 +206,16 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
               <Input
                 testID="email-input"
                 tone="dark"
-                accessibilityLabel="Email"
-                placeholder="Email"
+                accessibilityLabel={translate('auth.login.email')}
+                placeholder={translate('auth.login.email')}
                 autoCapitalize="none"
                 autoComplete="email"
+                // "username" pairs the field with the password for iOS AutoFill (A-008).
+                textContentType="username"
                 keyboardType="email-address"
+                returnKeyType="next"
+                submitBehavior="submit"
+                onSubmitEditing={() => passwordRef.current?.focus()}
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChangeText={field.handleChange}
@@ -216,11 +228,16 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             name="password"
             children={field => (
               <Input
+                ref={passwordRef}
                 testID="password-input"
                 tone="dark"
-                accessibilityLabel="Password"
-                placeholder="Password"
+                accessibilityLabel={translate('auth.login.password')}
+                placeholder={translate('auth.login.password')}
                 secureTextEntry={true}
+                autoComplete="current-password"
+                textContentType="password"
+                returnKeyType="go"
+                onSubmitEditing={() => void form.handleSubmit()}
                 value={field.state.value}
                 onBlur={field.handleBlur}
                 onChangeText={field.handleChange}
@@ -234,7 +251,7 @@ export function LoginForm({ onSuccess }: LoginFormProps) {
             children={([isSubmitting]) => (
               <Button
                 testID="login-button"
-                label="Sign In"
+                label={translate('auth.login.submit')}
                 variant="on-dark"
                 onPress={form.handleSubmit}
                 loading={isSubmitting}

@@ -2,11 +2,12 @@ import type { Offer } from '@/features/paddock/types';
 
 import * as React from 'react';
 
-import { Card, colors, IconButton, Image, Pressable, Text, View } from '@/components/ui';
+import { Card, colors, IconButton, Image, MotionPressable, Text, View } from '@/components/ui';
 import { CaretRightV2 } from '@/components/ui/icons/v2';
 import { getInitials } from '@/components/ui/initials';
 import { CopyIcon } from '@/features/paddock/components/paddock-icons';
 import { formatValidTo } from '@/features/paddock/lib/format-valid-to';
+import { translate } from '@/lib/i18n';
 
 type OfferCardProps = {
   offer: Offer;
@@ -22,7 +23,10 @@ export function OfferCard({ offer, onCopyCode, onOpenLink }: OfferCardProps) {
 
   return (
     <Card testID={`offer-card-${offer.id}`} className="gap-3">
-      <Pressable
+      <MotionPressable
+        size="flat"
+        pressedOpacity={0.85}
+        dimDisabled={false}
         testID={`offer-toggle-${offer.id}`}
         accessibilityRole={hasDetails ? 'button' : undefined}
         accessibilityState={hasDetails ? { expanded: open } : undefined}
@@ -46,7 +50,7 @@ export function OfferCard({ offer, onCopyCode, onOpenLink }: OfferCardProps) {
                 testID={`offer-copy-${offer.id}`}
                 variant="circle-light"
                 className="bg-ice"
-                accessibilityLabel="Copy code"
+                accessibilityLabel={translate('paddock.offer.copyCode')}
                 onPress={() => onCopyCode(offer.discountCode ?? '')}
               >
                 <CopyIcon color={colors.ink} />
@@ -58,14 +62,14 @@ export function OfferCard({ offer, onCopyCode, onOpenLink }: OfferCardProps) {
                   testID={`offer-link-${offer.id}`}
                   variant="circle-light"
                   className="bg-ice"
-                  accessibilityLabel="Open offer"
+                  accessibilityLabel={translate('paddock.offer.open')}
                   onPress={() => onOpenLink(offer.redeemUrl ?? '')}
                 >
                   <CaretRightV2 size={20} color={colors.ink} />
                 </IconButton>
               )
             : null}
-      </Pressable>
+      </MotionPressable>
       {open
         ? (
             <View testID={`offer-details-${offer.id}`} className="gap-2 border-t border-outline-variant pt-3">
@@ -74,9 +78,9 @@ export function OfferCard({ offer, onCopyCode, onOpenLink }: OfferCardProps) {
               {offer.howToRedeem ? <Text variant="body-sm" className="text-ink-variant">{offer.howToRedeem}</Text> : null}
               {offer.redeemUrl && offer.discountCode
                 ? (
-                    <Pressable testID={`offer-link-${offer.id}`} accessibilityRole="link" onPress={() => onOpenLink(offer.redeemUrl ?? '')}>
-                      <Text variant="body-sm" className="font-sans-semibold text-primary">Open offer</Text>
-                    </Pressable>
+                    <MotionPressable size="small" testID={`offer-link-${offer.id}`} accessibilityRole="link" onPress={() => onOpenLink(offer.redeemUrl ?? '')}>
+                      <Text variant="body-sm" className="font-sans-semibold text-primary">{translate('paddock.offer.open')}</Text>
+                    </MotionPressable>
                   )
                 : null}
             </View>

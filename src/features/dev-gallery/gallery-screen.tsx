@@ -14,6 +14,7 @@ import {
   StateSection,
 } from './display-sections';
 import { GradientSection, IconSection, LogoSection, PatternSection, TypeSection } from './foundations-sections';
+import { LoginVideoSection, MotionPressableSection } from './motion-sections';
 import { TabBarSection } from './tab-bar-section';
 
 const CONTENT = { gap: 32, paddingHorizontal: 16, paddingBottom: 96 };
@@ -29,7 +30,7 @@ export function GalleryScreen() {
       <ScreenBackground />
       <ScrollView contentContainerStyle={CONTENT} keyboardShouldPersistTaps="handled">
         <ScreenHeader variant="tab-root" title="Design V2 gallery" className="px-0" />
-        <Text variant="body" className="-mt-6">Dev-only. S13-01 foundations.</Text>
+        <Text variant="body" className="-mt-6">Dev-only. S13-01 foundations + S14-01 motion.</Text>
         <TypeSection />
         <ButtonSection />
         <IconButtonSection />
@@ -47,6 +48,8 @@ export function GalleryScreen() {
         <PatternSection />
         <LogoSection />
         <IconSection />
+        <MotionPressableSection />
+        <LoginVideoSection />
       </ScrollView>
     </View>
   );

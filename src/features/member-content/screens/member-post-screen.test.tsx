@@ -101,7 +101,7 @@ describe('memberPostView', () => {
     const onToggleLike = jest.fn();
     render(<MemberPostView post={POST} contentState="fresh" onToggleLike={onToggleLike} />);
 
-    fireEvent.press(screen.getByLabelText('Like post'));
+    fireEvent.press(screen.getByLabelText('Like'));
     expect(onToggleLike).toHaveBeenCalledWith('post-1', true);
   });
 
@@ -116,13 +116,13 @@ describe('memberPostView', () => {
       />,
     );
 
-    fireEvent.press(screen.getByLabelText('Unlike post'));
+    fireEvent.press(screen.getByLabelText('Liked'));
     expect(onToggleLike).not.toHaveBeenCalled();
   });
 
   it('keeps the like count read-only when no handler is wired', () => {
     render(<MemberPostView post={POST} contentState="fresh" />);
-    expect(screen.queryByLabelText('Like post')).not.toBeOnTheScreen();
+    expect(screen.queryByLabelText('Like')).not.toBeOnTheScreen();
     expect(screen.getByLabelText('5 likes')).toBeOnTheScreen();
   });
 
@@ -232,16 +232,52 @@ describe('memberPostView comments', () => {
         onDeleteComment={onDeleteComment}
       />,
     );
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     const deleteButtons = screen.getAllByLabelText('Delete comment');
     expect(deleteButtons).toHaveLength(1);
     fireEvent.press(deleteButtons[0]!);
+    // A-017: nothing is deleted until the member confirms.
+    expect(onDeleteComment).not.toHaveBeenCalled();
+    expect(alert).toHaveBeenCalledWith('Delete this comment?', 'This can’t be undone.', expect.any(Array));
+    const buttons = alert.mock.calls[0]![2]!;
+    expect(buttons.map(b => b.style)).toEqual(['cancel', 'destructive']);
+    buttons[1]!.onPress!();
     expect(onDeleteComment).toHaveBeenCalledWith('post-1', 'c-1');
+    alert.mockRestore();
   });
 
   it('renders no comments section when the feature is not wired', () => {
     render(<MemberPostView post={POST} contentState="fresh" />);
     expect(screen.queryByText('No comments yet')).not.toBeOnTheScreen();
     expect(screen.queryByLabelText('Write a comment')).not.toBeOnTheScreen();
+  });
+});
+
+describe('memberPostView comment a11y', () => {
+  it('reads each comment with its text, Delete and Report as actions (A-004)', () => {
+    const onDeleteComment = jest.fn();
+    const onLongPressComment = jest.fn();
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    render(
+      <MemberPostView
+        post={POST}
+        contentState="fresh"
+        comments={[comment({ canDelete: true })]}
+        onDeleteComment={onDeleteComment}
+        onLongPressComment={onLongPressComment}
+      />,
+    );
+    const row = screen.getByTestId('comment-c-1');
+    expect(row.props.accessibilityLabel).toMatch(/^Jane Member, .+, What a run!$/);
+    expect(row.props.accessibilityActions).toEqual([
+      { name: 'delete', label: 'Delete comment' },
+      { name: 'report', label: 'Report comment' },
+    ]);
+    fireEvent(row, 'accessibilityAction', { nativeEvent: { actionName: 'report' } });
+    expect(onLongPressComment).toHaveBeenCalledWith('post-1', expect.objectContaining({ id: 'c-1' }));
+    fireEvent(row, 'accessibilityAction', { nativeEvent: { actionName: 'delete' } });
+    expect(alert).toHaveBeenCalledTimes(1);
+    alert.mockRestore();
   });
 });
 
@@ -297,17 +333,44 @@ describe('memberPostView blocked comments', () => {
     expect(screen.getByLabelText('Write a comment').props.value).toBe('Bad words here');
   });
 
-  it('shows no inline copy for a plain failure', () => {
-    render(
+  it('keeps the reply text and says so when the send fails (A-016)', () => {
+    const onSubmitComment = jest.fn();
+    const view = (error: 'failed' | null) => (
       <MemberPostView
         post={POST}
         contentState="fresh"
         comments={[]}
-        onSubmitComment={jest.fn()}
-        commentError="failed"
-      />,
+        onSubmitComment={onSubmitComment}
+        commentError={error}
+      />
     );
+    const { rerender } = render(view(null));
+    fireEvent.changeText(screen.getByLabelText('Write a comment'), 'Great run');
+    fireEvent.press(screen.getByLabelText('Send comment'));
+    expect(screen.getByLabelText('Write a comment').props.value).toBe('');
+
+    rerender(view('failed'));
+    expect(screen.getByText('Couldn’t send your reply. Try again.')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Write a comment').props.value).toBe('Great run');
     expect(screen.queryByText('Our auto-moderation held back this comment. Please edit it and try again.')).not.toBeOnTheScreen();
+  });
+});
+
+describe('memberPostView refresh', () => {
+  it('retries comments that failed to load from a real button (A-018)', () => {
+    const onRetryComments = jest.fn();
+    render(<MemberPostView post={POST} contentState="fresh" commentsUnavailable onRetryComments={onRetryComments} />);
+    expect(screen.queryByText(/Pull down/)).not.toBeOnTheScreen();
+    fireEvent.press(screen.getByText('Try again'));
+    expect(onRetryComments).toHaveBeenCalledTimes(1);
+  });
+
+  it('pulls to refresh the thread when wired', () => {
+    const onRefresh = jest.fn();
+    render(<MemberPostView post={POST} contentState="fresh" comments={[]} onRefresh={onRefresh} />);
+    const scroll = screen.UNSAFE_getByProps({ keyboardShouldPersistTaps: 'handled' });
+    scroll.props.refreshControl.props.onRefresh();
+    return Promise.resolve().then(() => expect(onRefresh).toHaveBeenCalledTimes(1));
   });
 });
 
@@ -323,7 +386,7 @@ describe('memberPostView comment long-press', () => {
       />,
     );
 
-    fireEvent(screen.getByLabelText('Comment by Jane Member'), 'longPress');
+    fireEvent(screen.getByTestId('comment-c-1'), 'longPress');
     expect(onLongPressComment).toHaveBeenCalledWith('post-1', expect.objectContaining({ id: 'c-1' }));
   });
 });

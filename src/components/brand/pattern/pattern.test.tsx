@@ -10,8 +10,10 @@ afterEach(cleanup);
 const KINDS: TileKind[] = ['quad', 'gem', 'ring', 'harlequin'];
 
 describe('pattern tiles', () => {
-  it('defines the five colourways', () => {
-    expect(Object.keys(COLOURWAYS)).toEqual(['plum', 'navy', 'navyLit', 'green', 'cream']);
+  it('defines the colourways (five plus the charity-wave lit pair)', () => {
+    expect(Object.keys(COLOURWAYS)).toEqual(['plum', 'navy', 'navyLit', 'green', 'cream', 'plumLit', 'greenLit']);
+    expect(COLOURWAYS.plumLit.spur).toBe(COLOURWAYS.plum.accent);
+    expect(COLOURWAYS.greenLit.spur).toBe(COLOURWAYS.green.accent);
   });
 
   it.each(KINDS)('renders a %s tile for every turn', (kind) => {
