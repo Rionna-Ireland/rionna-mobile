@@ -5,6 +5,8 @@
 jest.mock('react-native-worklets', () => ({
   __esModule: true,
   default: {},
+  scheduleOnRN: (fn: (...args: unknown[]) => unknown, ...args: unknown[]) => fn(...args),
+  scheduleOnUI: (fn: (...args: unknown[]) => unknown, ...args: unknown[]) => fn(...args),
 }));
 
 // Mock react-native-reanimated
@@ -31,6 +33,13 @@ jest.mock('react-native-reanimated', () => {
     useAnimatedStyle: jest.fn(fn => fn()),
     useAnimatedScrollHandler: jest.fn(() => jest.fn()),
     useAnimatedProps: jest.fn(fn => fn()),
+    useDerivedValue: jest.fn((fn) => {
+      const current = fn();
+      return { value: current, get: () => current, set: jest.fn() };
+    }),
+    useAnimatedReaction: jest.fn(),
+    useAnimatedRef: jest.fn(() => ({ current: null })),
+    measure: jest.fn(() => null),
     useReducedMotion: jest.fn(() => false),
     withTiming: jest.fn(value => value),
     withSpring: jest.fn(value => value),
