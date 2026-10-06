@@ -80,6 +80,7 @@ export function EventCard({
                         : state === 'full' ? translate('events.full') : translate('events.rsvp')
                     }
                     disabled={state === 'full' || rsvpPending}
+                    haptic={state === 'going' ? false : 'success'}
                     onPress={() => onToggleRsvp?.(state !== 'going')}
                   />
                   <Button
@@ -89,6 +90,7 @@ export function EventCard({
                     variant="secondary"
                     label={reminderOn ? translate('events.reminding') : translate('events.remindMe')}
                     accessibilityState={{ selected: reminderOn }}
+                    haptic={reminderOn ? false : 'success'}
                     onPress={onToggleReminder}
                   />
                 </View>

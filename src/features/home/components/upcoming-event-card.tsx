@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import * as React from 'react';
 import { Pressable, View } from 'react-native';
 
-import { Card, MonoLabel, Text } from '@/components/ui';
+import { Card, MonoLabel, NumberRoll, Text } from '@/components/ui';
 import { formatEventDate } from '@/features/events/lib/format-event-date';
 import { slotsRemaining } from '@/features/home/lib/card-helpers';
 
@@ -28,7 +28,7 @@ export function UpcomingEventCard({ data }: { data: EventsResult | undefined }) 
       <Card className="gap-8">
         <MonoLabel>Upcoming events</MonoLabel>
         <View className="gap-1.5">
-          {slots ? <Text variant="body-sm" className="text-on-primary-container">{slots}</Text> : null}
+          {slots ? <NumberRoll variant="body-sm" className="text-on-primary-container" value={slots} /> : null}
           <Text variant="body-lg" numberOfLines={2}>{event.title}</Text>
           <Text variant="body-sm" className="text-ink-variant">{date}</Text>
         </View>

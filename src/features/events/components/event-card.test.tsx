@@ -3,6 +3,15 @@ import { cleanup, fireEvent, render, screen } from '@/lib/test-utils';
 
 import { EventCard } from './event-card';
 
+const mockSuccess = jest.fn();
+const mockTap = jest.fn();
+jest.mock('@/lib/motion/haptics', () => ({
+  ...jest.requireActual('@/lib/motion/haptics'),
+  success: () => mockSuccess(),
+  tap: () => mockTap(),
+}));
+
+beforeEach(() => jest.clearAllMocks());
 afterEach(cleanup);
 
 describe('eventCard', () => {
@@ -24,6 +33,9 @@ describe('eventCard', () => {
     fireEvent.press(screen.getByText('Remind me'));
     expect(onToggleRsvp).toHaveBeenCalledWith(true);
     expect(onToggleReminder).toHaveBeenCalledTimes(1);
+    // RSVP and Remind-me-on confirm with success(), not the default tap.
+    expect(mockSuccess).toHaveBeenCalledTimes(2);
+    expect(mockTap).not.toHaveBeenCalled();
   });
 
   it('shows "Going ✓" when RSVPd and pressing cancels', () => {
@@ -31,6 +43,7 @@ describe('eventCard', () => {
     render(<EventCard event={clubEvent({ rsvp: rsvp({ going: true }) })} onPress={jest.fn()} onToggleRsvp={onToggleRsvp} />);
     fireEvent.press(screen.getByText('Going ✓'));
     expect(onToggleRsvp).toHaveBeenCalledWith(false);
+    expect(mockSuccess).not.toHaveBeenCalled();
   });
 
   it('disables "Full" when full and not going', () => {

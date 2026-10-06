@@ -17,6 +17,7 @@ import {
   Gradient,
   Image,
   MonoLabel,
+  NumberRoll,
   Pressable,
   ScreenBackground,
   ScrollView,
@@ -37,6 +38,7 @@ import { CircleTiptapRenderer } from '@/features/member-content/components/circl
 import { hydrateCircleDoc } from '@/features/member-content/tiptap/hydrate';
 import { circleDocHasContent } from '@/features/member-content/tiptap/native-support';
 import { translate } from '@/lib/i18n';
+import { haptics } from '@/lib/motion';
 import { openExternalLink } from '@/lib/open-external-link';
 
 const CALENDAR_OUTCOME_KEY = {
@@ -156,7 +158,7 @@ function DetailRow({ label, value, divider }: { label: string; value: string; di
       className={`min-h-11 flex-row items-center justify-between py-3 ${divider ? 'border-b border-outline-variant' : ''}`}
     >
       <MonoLabel>{label}</MonoLabel>
-      <Text variant="body-lg" className="text-ink-variant">{value}</Text>
+      <NumberRoll variant="body-lg" className="text-ink-variant" value={value} />
     </View>
   );
 }
@@ -236,7 +238,10 @@ function RemindCard({
           testID="event-remind-switch"
           accessibilityLabel={translate('events.detail.remindMe')}
           value={reminderOn}
-          onValueChange={() => onToggleReminder?.()}
+          onValueChange={() => {
+            haptics.selection();
+            onToggleReminder?.();
+          }}
           trackColor={{ false: colors.surfaceContainerHigh, true: colors.primary }}
           thumbColor={colors.white}
         />
@@ -354,6 +359,7 @@ export function EventDetailView({
                       : state === 'full' ? translate('events.detail.eventFull') : translate('events.detail.rsvpGoing')
                   }
                   disabled={state === 'full'}
+                  haptic={state === 'going' ? false : 'success'}
                   loading={rsvpPending}
                   onPress={() => onToggleRsvp?.(state !== 'going')}
                 />
