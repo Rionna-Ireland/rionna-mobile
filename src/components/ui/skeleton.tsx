@@ -84,29 +84,37 @@ export function SkeletonTone({ value, children }: { value: SkeletonToneValue; ch
 
 type SkeletonGroupProps = {
   children: React.ReactNode;
+  /**
+   * Announce the group as one "Loading" element (default). Pass `false` when
+   * the group also holds real, readable content (a static screen title) and
+   * mark the placeholder part with `skeletonA11yProps()` instead.
+   */
+  announce?: boolean;
   className?: string;
   style?: StyleProp<ViewStyle>;
   testID?: string;
 };
 
+/** Screen-reader props for a placeholder region: one "Loading" progress element. */
+export function skeletonA11yProps() {
+  return {
+    accessible: true,
+    accessibilityRole: 'progressbar',
+    accessibilityLabel: translate('common.loading'),
+    accessibilityState: { busy: true },
+  } as const;
+}
+
 /**
  * One loading surface (a card, a list): a single shimmer clock for its shapes,
  * announced once to screen readers as "Loading".
  */
-export function SkeletonGroup({ children, className, style, testID }: SkeletonGroupProps) {
+export function SkeletonGroup({ children, announce = true, className, style, testID }: SkeletonGroupProps) {
   const { reduceMotion } = useMotion();
   const clock = useShimmerClock(!reduceMotion);
   return (
     <ClockContext value={clock}>
-      <View
-        testID={testID}
-        className={className}
-        style={style}
-        accessible
-        accessibilityRole="progressbar"
-        accessibilityLabel={translate('common.loading')}
-        accessibilityState={{ busy: true }}
-      >
+      <View testID={testID} className={className} style={style} {...(announce ? skeletonA11yProps() : null)}>
         {children}
       </View>
     </ClockContext>
@@ -201,6 +209,17 @@ export function SkeletonText({ variant, width = '100%', lines = 1, className, te
           <Skeleton height={bar} width={lines > 1 && i === lines - 1 ? '60%' : width} />
         </View>
       ))}
+    </View>
+  );
+}
+
+const CHIP_WIDTHS = [52, 92, 76, 100, 84];
+
+/** Stand-in for a `ChipRow`: 32pt pills with its 8pt gap and gutter inset. */
+export function SkeletonChipRow({ count = 4, contentInset = 0 }: { count?: number; contentInset?: number }) {
+  return (
+    <View className="flex-row overflow-hidden" style={{ gap: 8, paddingHorizontal: contentInset }}>
+      {CHIP_WIDTHS.slice(0, count).map(width => <Skeleton key={width} width={width} height={32} radius={6} />)}
     </View>
   );
 }
