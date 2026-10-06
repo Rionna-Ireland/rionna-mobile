@@ -1,3 +1,4 @@
+import type { ScrollView } from 'react-native';
 import type { FeaturedCardData } from '@/features/member-content/components/featured-card';
 import type { FeedChip, MemberContentState, MemberFeedItem } from '@/features/member-content/types';
 import type { AuthUser } from '@/lib/auth/utils';
@@ -18,6 +19,7 @@ import {
 } from '@/components/ui';
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { AnimatedScrollView, CollapsingTitle, CompactHeaderBar, useScrollHeader } from '@/components/ui/scroll-header';
+import { useTabScrollToTop } from '@/components/ui/scroll-to-top';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { NewPostButton } from '@/features/community-posting/components/new-post-button';
@@ -83,6 +85,14 @@ export function emptyCopyForChip(chip: FeedChip | undefined): { title: string; m
   }
 }
 
+function SavedContentBanner() {
+  return (
+    <View className="rounded-lg bg-primary-fixed px-4 py-3">
+      <Text variant="body-sm" className="font-sans-medium">{translate('community.savedContent')}</Text>
+    </View>
+  );
+}
+
 export function CommunityFeedView({
   items,
   contentState,
@@ -111,6 +121,8 @@ export function CommunityFeedView({
     [items, chips],
   );
   const { scrollY, onScroll } = useScrollHeader();
+  const scrollRef = React.useRef<ScrollView>(null);
+  useTabScrollToTop(scrollRef);
   const empty = emptyCopy ?? defaultEmptyCopy();
   // First load only; chip switches, refetches and refreshes mount rows instantly.
   // After a skeleton, its crossfade is the entrance (S14-03).
@@ -119,6 +131,7 @@ export function CommunityFeedView({
   return (
     <View className="flex-1">
       <AnimatedScrollView
+        ref={scrollRef}
         className="flex-1 bg-surface"
         contentContainerStyle={{ paddingBottom: contentPaddingBottom }}
         refreshControl={<BrandedRefreshControl refreshing={isRefetching} onRefresh={onRefresh} />}
@@ -147,13 +160,7 @@ export function CommunityFeedView({
 
         {/* 20pt between the band's edge and the first post (frame 10, A-013). */}
         <View className="gap-3 px-4 pt-5">
-          {contentState === 'saved'
-            ? (
-                <View className="rounded-lg bg-primary-fixed px-4 py-3">
-                  <Text variant="body-sm" className="font-sans-medium">{translate('community.savedContent')}</Text>
-                </View>
-              )
-            : null}
+          {contentState === 'saved' ? <SavedContentBanner /> : null}
           {!isLoading && contentState === 'empty'
             ? <EmptyState testID="member-feed-empty" title={empty.title} body={empty.message || undefined} />
             : null}
