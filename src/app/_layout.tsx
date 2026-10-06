@@ -28,6 +28,7 @@ import { useThemeConfig } from '@/components/ui/use-theme-config';
 import { ArrivalOverlay } from '@/features/arrival/arrival-overlay';
 import { ArrivalProvider } from '@/features/arrival/arrival-provider';
 import { hydrateAuth, useAuthStore as useAuth } from '@/features/auth/use-auth-store';
+import { HeroTransitionProvider } from '@/features/hero-transition/hero-transition-provider';
 import { TermsGate } from '@/features/legal/terms-gate';
 import { NOTIFICATION_CENTRE_QUERY_ROOT } from '@/features/notification-centre/types';
 import {
@@ -40,7 +41,7 @@ import { APIProvider } from '@/lib/api';
 import { queryClient } from '@/lib/api/query-client';
 
 import { loadSelectedTheme } from '@/lib/hooks/use-selected-theme';
-import { MotionProvider } from '@/lib/motion';
+import { durations, MotionProvider } from '@/lib/motion';
 import '@/features/notifications/handler';
 // Import  global CSS file
 import '../global.css';
@@ -178,6 +179,7 @@ function AppStack() {
     <Providers>
       <Stack>
         <Stack.Screen name="(app)" options={{ headerShown: false }} />
+        <Stack.Screen name="stables/[horse-id]" options={horseDetailOptions} />
         {/* Design V2 screens draw their own ScreenHeader (with back), so the native header stays hidden. */}
         {MODAL_STACK_SCREENS.map(({ name, options }) => (
           <Stack.Screen key={name} name={name} options={{ ...options, headerShown: false }} />
@@ -190,14 +192,29 @@ function AppStack() {
   );
 }
 
+/**
+ * Horse detail (S14-05 §4): opened by the hero transition (`?transition=hero`)
+ * or as its Reduce Motion / low-end fallback (`?transition=fade`), the stack
+ * only crossfades (`quick`) under the overlay; otherwise (deep links, no
+ * photo) it's the default push. The iOS edge swipe keeps the native animation
+ * either way (`animationMatchesGesture` stays false).
+ */
+function horseDetailOptions({ route }: { route: { params?: object } }) {
+  const params = route.params as { transition?: string } | undefined;
+  const crossfade = params?.transition === 'hero' || params?.transition === 'fade';
+  return {
+    title: '',
+    headerBackTitle: 'Stables',
+    headerTransparent: true,
+    headerShown: false,
+    ...(crossfade ? { animation: 'fade' as const, animationDuration: durations.quick } : null),
+  };
+}
+
 const MODAL_STACK_SCREENS: {
   name: string;
   options: React.ComponentProps<typeof Stack.Screen>['options'];
 }[] = [
-  {
-    name: 'stables/[horse-id]',
-    options: { title: '', headerBackTitle: 'Stables', headerTransparent: true },
-  },
   {
     name: 'post/[space-id]/[post-id]',
     options: {
@@ -268,7 +285,7 @@ function Providers({ children }: { children: React.ReactNode }) {
           <APIProvider>
             <MotionProvider>
               <BottomSheetModalProvider>
-                {children}
+                <HeroTransitionProvider>{children}</HeroTransitionProvider>
                 <FlashMessage position="top" />
               </BottomSheetModalProvider>
             </MotionProvider>
