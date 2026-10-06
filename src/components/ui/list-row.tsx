@@ -1,9 +1,10 @@
 import * as React from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { twMerge } from 'tailwind-merge';
 
 import colors from './colors';
 import { CaretRightV2 } from './icons/v2';
+import { MotionPressable } from './pressable';
 import { Text } from './text';
 
 export type ListRowProps = {
@@ -24,7 +25,8 @@ export type ListRowProps = {
 
 /**
  * Label-left / value-right row with a hairline divider (S13-01 §7): pedigree
- * rows, Profile rows, Notifications. 44pt minimum height.
+ * rows, Profile rows, Notifications. 44pt minimum height. Tappable rows use a
+ * `flat` `MotionPressable`: full-bleed rows dim rather than scale.
  */
 export function ListRow({
   label,
@@ -61,17 +63,18 @@ export function ListRow({
 
   if (onPress) {
     return (
-      <Pressable
+      <MotionPressable
+        size="flat"
+        pressedOpacity={0.6}
         testID={testID}
         onPress={onPress}
         accessibilityRole="button"
         accessibilityLabel={typeof value === 'string' ? `${label}, ${value}` : label}
         accessibilityHint={accessibilityHint}
         className={rowClass}
-        style={({ pressed }) => (pressed ? { opacity: 0.6 } : null)}
       >
         {content}
-      </Pressable>
+      </MotionPressable>
     );
   }
   return (

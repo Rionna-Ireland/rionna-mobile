@@ -1,13 +1,13 @@
 import type { BottomSheetModal } from '@gorhom/bottom-sheet';
-import type { PressableProps } from 'react-native';
 import type { SvgProps } from 'react-native-svg';
+import type { MotionPressableProps } from './pressable';
 import {
   BottomSheetFlatList,
 
 } from '@gorhom/bottom-sheet';
 import { FlashList } from '@shopify/flash-list';
 import * as React from 'react';
-import { Platform, Pressable, View } from 'react-native';
+import { Platform, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { tv } from 'tailwind-variants';
 
@@ -15,6 +15,7 @@ import colors from '@/components/ui/colors';
 
 import { CaretDown } from '@/components/ui/icons';
 import { Modal, useModal } from './modal';
+import { MotionPressable } from './pressable';
 import { Text } from './text';
 
 const selectTv = tv({
@@ -108,18 +109,22 @@ const Option = React.memo(
     label,
     selected = false,
     ...props
-  }: PressableProps & {
+  }: MotionPressableProps & {
     selected?: boolean;
     label: string;
   }) => {
+    // Full-bleed sheet row: dims (no scale) with a selection() tick.
     return (
-      <Pressable
+      <MotionPressable
+        size="flat"
+        pressedOpacity={0.6}
+        haptic="selection"
         className="min-h-11 flex-row items-center border-b border-outline-variant bg-white px-4 py-3"
         {...props}
       >
         <Text variant="body" className="flex-1">{label}</Text>
         {selected && <Check />}
-      </Pressable>
+      </MotionPressable>
     );
   },
 );
@@ -184,7 +189,7 @@ export function Select(props: SelectProps) {
             {label}
           </Text>
         )}
-        <Pressable
+        <MotionPressable
           className={styles.input()}
           disabled={disabled}
           onPress={modal.present}
@@ -194,7 +199,7 @@ export function Select(props: SelectProps) {
             <Text className={styles.inputValue()}>{textValue}</Text>
           </View>
           <CaretDown />
-        </Pressable>
+        </MotionPressable>
         {error && (
           <Text
             testID={`${testID}-error`}

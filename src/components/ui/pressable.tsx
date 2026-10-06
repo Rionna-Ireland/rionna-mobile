@@ -1,4 +1,4 @@
-import type { GestureResponderEvent, PressableProps, StyleProp, ViewStyle } from 'react-native';
+import type { GestureResponderEvent, PressableProps, StyleProp, View, ViewStyle } from 'react-native';
 import type { HapticIntent } from '@/lib/motion';
 import * as React from 'react';
 import { Platform, Pressable } from 'react-native';
@@ -18,12 +18,16 @@ export type MotionPressableProps = Omit<PressableProps, 'style'> & {
   className?: string;
   /** Static styles only: press state is driven by the primitive, not a style function. */
   style?: StyleProp<ViewStyle>;
-  /** `small` (chips, icon buttons) presses deeper: `pressScaleSmall`. iOS only. */
-  size?: 'default' | 'small';
+  /**
+   * `small` (chips, icon buttons) presses deeper: `pressScaleSmall`. `flat`
+   * (full-bleed list rows) doesn't scale: pair it with `pressedOpacity`. iOS only.
+   */
+  size?: 'default' | 'small' | 'flat';
   /** Opacity while pressed (iOS), e.g. 0.85. Omit to keep full opacity. */
   pressedOpacity?: number;
   /** Haptic fired on press, from the motion vocabulary. */
   haptic?: HapticIntent;
+  ref?: React.Ref<View>;
 };
 
 function usePressFeedback(enabled: boolean, scaleTo: number, pressedOpacity?: number) {
@@ -71,7 +75,7 @@ export function MotionPressable({
 }: MotionPressableProps) {
   const { reduceMotion } = useMotion();
   const isAndroid = Platform.OS === 'android';
-  const scaleTo = reduceMotion ? 1 : size === 'small' ? pressScaleSmall : pressScale;
+  const scaleTo = reduceMotion || size === 'flat' ? 1 : size === 'small' ? pressScaleSmall : pressScale;
   const feedback = usePressFeedback(!isAndroid, scaleTo, pressedOpacity);
 
   const handlePress = (e: GestureResponderEvent) => {

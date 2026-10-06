@@ -5,7 +5,50 @@ import { cleanup, render, screen, setup } from '@/lib/test-utils';
 
 import { Button } from './button';
 
+const mockTap = jest.fn();
+const mockSuccess = jest.fn();
+jest.mock('@/lib/motion/haptics', () => ({
+  ...jest.requireActual('@/lib/motion/haptics'),
+  tap: () => mockTap(),
+  success: () => mockSuccess(),
+}));
+
+beforeEach(() => jest.clearAllMocks());
 afterEach(cleanup);
+
+describe('button haptics', () => {
+  it('taps on primary presses by default', async () => {
+    const { user } = setup(<Button testID="b" label="Sign in" onPress={jest.fn()} />);
+    await user.press(screen.getByTestId('b'));
+    expect(mockTap).toHaveBeenCalledTimes(1);
+  });
+
+  it('stays silent on secondary buttons', async () => {
+    const { user } = setup(<Button testID="b" variant="secondary" label="Cancel" onPress={jest.fn()} />);
+    await user.press(screen.getByTestId('b'));
+    expect(mockTap).not.toHaveBeenCalled();
+  });
+
+  it('honours an explicit haptic override, including opting out', async () => {
+    const { user } = setup(
+      <>
+        <Button testID="rsvp" variant="secondary" haptic="success" label="RSVP" onPress={jest.fn()} />
+        <Button testID="quiet" haptic={false} label="Quiet" onPress={jest.fn()} />
+      </>,
+    );
+    await user.press(screen.getByTestId('rsvp'));
+    await user.press(screen.getByTestId('quiet'));
+    expect(mockSuccess).toHaveBeenCalledTimes(1);
+    expect(mockTap).not.toHaveBeenCalled();
+  });
+
+  it('shows only the new label after a change (the old copy is hidden while it fades)', () => {
+    const { rerender } = render(<Button testID="b" label="RSVP" />);
+    rerender(<Button testID="b" label="Going" />);
+    expect(screen.getByText('Going')).toBeOnTheScreen();
+    expect(screen.queryByText('RSVP')).toBeNull();
+  });
+});
 
 describe('button component ', () => {
   it('should render correctly ', () => {

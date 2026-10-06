@@ -1,9 +1,9 @@
-import type { PressableProps } from 'react-native';
+import type { MotionPressableProps } from './pressable';
 import * as React from 'react';
-import { Pressable } from 'react-native';
 import { tv } from 'tailwind-variants';
 
 import { minHitSlop } from './hit-slop';
+import { MotionPressable } from './pressable';
 
 /**
  * Icon-only button (S13-01 §7).
@@ -12,6 +12,7 @@ import { minHitSlop } from './hit-slop';
  * - `circle`: ice-light 32×32 circle (the play button on photo cards).
  * - `circle-light`: 44×44 white-ish circle (Profile edit pencil).
  * The icon is passed as children; pick its colour to suit the fill.
+ * Presses with the small `MotionPressable` scale; no haptic unless `haptic` is set.
  */
 const iconButton = tv({
   base: 'items-center justify-center',
@@ -36,7 +37,7 @@ const SIZE: Record<IconButtonVariant, number> = {
   'circle-light': 44,
 };
 
-export type IconButtonProps = Omit<PressableProps, 'children'> & {
+export type IconButtonProps = Omit<MotionPressableProps, 'children'> & {
   /** Required: icon-only buttons have no visible text. */
   accessibilityLabel: string;
   variant?: IconButtonVariant;
@@ -54,16 +55,16 @@ export function IconButton({
   const size = SIZE[variant];
   const pad = minHitSlop(size);
   return (
-    <Pressable
+    <MotionPressable
+      size="small"
       accessibilityRole="button"
       accessibilityState={{ disabled: Boolean(disabled) }}
       disabled={disabled}
       hitSlop={pad ? { ...pad, left: pad.top, right: pad.top } : undefined}
       className={iconButton({ variant, disabled: Boolean(disabled), className })}
-      style={({ pressed }) => (pressed && !disabled ? { opacity: 0.7 } : null)}
       {...props}
     >
       {children}
-    </Pressable>
+    </MotionPressable>
   );
 }

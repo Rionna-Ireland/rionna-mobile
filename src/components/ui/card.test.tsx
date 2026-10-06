@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { cleanup, render, screen } from '@/lib/test-utils';
+import { cleanup, render, screen, setup } from '@/lib/test-utils';
 
 import { Card } from './card';
 import { Text } from './text';
@@ -46,5 +46,15 @@ describe('card', () => {
   it('can drop its padding', () => {
     render(<Card testID="card" noPadding />);
     expect(screen.getByTestId('card').props.className).not.toContain('p-4');
+  });
+
+  it('becomes a pressable button when given onPress', async () => {
+    const onPress = jest.fn();
+    const { user } = setup(<Card testID="card" accessibilityLabel="Open" onPress={onPress} />);
+    const card = screen.getByTestId('card');
+    expect(card.props.accessibilityRole).toBe('button');
+    expect(card.props.className).toContain('rounded-lg');
+    await user.press(card);
+    expect(onPress).toHaveBeenCalledTimes(1);
   });
 });
