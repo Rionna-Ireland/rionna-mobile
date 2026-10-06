@@ -3,7 +3,7 @@ import type { StablesFilter } from '@/features/stables/lib/stables-filters';
 import type { Horse } from '@/features/stables/types';
 import type { TxKeyPath } from '@/lib/i18n';
 
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import * as React from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -23,6 +23,8 @@ import { List } from '@/components/ui/list';
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
 import { CollapsingTitle, CompactHeaderBar, useScrollHeader } from '@/components/ui/scroll-header';
 import { useTabBarContentPadding } from '@/components/ui/tab-bar-layout';
+import { heroSourceKey } from '@/features/hero-transition/types';
+import { useOpenHorse } from '@/features/hero-transition/use-open-horse';
 import { useFollowHorse } from '@/features/stables/api/use-horse-follow';
 import { useHorses } from '@/features/stables/api/use-horses';
 import { HorseCard } from '@/features/stables/components/horse-card';
@@ -107,10 +109,10 @@ function FilterEmpty({ filter }: { filter: StablesFilter }) {
 /** Horse rows: open on press, follow toggle, first-load entrance (S14-02 §6). */
 function useHorseRenderItem(ready: boolean, skeletonShowing: boolean) {
   const { toggleFollow, pendingHorseId } = useFollowHorse();
-  const router = useRouter();
+  const openHorse = useOpenHorse();
   const handlePress = React.useCallback(
-    (horseId: string) => router.push(`/stables/${horseId}`),
-    [router],
+    (horseId: string) => openHorse(horseId, heroSourceKey('stables', horseId)),
+    [openHorse],
   );
   const handleToggleFollow = React.useCallback(
     (horseId: string, following: boolean) => toggleFollow({ horseId, following }),
