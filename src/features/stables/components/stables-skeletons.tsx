@@ -1,7 +1,7 @@
 import type { StyleProp, ViewStyle } from 'react-native';
 
 import * as React from 'react';
-import { View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
 
 import {
   Card,
@@ -11,6 +11,7 @@ import {
   SkeletonChipRow,
   SkeletonGroup,
   SkeletonText,
+  SkeletonTone,
   Text,
 } from '@/components/ui';
 import { translate } from '@/lib/i18n';
@@ -59,6 +60,54 @@ export function StablesSkeleton({ style }: { style?: StyleProp<ViewStyle> }) {
       <View className="gap-2" {...skeletonA11yProps()}>
         {[0, 1, 2, 3].map(i => <HorseCardSkeleton key={i} />)}
       </View>
+    </SkeletonGroup>
+  );
+}
+
+/** A section card: kicker plus a few body lines. */
+function SectionSkeleton({ lines }: { lines: number }) {
+  return (
+    <View className="px-4 pb-2">
+      <Card className="gap-3">
+        <SkeletonText variant="label-sm" width={80} />
+        <SkeletonText variant="body" lines={lines} />
+      </Card>
+    </View>
+  );
+}
+
+/**
+ * Horse detail first load: the navy hero frame (square, same padding and
+ * name / fact lines / pill row as `HorseHero`), the section chips, then two
+ * section cards.
+ */
+export function HorseDetailSkeleton({ heroTopPadding }: { heroTopPadding: number }) {
+  const { width } = useWindowDimensions();
+  return (
+    <SkeletonGroup testID="horse-detail-skeleton">
+      <View className="bg-primary" style={{ minHeight: width }}>
+        <SkeletonTone value="dark">
+          <View style={{ paddingTop: heroTopPadding, minHeight: width }} className="justify-between gap-8 px-4 pb-8">
+            <View className="h-11" />
+            <View className="gap-6">
+              <View className="gap-2">
+                <SkeletonText variant="display-lg" width="65%" />
+                <SkeletonText variant="body" width="80%" />
+                <SkeletonText variant="body" width="50%" />
+              </View>
+              <View className="flex-row gap-1">
+                <Skeleton height={30} radius={6} className="flex-1" />
+                <Skeleton height={30} radius={6} className="flex-1" />
+              </View>
+            </View>
+          </View>
+        </SkeletonTone>
+      </View>
+      <View className="pt-5 pb-3">
+        <SkeletonChipRow count={4} contentInset={16} />
+      </View>
+      <SectionSkeleton lines={4} />
+      <SectionSkeleton lines={3} />
     </SkeletonGroup>
   );
 }

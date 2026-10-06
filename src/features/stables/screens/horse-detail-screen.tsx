@@ -6,11 +6,10 @@ import type { Entry, HorseDetail, HorseUpdate } from '@/features/stables/types';
 import Env from 'env';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
-import { ScrollView, Share, View } from 'react-native';
+import { ScrollView, Share, StyleSheet, View } from 'react-native';
 import { useSharedValue } from 'react-native-reanimated';
 
 import {
-  ActivityIndicator,
   Button,
   ChipRow,
   EmptyState,
@@ -28,6 +27,7 @@ import { HorseDetailBar, useHorseDetailBarMetrics } from '@/features/stables/com
 import { HorseHero } from '@/features/stables/components/horse-hero';
 import { HorseUpdatesTimeline } from '@/features/stables/components/horse-updates-timeline';
 import { RacingSection } from '@/features/stables/components/racing-section';
+import { HorseDetailSkeleton } from '@/features/stables/components/stables-skeletons';
 import { StorySection } from '@/features/stables/components/story-section';
 import { WellbeingSection } from '@/features/stables/components/wellbeing-section';
 import {
@@ -42,6 +42,7 @@ import { getVisibleHorseSections } from '@/features/stables/lib/horse-sections';
 import { tx } from '@/features/stables/lib/tx';
 import { useSectionScrollSync } from '@/features/stables/lib/use-section-scroll-sync';
 import { translate } from '@/lib/i18n';
+import { isFirstLoad, SkeletonSwap } from '@/lib/motion';
 
 const SECTION_LABELS: Record<HorseSectionKey, Parameters<typeof translate>[0]> = {
   story: 'stables.detail.sections.story',
@@ -276,26 +277,37 @@ function HorseDetailBody({ horse, updates }: { horse: HorseDetail; updates: Hors
   );
 }
 
+/** Cold first load: the hero/sections skeleton under a back-only bar (no horse to share yet). */
+function HorseDetailLoading() {
+  const goBack = useGoBack();
+  const { top } = useHorseDetailBarMetrics();
+  const handoff = useSharedValue(0);
+  return (
+    <View className="flex-1">
+      <Stack.Screen options={SCREEN_OPTIONS} />
+      <FocusAwareStatusBar barStyle="light" />
+      <ScreenBackground />
+      <HorseDetailSkeleton heroTopPadding={top} />
+      <HorseDetailBar horseName="" progress={handoff} onBack={goBack} />
+    </View>
+  );
+}
+
 /**
  * Horse detail (S13-04, Figma frame 7): cinematic photo hero, then section
  * chips (Story · Racing · Updates · Wellbeing) that scroll to stacked
- * sections, with the selected chip following the scroll position.
+ * sections, with the selected chip following the scroll position. A cold
+ * first load shows the skeleton, crossfading to the page (S14-03).
  */
 export function HorseDetailScreen() {
   const params = useLocalSearchParams<{ 'horse-id': string }>();
   const horseId = params['horse-id'];
-  const { data: horse, isLoading, isError, refetch, isRefetching } = useHorse(horseId);
+  const horseQuery = useHorse(horseId);
+  const { data: horse, isError, refetch, isRefetching } = horseQuery;
   const { data: updates } = useHorseUpdates(horseId);
+  const loading = isFirstLoad(horseQuery);
 
-  if (isLoading) {
-    return (
-      <StateScreen>
-        <ActivityIndicator />
-      </StateScreen>
-    );
-  }
-
-  if (isError) {
+  if (!loading && isError) {
     return (
       <StateScreen>
         <ErrorState testID="horse-error" onRetry={() => refetch()} retrying={isRefetching} />
@@ -303,7 +315,7 @@ export function HorseDetailScreen() {
     );
   }
 
-  if (!horse) {
+  if (!loading && !horse) {
     return (
       <StateScreen>
         <EmptyState
@@ -315,5 +327,13 @@ export function HorseDetailScreen() {
     );
   }
 
-  return <HorseDetailBody horse={horse} updates={updates} />;
+  return (
+    <View className="flex-1">
+      <SkeletonSwap loading={loading} skeleton={<HorseDetailLoading />} style={styles.fill}>
+        {horse ? <HorseDetailBody horse={horse} updates={updates} /> : null}
+      </SkeletonSwap>
+    </View>
+  );
 }
+
+const styles = StyleSheet.create({ fill: { flex: 1 } });

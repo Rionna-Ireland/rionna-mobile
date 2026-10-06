@@ -291,12 +291,16 @@ describe('horseDetailScreen hero and states', () => {
     expect(mockRouter.back).toHaveBeenCalled();
   });
 
-  it('does not render horse content while the horse is loading', () => {
-    mockUseHorse.mockReturnValue({ data: undefined, isLoading: true, isError: false });
+  it('shows the hero + sections skeleton on a cold first load (back only, no share)', () => {
+    mockUseHorse.mockReturnValue({ data: undefined, isLoading: true, isPending: true, isFetching: true, isError: false });
 
     render(<HorseProfileScreen />);
 
     expect(screen.queryByText('Laska')).toBeNull();
+    expect(screen.getByTestId('horse-detail-skeleton')).toBeOnTheScreen();
+    expect(screen.queryByTestId('horse-hero-share')).toBeNull();
+    fireEvent.press(screen.getByTestId('horse-hero-back'));
+    expect(mockRouter.back).toHaveBeenCalled();
   });
 
   it('shows an error state with retry', () => {
