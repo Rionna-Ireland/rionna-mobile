@@ -152,6 +152,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       backgroundColor: '#ffffff', // S13-02: equals the JS first frame (top of bg-welcome-light); takes effect at next native build (S14-01)
     },
     package: Env.EXPO_PUBLIC_PACKAGE,
+    // S14-02 §4: platform predictive back (Android 13+). Native change: ships with the S14 binary.
+    predictiveBackGestureEnabled: true,
   },
   web: {
     favicon: './assets/favicon.png',
