@@ -6,6 +6,7 @@ import * as React from 'react';
 import { IconButton } from '@/components/ui';
 import { usePostableSpaces } from '@/features/community-posting/api/use-postable-spaces';
 import { PlusGlyph } from '@/features/community-posting/components/plus-glyph';
+import { translate } from '@/lib/i18n';
 
 type NewPostButtonProps = {
   scope: MemberContentScope;
@@ -29,7 +30,7 @@ export function NewPostButton({ scope }: NewPostButtonProps) {
     <IconButton
       testID="new-post-button"
       variant="square-accent"
-      accessibilityLabel="New post"
+      accessibilityLabel={translate('community.space.newPostA11y')}
       onPress={() => router.push('/post/new')}
       className="size-[52px] border border-on-primary-container"
     >

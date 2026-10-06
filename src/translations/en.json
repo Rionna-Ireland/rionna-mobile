@@ -20,6 +20,7 @@
       "unavailable": "Comments couldn’t load."
     },
     "compose": {
+      "addPhoto": "Add photo",
       "bodyA11y": "Post body",
       "bodyPlaceholder": "What's on your mind?",
       "cancel": "Cancel",
@@ -34,6 +35,7 @@
       "post": "Post",
       "postIn": "Post in",
       "posting": "Posting…",
+      "removePhoto": "Remove photo",
       "spacesFailed": "Couldn't load your spaces.",
       "titleA11y": "Post title",
       "titlePlaceholder": "Title (optional)"
@@ -73,6 +75,11 @@
       "liked": "Liked",
       "unlikeAction": "Unlike"
     },
+    "media": {
+      "downloadFile": "Download file",
+      "unavailable": "Media unavailable",
+      "view": "View media"
+    },
     "post": {
       "anonymousAuthor": "Rionna member",
       "commentCountOne": "{{count}} comment",
@@ -83,6 +90,28 @@
       "retryA11y": "Retry post",
       "unavailableBody": "Check your connection and try again.",
       "unavailableTitle": "Post unavailable"
+    },
+    "postMenu": {
+      "delete": "Delete post",
+      "deleteConfirmTitle": "Delete this post?",
+      "deleteFailed": "Couldn't delete that post. Try again.",
+      "optionsA11y": "Post options",
+      "report": "Report post"
+    },
+    "report": {
+      "abusive": "Abusive",
+      "failed": "Couldn't send that report. Try again.",
+      "noteA11y": "Report note",
+      "notePlaceholder": "Tell us more (optional)",
+      "offTopic": "Off topic",
+      "other": "Other",
+      "selected": "Selected",
+      "send": "Send",
+      "sendA11y": "Send report",
+      "sending": "Sending…",
+      "sent": "Thanks — the club has been notified.",
+      "spam": "Spam",
+      "title": "Report"
     },
     "role": {
       "staff": "Staff",

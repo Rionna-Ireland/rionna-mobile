@@ -2,11 +2,13 @@ import type { ReportReason, ReportTarget } from '@/features/community-posting/ty
 import type { MemberContentScope } from '@/features/member-content/types';
 
 import * as React from 'react';
-import { Alert, Pressable, Text, TextInput, View } from 'react-native';
+import { Alert, Text, TextInput, View } from 'react-native';
 
 import colors from '@/components/ui/colors';
 import { Modal, useModal } from '@/components/ui/modal';
+import { MotionPressable } from '@/components/ui/pressable';
 import { useReportContent } from '@/features/community-posting/api/use-report-content';
+import { translate } from '@/lib/i18n';
 
 type ReportSheetProps = {
   scope: MemberContentScope;
@@ -15,12 +17,14 @@ type ReportSheetProps = {
   onClose: () => void;
 };
 
-const REASONS: { value: ReportReason; label: string }[] = [
-  { value: 'spam', label: 'Spam' },
-  { value: 'abusive', label: 'Abusive' },
-  { value: 'off_topic', label: 'Off topic' },
-  { value: 'other', label: 'Other' },
-];
+const REASON_KEYS = {
+  spam: 'community.report.spam',
+  abusive: 'community.report.abusive',
+  off_topic: 'community.report.offTopic',
+  other: 'community.report.other',
+} as const satisfies Record<ReportReason, string>;
+
+const REASONS = Object.keys(REASON_KEYS) as ReportReason[];
 
 const NOTE_MAX = 500;
 
@@ -29,23 +33,30 @@ function ReportReasonOption({
   selected,
   onSelect,
 }: {
-  reason: { value: ReportReason; label: string };
+  reason: ReportReason;
   selected: boolean;
   onSelect: (value: ReportReason) => void;
 }) {
+  const label = translate(REASON_KEYS[reason]);
   return (
-    <Pressable
+    <MotionPressable
+      size="flat"
+      pressedOpacity={0.85}
       accessibilityRole="radio"
       accessibilityState={{ selected }}
-      accessibilityLabel={reason.label}
-      onPress={() => onSelect(reason.value)}
-      className={`flex-row items-center justify-between border-b border-outline-variant py-3.5 ${
-        selected ? 'opacity-100' : 'opacity-80'
-      }`}
+      accessibilityLabel={label}
+      onPress={() => onSelect(reason)}
     >
-      <Text className="font-sans text-base text-ink">{reason.label}</Text>
-      {selected ? <Text className="font-sans text-sm text-primary">Selected</Text> : null}
-    </Pressable>
+      {/* The dimmed state lives on an inner view: the press opacity drives the pressable's own. */}
+      <View
+        className={`flex-row items-center justify-between border-b border-outline-variant py-3.5 ${
+          selected ? 'opacity-100' : 'opacity-80'
+        }`}
+      >
+        <Text className="font-sans text-base text-ink">{label}</Text>
+        {selected ? <Text className="font-sans text-sm text-primary">{translate('community.report.selected')}</Text> : null}
+      </View>
+    </MotionPressable>
   );
 }
 
@@ -92,24 +103,24 @@ export function ReportSheet({ scope, target, onClose }: ReportSheetProps) {
     });
     if (ok) {
       closeSheet();
-      Alert.alert('Thanks — the club has been notified.');
+      Alert.alert(translate('community.report.sent'));
     }
     else {
-      Alert.alert('Couldn\'t send that report. Try again.');
+      Alert.alert(translate('community.report.failed'));
     }
   }, [target, report, reason, note, closeSheet]);
 
   return (
-    <Modal ref={modal.ref} title="Report" onDismiss={onClose} snapPoints={[reason === 'other' ? '78%' : '62%']}>
+    <Modal ref={modal.ref} title={translate('community.report.title')} onDismiss={onClose} snapPoints={[reason === 'other' ? '78%' : '62%']}>
       <View className="px-4 pb-6">
         {REASONS.map(item => (
-          <ReportReasonOption key={item.value} reason={item} selected={reason === item.value} onSelect={setReason} />
+          <ReportReasonOption key={item} reason={item} selected={reason === item} onSelect={setReason} />
         ))}
         {reason === 'other'
           ? (
               <TextInput
-                accessibilityLabel="Report note"
-                placeholder="Tell us more (optional)"
+                accessibilityLabel={translate('community.report.noteA11y')}
+                placeholder={translate('community.report.notePlaceholder')}
                 placeholderTextColor={colors.inkMuted}
                 value={note}
                 onChangeText={setNote}
@@ -120,17 +131,17 @@ export function ReportSheet({ scope, target, onClose }: ReportSheetProps) {
               />
             )
           : null}
-        <Pressable
+        <MotionPressable
           accessibilityRole="button"
-          accessibilityLabel="Send report"
+          accessibilityLabel={translate('community.report.sendA11y')}
           disabled={isPending}
           onPress={() => void onSend()}
           className={`mt-4 items-center rounded-2xl px-4 py-3 ${isPending ? 'bg-ink-muted' : 'bg-primary'}`}
         >
           <Text className="font-sans-semibold text-base text-white">
-            {isPending ? 'Sending…' : 'Send'}
+            {translate(isPending ? 'community.report.sending' : 'community.report.send')}
           </Text>
-        </Pressable>
+        </MotionPressable>
       </View>
     </Modal>
   );

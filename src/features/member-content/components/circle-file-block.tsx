@@ -1,12 +1,14 @@
 import type { HydratedNode } from '@/features/member-content/tiptap/hydrate';
 
 import * as React from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 
 import colors from '@/components/ui/colors';
+import { MotionPressable } from '@/components/ui/pressable';
 import { CircleMediaFrame } from '@/features/member-content/components/circle-media-frame';
 import { CircleUnsupportedBlock } from '@/features/member-content/components/circle-unsupported-block';
 import { nonEmptyString, safeExternalUrl } from '@/features/member-content/lib/content-format';
+import { translate } from '@/lib/i18n';
 
 type CircleFileBlockProps = {
   node: HydratedNode;
@@ -71,17 +73,17 @@ export function CircleFileBlock({ node, onOpenUrl }: CircleFileBlockProps) {
 
   const name = nonEmptyString(file?.filename)
     ?? nonEmptyString(node.attrs?.filename)
-    ?? 'Download file';
+    ?? translate('community.media.downloadFile');
 
   return (
-    <Pressable
+    <MotionPressable
       accessibilityRole="link"
       disabled={!onOpenUrl}
       style={styles.fileLink}
       onPress={() => onOpenUrl?.(src)}
     >
       <Text style={styles.fileLinkText}>{name}</Text>
-    </Pressable>
+    </MotionPressable>
   );
 }
 

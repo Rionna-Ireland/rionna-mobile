@@ -1,9 +1,10 @@
 import type { PostImage } from '@/features/community-posting/types';
 
 import * as React from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 
-import { Button, Image, Text } from '@/components/ui';
+import { Button, Image, MotionPressable, Text } from '@/components/ui';
+import { translate } from '@/lib/i18n';
 
 type ComposeImageRowProps = {
   image: PostImage | null;
@@ -24,15 +25,16 @@ export function ComposeImageRow({ image, imageError, onPickImage, onRemoveImage 
         ? (
             <View className="relative self-start">
               <Image source={{ uri: image.uri }} className="size-24 rounded-lg" />
-              <Pressable
+              <MotionPressable
+                size="small"
                 accessibilityRole="button"
-                accessibilityLabel="Remove photo"
+                accessibilityLabel={translate('community.compose.removePhoto')}
                 onPress={onRemoveImage}
                 hitSlop={8}
-                className="absolute -top-2 -right-2 size-6 items-center justify-center rounded-full bg-primary"
+                className="absolute -top-2 -right-2 size-6 items-center justify-center overflow-hidden rounded-full bg-primary"
               >
                 <Text variant="body-sm" className="font-sans-semibold text-white">×</Text>
-              </Pressable>
+              </MotionPressable>
             </View>
           )
         : (
@@ -40,7 +42,7 @@ export function ComposeImageRow({ image, imageError, onPickImage, onRemoveImage 
               variant="secondary"
               size="md"
               fullWidth={false}
-              label="Add photo"
+              label={translate('community.compose.addPhoto')}
               onPress={onPickImage}
             />
           )}
