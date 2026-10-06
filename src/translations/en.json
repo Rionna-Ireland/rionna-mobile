@@ -3,6 +3,14 @@
     "back": "Back",
     "errorTitle": "Something went wrong",
     "loading": "Loading",
+    "time": {
+      "daysAgo": "{{count}} days ago",
+      "hourAgo": "1 hour ago",
+      "hoursAgo": "{{count}} hours ago",
+      "justNow": "Just now",
+      "minutesAgo": "{{count}} min ago",
+      "yesterday": "Yesterday"
+    },
     "tryAgain": "Try again"
   },
   "events": {
