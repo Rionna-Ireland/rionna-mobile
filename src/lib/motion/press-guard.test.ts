@@ -18,21 +18,12 @@ const SRC = path.resolve(__dirname, '../..');
 const ROOTS = ['features', 'components'];
 
 /**
- * Files still waiting on their swap. ONLY files owned by the parallel S14-08
- * part B (member-content, community-posting, polls); shrink it as they land and
- * never add to it.
+ * Deliberate exceptions, each with its reason. Never add to it without one.
  */
 const PRESS_ALLOWLIST = new Set<string>([
-  'features/community-posting/components/compose-image-row.tsx',
-  'features/community-posting/components/post-overflow-menu.tsx',
-  'features/community-posting/components/report-sheet.tsx',
-  'features/member-content/components/circle-embed-block.tsx',
-  'features/member-content/components/circle-file-block.tsx',
-  'features/member-content/components/featured-card.tsx',
+  // The heart's S14-02 pop (popScale spring + haptic) IS the press feedback; a
+  // MotionPressable press-scale on top would fight it.
   'features/member-content/components/like-toggle.tsx',
-  'features/member-content/components/member-feed-card.tsx',
-  'features/member-content/screens/member-post-screen.tsx',
-  'features/polls/components/poll-card.tsx',
 ]);
 
 const RAW_PRESSABLE = /<(?:Pressable|TouchableOpacity|TouchableHighlight)\b/;
