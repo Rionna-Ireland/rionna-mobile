@@ -2,7 +2,8 @@ import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import type { MemberFeedItem } from '@/features/member-content/types';
 
 import * as React from 'react';
-import { ScrollView, useWindowDimensions, View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 
 import { Button, Card, Dots, MonoLabel, Text } from '@/components/ui';
 
@@ -14,12 +15,19 @@ type AnnouncementCarouselProps = {
   onOpen: (spaceId: string, postId: string) => void;
 };
 
-/** Paged navy announcement cards (S13-06). Renders nothing when there are none. */
+/**
+ * Paged navy announcement cards (S13-06). Renders nothing when there are none.
+ * Native snap; each card's dots track the scroll position (S14-02 §7).
+ */
 export function AnnouncementCarousel({ announcements, onOpen }: AnnouncementCarouselProps) {
   const { width: windowWidth } = useWindowDimensions();
   const [index, setIndex] = React.useState(0);
   const slideWidth = windowWidth - GUTTER * 2;
   const step = slideWidth + GAP;
+  const progress = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler((e) => {
+    progress.set(e.contentOffset.x / step);
+  });
 
   const onScrollEnd = React.useCallback(
     (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -35,11 +43,13 @@ export function AnnouncementCarousel({ announcements, onOpen }: AnnouncementCaro
 
   return (
     <View testID="announcement-carousel">
-      <ScrollView
+      <Animated.ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         snapToInterval={step}
         decelerationRate="fast"
+        onScroll={onScroll}
+        scrollEventThrottle={16}
         onMomentumScrollEnd={onScrollEnd}
         contentContainerStyle={{ paddingHorizontal: GUTTER, gap: GAP }}
       >
@@ -65,12 +75,12 @@ export function AnnouncementCarousel({ announcements, onOpen }: AnnouncementCaro
                 onPress={() => onOpen(item.spaceId!, item.id)}
               />
               {announcements.length > 1
-                ? <Dots count={announcements.length} index={active} />
+                ? <Dots count={announcements.length} index={active} progress={progress} />
                 : null}
             </View>
           </Card>
         ))}
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 }
