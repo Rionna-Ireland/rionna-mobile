@@ -15,6 +15,8 @@ import { Text } from './text';
 const FLIP = { type: 'timing', duration: durations.instant } as const;
 
 const SIZE = 20;
+/** 20pt control → 44pt target on every side (A-040): it may render without a label. */
+const HIT_SLOP = { top: 12, bottom: 12, left: 12, right: 12 };
 const WIDTH = 50;
 const HEIGHT = 28;
 const THUMB_HEIGHT = 22;
@@ -53,6 +55,7 @@ export function Root({
       className={`flex-row items-center ${className}`}
       accessibilityState={{ checked }}
       disabled={disabled}
+      hitSlop={HIT_SLOP}
       {...props}
     >
       {children}
