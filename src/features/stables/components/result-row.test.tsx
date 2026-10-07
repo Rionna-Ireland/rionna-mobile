@@ -45,11 +45,12 @@ describe('resultRow', () => {
     expect(screen.getByText('21 June')).toBeOnTheScreen();
   });
 
-  it('adds field size and SP when S13-10 fields are present', () => {
-    render(<ResultRow entry={{ ...BASE_ENTRY, fieldSize: 11, startingPrice: '6/1' }} />);
+  it('adds field size but never a starting price', () => {
+    render(<ResultRow entry={{ ...BASE_ENTRY, fieldSize: 11, startingPrice: '6/1' } as Entry} />);
 
     expect(screen.getByText('Naas, 6f mdn — 3rd of 11')).toBeOnTheScreen();
-    expect(screen.getByText('21 June · 6/1')).toBeOnTheScreen();
+    expect(screen.getByText('21 June')).toBeOnTheScreen();
+    expect(screen.queryByText(/6\/1/)).toBeNull();
   });
 
   it('never renders a replay affordance, even when replayUrl is set (S13-16)', () => {

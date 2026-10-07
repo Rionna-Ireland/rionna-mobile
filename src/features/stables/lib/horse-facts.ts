@@ -1,6 +1,8 @@
-import type { Entry, Horse, HorseSex, HorseUpdate, Race } from '@/features/stables/types';
+import type { Entry, Horse, HorseSex, HorseUpdate, HorseWellbeing, Race } from '@/features/stables/types';
 
 import { relativeTime } from '@/features/pulse/components/relative-time';
+import { tx } from '@/features/stables/lib/tx';
+import { translate } from '@/lib/i18n';
 
 /**
  * Pure formatting for the Stables card and Horse detail (S13-04). Everything
@@ -148,11 +150,9 @@ export function formatResultLine(entry: Entry): string {
   return `${descriptor} — ${ordinal(entry.finishingPosition)}${field}`;
 }
 
-/** "21 June · 6/1" (SP from S13-10 when present). */
+/** "21 June". No starting price / odds anywhere (client ruling). */
 export function formatResultMeta(entry: Entry): string {
-  const date = formatShortDate(entry.race.postTime);
-  const sp = entry.startingPrice?.trim();
-  return sp ? `${date} · ${sp}` : date;
+  return formatShortDate(entry.race.postTime);
 }
 
 const SEX_LABELS: Record<HorseSex, string> = {
@@ -191,8 +191,52 @@ export function getTrainerLine(horse: Pick<Horse, 'trainer'>): string | null {
   return location ? `${name}, ${location}` : name;
 }
 
-/** "May 2023 · Co. Meath" (S13-10); `null` until a foaling date or place exists. */
-export function getFoaledLine(horse: Pick<Horse, 'foaledOn' | 'foaledPlace'>): string | null {
+const COUNTRY_NAMES: Record<string, string> = {
+  IRE: 'Ireland',
+  IRL: 'Ireland',
+  GB: 'Great Britain',
+  GBR: 'Great Britain',
+  UK: 'United Kingdom',
+  FR: 'France',
+  FRA: 'France',
+  USA: 'United States',
+  US: 'United States',
+  GER: 'Germany',
+  DE: 'Germany',
+  AUS: 'Australia',
+  NZ: 'New Zealand',
+  JPN: 'Japan',
+  ITY: 'Italy',
+  IT: 'Italy',
+  SPA: 'Spain',
+  ES: 'Spain',
+  CAN: 'Canada',
+  ARG: 'Argentina',
+  BRZ: 'Brazil',
+  CHI: 'Chile',
+  SAF: 'South Africa',
+  UAE: 'United Arab Emirates',
+  HK: 'Hong Kong',
+  IND: 'India',
+  TUR: 'Turkey',
+  SWE: 'Sweden',
+  NOR: 'Norway',
+  DEN: 'Denmark',
+  BEL: 'Belgium',
+  HOL: 'Netherlands',
+  NL: 'Netherlands',
+};
+
+/** "IRE" -> "Ireland"; unknown codes are shown as given (trimmed). */
+export function getCountryName(code: string | null | undefined): string | null {
+  const raw = code?.trim();
+  if (!raw)
+    return null;
+  return COUNTRY_NAMES[raw.toUpperCase()] ?? raw;
+}
+
+/** "May 2023 · Co. Meath" (S13-10); falls back to the country name; `null` with nothing known. */
+export function getFoaledLine(horse: Pick<Horse, 'foaledOn' | 'foaledPlace' | 'foaledCountry'>): string | null {
   let when: string | null = null;
   if (horse.foaledOn) {
     // `foaledOn` is a calendar date ("2023-05-12"); read it as UTC so a
@@ -201,7 +245,7 @@ export function getFoaledLine(horse: Pick<Horse, 'foaledOn' | 'foaledPlace'>): s
     if (!Number.isNaN(d.getTime()))
       when = `${MONTHS_SHORT[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
   }
-  const place = horse.foaledPlace?.trim() || null;
+  const place = horse.foaledPlace?.trim() || getCountryName(horse.foaledCountry);
   const parts = [when, place].filter(Boolean);
   return parts.length > 0 ? parts.join(' · ') : null;
 }
@@ -215,7 +259,7 @@ export type PedigreeRowKey = 'sire' | 'dam' | 'damsire' | 'foaled';
 export type PedigreeRow = { key: PedigreeRowKey; value: string };
 
 /** Sire, Dam, Dam's sire, then Foaled (S13-10) — only the rows with values. */
-export function getPedigreeRows(horse: Pick<Horse, 'pedigree' | 'foaledOn' | 'foaledPlace'>): PedigreeRow[] {
+export function getPedigreeRows(horse: Pick<Horse, 'pedigree' | 'foaledOn' | 'foaledPlace' | 'foaledCountry'>): PedigreeRow[] {
   const rows: PedigreeRow[] = [];
   const { sire, dam, damsire } = horse.pedigree ?? {};
   if (sire?.trim())
@@ -246,6 +290,52 @@ export function buildHorseShareContent(
   // two items, Android ignores `url` entirely.
   const url = horse.publicUrl?.trim() || CLUB_SITE_URL;
   return { message: `${message} ${url}` };
+}
+
+export type WellbeingRow = { key: 'vetCheck' | 'trainingLoad'; label: string; value: string; date?: string };
+
+const VET_STATUS_KEYS = {
+  ALL_CLEAR: 'stables.detail.wellbeing.vetStatus.allClear',
+  MONITORING: 'stables.detail.wellbeing.vetStatus.monitoring',
+  TREATMENT: 'stables.detail.wellbeing.vetStatus.treatment',
+} as const;
+
+const TRAINING_LOAD_KEYS = {
+  RESTING: 'stables.detail.wellbeing.load.resting',
+  LIGHT: 'stables.detail.wellbeing.load.light',
+  BUILDING: 'stables.detail.wellbeing.load.building',
+  FULL: 'stables.detail.wellbeing.load.full',
+} as const;
+
+/**
+ * "Vet check — all clear · 10 July" / "Training load — building" rows from the
+ * structured wellbeing payload. Only the fields that are set produce a row.
+ */
+export function getWellbeingRows(wellbeing: HorseWellbeing | null | undefined): WellbeingRow[] {
+  if (!wellbeing)
+    return [];
+  const rows: WellbeingRow[] = [];
+  const vetKey = wellbeing.vetCheckStatus ? VET_STATUS_KEYS[wellbeing.vetCheckStatus] : undefined;
+  if (vetKey) {
+    const checked = wellbeing.vetCheckedAt && !Number.isNaN(new Date(wellbeing.vetCheckedAt).getTime())
+      ? formatShortDate(wellbeing.vetCheckedAt)
+      : undefined;
+    rows.push({
+      key: 'vetCheck',
+      label: tx('stables.detail.wellbeing.vetCheck', { status: translate(vetKey) }),
+      value: translate(vetKey),
+      date: checked,
+    });
+  }
+  const loadKey = wellbeing.trainingLoad ? TRAINING_LOAD_KEYS[wellbeing.trainingLoad] : undefined;
+  if (loadKey) {
+    rows.push({
+      key: 'trainingLoad',
+      label: tx('stables.detail.wellbeing.trainingLoad', { load: translate(loadKey) }),
+      value: translate(loadKey),
+    });
+  }
+  return rows;
 }
 
 /** How many wellbeing updates the Wellbeing card lists. */
