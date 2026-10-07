@@ -175,6 +175,19 @@ describe('memberPostView comments', () => {
     expect(screen.getByText('Great going.')).toBeOnTheScreen();
   });
 
+  it('shows the role badge on a trainer comment and on the post author', () => {
+    render(
+      <MemberPostView
+        post={{ ...POST, authorRole: 'staff' }}
+        contentState="fresh"
+        comments={[comment({ id: 'c-t', authorRole: 'trainer' }), comment({ id: 'c-m' })]}
+      />,
+    );
+    expect(screen.getAllByTestId('role-badge')).toHaveLength(2);
+    expect(screen.getByText('Trainer')).toBeOnTheScreen();
+    expect(screen.getByText('Staff')).toBeOnTheScreen();
+  });
+
   it('shows the empty state when there are no comments yet', () => {
     render(<MemberPostView post={POST} contentState="fresh" comments={[]} />);
     expect(screen.getByText('No comments yet')).toBeOnTheScreen();

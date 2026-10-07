@@ -33,6 +33,7 @@ import { FeedItemRenderer } from '@/features/member-content/components/feed-item
 import { FeedSkeleton } from '@/features/member-content/components/feed-skeletons';
 import { announcementSpaceIdsFromChips, selectAnnouncements } from '@/features/member-content/lib/announcements';
 import { chipToFilter } from '@/features/member-content/lib/chip-filter';
+import { toFeaturedCardData } from '@/features/member-content/lib/featured-card';
 import { useFeedChipSelection } from '@/features/member-content/lib/use-feed-chip-selection';
 import { usePollVote } from '@/features/polls/api/use-poll-vote';
 import { translate } from '@/lib/i18n';
@@ -56,7 +57,7 @@ type CommunityFeedViewProps = {
   emptyCopy?: { title: string; message: string };
   /** Top-right action (the "+" new-post button). */
   headerRight?: React.ReactNode;
-  /** Live Q&A slot — S13-11 supplies this; nothing renders without it. */
+  /** Live Q&A card (from the feed's first page); nothing renders without it. */
   featuredCard?: FeaturedCardData | null;
   onOpenFeaturedCard?: (id: string) => void;
 };
@@ -210,6 +211,7 @@ function SignedInCommunityFeed({ member }: { member: AuthUser }) {
   const chipSelection = useFeedChipSelection(scope, chips);
   const filter = chipSelection.selectedChip ? chipToFilter(chipSelection.selectedChip) : undefined;
   const feed = useMemberFeed(scope, filter);
+  const featuredCard = React.useMemo(() => toFeaturedCardData(feed.featured), [feed.featured]);
   const like = usePostLike(scope);
   const poll = usePollVote(scope);
   const pull = usePullToRefresh(() => feed.refetch());
@@ -235,6 +237,8 @@ function SignedInCommunityFeed({ member }: { member: AuthUser }) {
         onSelectChip={chipSelection.select}
         emptyCopy={emptyCopyForChip(chipSelection.selectedChip)}
         headerRight={<NewPostButton scope={scope} />}
+        featuredCard={featuredCard}
+        onOpenFeaturedCard={eventId => router.push({ pathname: '/event/[event-id]', params: { 'event-id': eventId } })}
       />
     </View>
   );

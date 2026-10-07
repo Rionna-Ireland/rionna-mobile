@@ -137,6 +137,13 @@ describe('communityFeedView', () => {
     expect(screen.getByTestId('featured-card')).toBeOnTheScreen();
   });
 
+  it('opens the featured card with its id when pressed', () => {
+    const onOpenFeaturedCard = jest.fn();
+    render(<CommunityFeedView {...BASE_PROPS} featuredCard={{ id: 'evt-9', kicker: 'Live Q&A', title: 'Ask the trainer' }} onOpenFeaturedCard={onOpenFeaturedCard} />);
+    fireEvent.press(screen.getByTestId('featured-card'));
+    expect(onOpenFeaturedCard).toHaveBeenCalledWith('evt-9');
+  });
+
   it('shows the role badge only when authorRole is present', () => {
     const { rerender } = render(<CommunityFeedView {...BASE_PROPS} />);
     expect(screen.queryByTestId('role-badge')).not.toBeOnTheScreen();

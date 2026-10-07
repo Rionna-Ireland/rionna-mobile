@@ -39,6 +39,17 @@ export type MemberFeedItem = {
   authorRole?: AuthorRole | null;
   /** Avatar URL when the feed payload carries one. */
   authorAvatarUrl?: string | null;
+  /** Inside Track items: video length in seconds, when known. */
+  videoDurationSeconds?: number;
+};
+
+/** The Community tab's featured card: the soonest upcoming Q&A event (first page only). */
+export type FeaturedQa = {
+  kind: 'qa';
+  eventId: string;
+  title: string;
+  startsAt: string;
+  cta: string;
 };
 
 export type MemberFeedResult = {
@@ -46,6 +57,8 @@ export type MemberFeedResult = {
   items: MemberFeedItem[];
   page: number;
   hasNextPage: boolean;
+  /** Present on page 1 only; `null` when no upcoming Q&A. Absent on older backends. */
+  featured?: FeaturedQa | null;
 };
 
 export type InsideTrackResult = {
