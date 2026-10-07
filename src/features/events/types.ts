@@ -11,6 +11,8 @@ export type ClubEventRsvp = {
   full: boolean;
 };
 
+export type EventTypeValue = 'RACE_DAY' | 'STABLE_VISIT' | 'SOCIAL' | 'QA' | 'OTHER';
+
 export type ClubEvent = {
   id: string;
   spaceId: string | null;
@@ -27,11 +29,10 @@ export type ClubEvent = {
   inlineAttachments: Record<string, unknown>[];
   url: string | null;
   rsvp: ClubEventRsvp;
-  /**
-   * Event category ("Race Day", "Stable Visit", ...). Arrives with S13-11; until
-   * then it is absent and every type-driven element falls back to its default.
-   */
+  /** Display label of the event category ("Race Day", "Stable Visit", "Q&A", "Other"). */
   type?: string | null;
+  /** Raw category enum; drives colour/strip logic. A missing sidecar row arrives as OTHER. */
+  eventType?: EventTypeValue | null;
 };
 
 export type EventsResult = {

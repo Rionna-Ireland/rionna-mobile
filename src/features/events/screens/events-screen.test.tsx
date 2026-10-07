@@ -171,3 +171,23 @@ describe('eventsScreen with nothing upcoming', () => {
     expect(screen.queryByTestId('events-upcoming-empty')).toBeNull();
   });
 });
+
+describe('eventsScreen other-only types', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    jest.useFakeTimers({ now: NOW, doNotFake: ['nextTick', 'setImmediate'] });
+  });
+  afterEach(() => jest.useRealTimers());
+
+  it('hides the type filter when every event is OTHER', () => {
+    mockQueries = {
+      upcoming: ok([
+        clubEvent({ type: 'Other', eventType: 'OTHER' }),
+        clubEvent({ id: 'event-3', title: 'Yard morning', type: 'Other', eventType: 'OTHER' }),
+      ]),
+      past: ok([]),
+    };
+    render(<EventsScreen />);
+    expect(screen.queryByTestId('events-type-filter')).toBeNull();
+  });
+});

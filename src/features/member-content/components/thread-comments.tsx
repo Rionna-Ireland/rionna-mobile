@@ -35,7 +35,7 @@ function CommentRow({ postId, comment, onDeleteComment, pendingDeleteCommentId, 
   const authorName = authorDisplayName(comment.authorName);
   const time = formatRelativeTime(comment.createdAt);
   const deleting = pendingDeleteCommentId === comment.id;
-  // A staff/trainer answer is highlighted lilac (frame 11); hidden until S13-11 sends authorRole.
+  // A staff/trainer answer is highlighted lilac (frame 11).
   const highlighted = Boolean(comment.authorRole);
   const canDelete = Boolean(comment.canDelete && onDeleteComment);
   const requestDelete = () => confirmDeleteComment(() => onDeleteComment?.(postId, comment.id));

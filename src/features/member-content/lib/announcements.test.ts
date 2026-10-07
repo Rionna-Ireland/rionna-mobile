@@ -38,6 +38,15 @@ describe('selectAnnouncements', () => {
     expect([...ids].sort()).toEqual(['a', 'b', 'c']);
   });
 
+  it('prefers isAnnouncement over the space heuristics when it is defined', () => {
+    const items = [
+      post({ id: 'no', spaceId: 'ann', spaceName: 'Announcements', isAnnouncement: false }),
+      post({ id: 'yes', spaceId: 'x', spaceName: 'Racing', isAnnouncement: true }),
+      post({ id: 'fallback', spaceId: 'ann' }),
+    ];
+    expect(selectAnnouncements(items, ['ann']).map(i => i.id).sort()).toEqual(['fallback', 'yes']);
+  });
+
   it('sorts newest first, caps the count and skips polls and unopenable posts', () => {
     const items = [
       post({ id: 'old', isAnnouncement: true, createdAt: '2026-01-01T00:00:00.000Z' }),

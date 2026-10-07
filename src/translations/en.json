@@ -87,6 +87,10 @@
       "placeholder": "Write a reply…",
       "sendA11y": "Send comment"
     },
+    "featured": {
+      "kicker": "Live Q&A · {{when}}",
+      "kickerNoDate": "Live Q&A"
+    },
     "feed": {
       "emptyBody": "New updates from your live circles will appear here.",
       "emptyHorsesBody": "Follow a horse to see its space here.",
@@ -255,6 +259,8 @@
     "insideTrack": {
       "a11y": "Inside Track: {{title}}",
       "kicker": "Inside Track",
+      "minWatchOne": "{{count}} min watch",
+      "minWatchOther": "{{count}} min watch",
       "new": "NEW",
       "play": "Play"
     },
@@ -464,14 +470,19 @@
       "club": "Club",
       "fallbackName": "Rionna member",
       "followedHorses": "Followed horses",
+      "foundingSince": "Founding member, since {{since}}",
       "help": "Help & support",
       "helpSubject": "Rionna app support",
       "logout": "Log out",
+      "memberSince": "Member since {{since}}",
       "membership": "Membership",
       "membershipStatus": "Status",
       "membershipStatusValue": "Active member",
       "personalDetails": "Personal details",
       "statusActive": "Active",
+      "statusCancelled": "Ended",
+      "statusNone": "Not a member",
+      "statusPastDue": "Past due",
       "title": "Profile"
     },
     "rate": "Rate",
@@ -523,6 +534,21 @@
         "wellbeing": "Wellbeing"
       },
       "updatesLabel": "Updates",
+      "wellbeing": {
+        "load": {
+          "building": "building",
+          "full": "full",
+          "light": "light",
+          "resting": "resting"
+        },
+        "trainingLoad": "Training load — {{load}}",
+        "vetCheck": "Vet check — {{status}}",
+        "vetStatus": {
+          "allClear": "all clear",
+          "monitoring": "monitoring",
+          "treatment": "in treatment"
+        }
+      },
       "wellbeingLabel": "Wellbeing",
       "wellbeingRowA11y": "Open update: {{title}}"
     },

@@ -11,7 +11,7 @@ import { CaretRightV2 } from '@/components/ui/icons/v2';
 
 const STRIP_PATTERN: TileSpec = { kind: 'harlequin', colourway: 'cream', turn: 0 };
 
-/** Featured card payload — arrives with S13-11 (Live Q&A). Nothing provides it yet. */
+/** Featured card payload (Live Q&A), mapped from the feed's `featured`. */
 export type FeaturedCardData = {
   id: string;
   kicker: string;
@@ -21,7 +21,7 @@ export type FeaturedCardData = {
 
 /**
  * Live Q&A style featured card (cream pattern strip, kicker, `display-sm`
- * title, chevron). Slot only: renders nothing without data (S13-11).
+ * title, chevron). Renders nothing without data.
  */
 export function FeaturedCard({ card, onPress }: { card: FeaturedCardData | null | undefined; onPress?: (id: string) => void }) {
   if (!card) {

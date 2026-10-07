@@ -15,8 +15,10 @@ import { PencilV2 } from '@/components/ui/icons/v2';
 import { Tag } from '@/components/ui/mono-label';
 import { AnimatedScrollView, useScrollHeader } from '@/components/ui/scroll-header';
 import { signOut, useAuthStore } from '@/features/auth/use-auth-store';
+import { useMembership } from '@/features/settings/api/use-membership';
 import { PageHeader } from '@/features/settings/components/page-header';
 import { SettingsCard } from '@/features/settings/components/settings-card';
+import { getMembershipLine, getStatusPill } from '@/features/settings/lib/membership';
 import { translate } from '@/lib/i18n';
 import { openExternalLink } from '@/lib/open-external-link';
 
@@ -24,16 +26,15 @@ const PRIVACY_URL = 'https://rionna.com/legal/privacy-policy';
 const TERMS_URL = 'https://rionna.com/legal/terms';
 const SUPPORT_EMAIL = 'hello@rionna.com';
 
-function ProfileIdentity({ name, email }: { name: string; email: string }) {
+function ProfileIdentity({ name, subline }: { name: string; subline: string }) {
   const router = useRouter();
   return (
     <View className="flex-row items-center gap-3">
       <Avatar ring size={40} name={name} testID="profile-avatar" />
       <View className="flex-1 gap-1">
         <Text variant="display-sm" numberOfLines={2}>{name}</Text>
-        {/* ⏳ S13-12: "Founding member, since {Month YYYY}" replaces the email. */}
         <Text variant="body" className="text-ink-variant" numberOfLines={1}>
-          {email}
+          {subline}
         </Text>
       </View>
       <IconButton
@@ -53,6 +54,10 @@ export function ProfileScreen() {
   const user = useAuthStore.use.user();
   const displayName = user?.name?.trim() || translate('settings.profile.fallbackName');
   const { scrollY, onScroll } = useScrollHeader();
+  const membership = useMembership(user?.id).data;
+  // Until the membership loads (or without a start date) the email stays as the subline.
+  const subline = getMembershipLine(membership) ?? user?.email ?? '';
+  const pill = membership ? getStatusPill(membership.status) : null;
 
   const openSupport = () => {
     const subject = encodeURIComponent(translate('settings.profile.helpSubject'));
@@ -69,13 +74,13 @@ export function ProfileScreen() {
         onScroll={onScroll}
         scrollEventThrottle={16}
       >
-        <ProfileIdentity name={displayName} email={user?.email ?? ''} />
+        <ProfileIdentity name={displayName} subline={subline} />
 
         {/* D9: membership is display-only. No billing, renewal or payment-history UI. */}
         <SettingsCard title={translate('settings.profile.membership')} testID="membership-card">
           <ListRow
             label={translate('settings.profile.membershipStatus')}
-            value={<Tag variant="navy" label={translate('settings.profile.statusActive')} />}
+            value={pill ? <Tag variant={pill.variant} label={pill.label} testID="membership-status" /> : undefined}
             divider={false}
             // Only row: no bottom padding, so the card's 16pt reads symmetric (A-047).
             className="pb-0"

@@ -18,6 +18,7 @@ import {
   getResults,
   getStoryText,
   getTrainerLine,
+  getWellbeingRows,
   getWellbeingUpdates,
   ordinal,
 } from './horse-facts';
@@ -127,10 +128,10 @@ describe('entries', () => {
     expect(formatResultMeta(ran2)).toBe('21 June');
   });
 
-  it('adds field size and SP once S13-10 ships', () => {
-    const full = { ...ran2, fieldSize: 11, startingPrice: '6/1' };
+  it('adds field size but never a starting price', () => {
+    const full = { ...ran2, fieldSize: 11, startingPrice: '6/1' } as Entry;
     expect(formatResultLine(full)).toBe('Naas, 6f mdn — 3rd of 11');
-    expect(formatResultMeta(full)).toBe('21 June · 6/1');
+    expect(formatResultMeta(full)).toBe('21 June');
   });
 });
 
@@ -159,6 +160,14 @@ describe('profile facts (S13-10 field presence)', () => {
     expect(getFoaledLine({})).toBeNull();
     expect(getFoaledLine({ foaledOn: '2023-05-12', foaledPlace: 'Co. Meath' })).toBe('May 2023 · Co. Meath');
     expect(getFoaledLine({ foaledPlace: 'Co. Meath' })).toBe('Co. Meath');
+  });
+
+  it('falls back to a readable country name when there is no place', () => {
+    expect(getFoaledLine({ foaledOn: '2023-05-12', foaledCountry: 'IRE' })).toBe('May 2023 · Ireland');
+    expect(getFoaledLine({ foaledCountry: 'FR' })).toBe('France');
+    expect(getFoaledLine({ foaledCountry: 'ZZZ' })).toBe('ZZZ');
+    expect(getFoaledLine({ foaledPlace: 'Co. Meath', foaledCountry: 'IRE' })).toBe('Co. Meath');
+    expect(getFoaledLine({ foaledCountry: '  ' })).toBeNull();
   });
 });
 
@@ -212,5 +221,29 @@ describe('formatUpdateStamp', () => {
   });
   it('adds the year when not the current one', () => {
     expect(formatUpdateStamp(new Date(2025, 7, 20, 9, 0).toISOString(), now)).toBe('20 August 2025');
+  });
+});
+
+describe('getWellbeingRows', () => {
+  it('is empty without wellbeing', () => {
+    expect(getWellbeingRows(null)).toEqual([]);
+    expect(getWellbeingRows(undefined)).toEqual([]);
+    expect(getWellbeingRows({ vetCheckStatus: null, vetCheckedAt: null, trainingLoad: null })).toEqual([]);
+  });
+
+  it('builds the vet check and training load rows', () => {
+    const rows = getWellbeingRows({
+      vetCheckStatus: 'ALL_CLEAR',
+      vetCheckedAt: '2026-07-10T12:00:00.000Z',
+      trainingLoad: 'BUILDING',
+    });
+    expect(rows.map(r => r.label)).toEqual(['Vet check — all clear', 'Training load — building']);
+    expect(rows[0].date).toBe('10 July');
+    expect(rows[1].date).toBeUndefined();
+  });
+
+  it('omits a row whose field is null', () => {
+    expect(getWellbeingRows({ vetCheckStatus: null, vetCheckedAt: null, trainingLoad: 'FULL' }).map(r => r.key))
+      .toEqual(['trainingLoad']);
   });
 });

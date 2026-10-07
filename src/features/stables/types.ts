@@ -78,10 +78,8 @@ export type Entry = {
   // Admin-set link to race footage (S8-01 §5/§6). Still returned by the API
   // but not rendered in v1 (S13-16: replays hidden). Optional on older payloads.
   replayUrl?: string | null;
-  // S13-10 (not yet shipped): runner count and starting price ("6/1",
-  // "Evs", "11/4F"). Rendered only when present.
+  // Runner count. Rendered only when present. (No starting price / odds: client ruling.)
   fieldSize?: number | null;
-  startingPrice?: string | null;
   createdAt: string;
   updatedAt: string;
   jockey: Jockey | null;
@@ -149,11 +147,24 @@ export type Horse = {
   ageYears?: number | null;
   foaledOn?: string | null;
   foaledPlace?: string | null;
+  // Provider country code ("IRE", "FR"); the foaled line falls back to its name.
+  foaledCountry?: string | null;
+  // Structured vet check / training load (S13-10). `null` when none recorded.
+  wellbeing?: HorseWellbeing | null;
   // GET /api/horses carries recent results only (RAN, max 3) plus the scalar
   // `nextEntryId`; no next-entry status or date. If a declared entry ever
   // appears here the card shows "Declared · date", else `nextEntryId` drives a
   // neutral "Entry upcoming" pill.
   entries?: Entry[];
+};
+
+export type VetCheckStatus = 'ALL_CLEAR' | 'MONITORING' | 'TREATMENT';
+export type TrainingLoad = 'RESTING' | 'LIGHT' | 'BUILDING' | 'FULL';
+
+export type HorseWellbeing = {
+  vetCheckStatus: VetCheckStatus | null;
+  vetCheckedAt: string | null;
+  trainingLoad: TrainingLoad | null;
 };
 
 export type HorseSex = 'FILLY' | 'COLT' | 'MARE' | 'GELDING' | 'STALLION';

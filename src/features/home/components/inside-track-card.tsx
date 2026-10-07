@@ -16,11 +16,19 @@ const INSIDE_TRACK_HEIGHT = 183;
 // item's own image, so the title sits on a known, scrim-tested background.
 const INSIDE_TRACK_BACKGROUND = require('../../../../assets/inside-track-bg.jpg');
 
+/** "4 min watch" (rounded up); `null` without a positive duration. */
+export function minWatchLabel(seconds: number | undefined): string | null {
+  if (!seconds || seconds <= 0)
+    return null;
+  const count = Math.ceil(seconds / 60);
+  return translate(count === 1 ? 'home.insideTrack.minWatchOne' : 'home.insideTrack.minWatchOther', { count });
+}
+
 type InsideTrackCardProps = { data: InsideTrackResult | undefined; now: Date; entranceIndex: number };
 
 /**
- * S13-03 §6: full-bleed photo card. "N min watch" stays hidden until S13-13
- * ships a duration. Background is the fixed brand horseback photo.
+ * S13-03 §6: full-bleed photo card. "N min watch" shows only when the item
+ * carries a video duration (S13-13). Background is the fixed brand horseback photo.
  */
 export function InsideTrackCard({ data, now, entranceIndex }: InsideTrackCardProps) {
   const router = useRouter();
@@ -29,6 +37,7 @@ export function InsideTrackCard({ data, now, entranceIndex }: InsideTrackCardPro
   const entering = useFirstLoadEntrance(Boolean(teaser))(entranceIndex);
   if (!teaser)
     return null;
+  const watchLabel = minWatchLabel(teaser.videoDurationSeconds);
 
   const open = () => {
     if (teaser.spaceId)
@@ -57,6 +66,7 @@ export function InsideTrackCard({ data, now, entranceIndex }: InsideTrackCardPro
             <PlayV2 size={12} color={colors.ink} />
           </IconButton>
           <View className="flex-row gap-1.5">
+            {watchLabel ? <Tag variant="ice-outline" label={watchLabel} testID="home-inside-track-duration" /> : null}
             {isNewItem(teaser.createdAt, now) ? <Tag variant="ice" label={translate('home.insideTrack.new')} testID="home-inside-track-new" /> : null}
           </View>
         </View>
