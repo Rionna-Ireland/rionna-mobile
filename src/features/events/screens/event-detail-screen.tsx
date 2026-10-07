@@ -34,6 +34,7 @@ import { EventDetailSkeleton } from '@/features/events/components/events-skeleto
 import { addEventToDeviceCalendar } from '@/features/events/lib/add-to-calendar';
 import { rsvpButtonState } from '@/features/events/lib/calendar-grid';
 import { useEventReminder } from '@/features/events/lib/event-reminders';
+import { hasEventCategory } from '@/features/events/lib/event-type';
 import { formatEventDateLine } from '@/features/events/lib/format-event-date';
 import { CircleTiptapRenderer } from '@/features/member-content/components/circle-tiptap-renderer';
 import { hydrateCircleDoc } from '@/features/member-content/tiptap/hydrate';
@@ -377,7 +378,7 @@ function EventDetailBody({
         <HeaderBand event={event} onBack={onBack} onShare={onShare} onHeight={onHeaderHeight} />
         <View className="gap-3 px-4 pt-4">
           <Card testID="event-detail-card" className="gap-3">
-            {event.type ? <MonoLabel testID="event-detail-type">{event.type}</MonoLabel> : null}
+            {event.type && hasEventCategory(event) ? <MonoLabel testID="event-detail-type">{event.type}</MonoLabel> : null}
             {hasNativeBody
               ? (
                   <CircleTiptapRenderer
