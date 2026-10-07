@@ -28,6 +28,7 @@ import { useOffers } from '@/features/paddock/api/use-offers';
 import { JourneyCard } from '@/features/paddock/components/journey-card';
 import { HubSubtitleSkeleton } from '@/features/paddock/components/paddock-skeletons';
 import { charitySubtitle, offersSubtitle } from '@/features/paddock/lib/hub-copy';
+import { useMembership } from '@/features/settings/api/use-membership';
 import { translate } from '@/lib/i18n';
 import { EntranceItem, isFirstLoad, SkeletonSwap, useFirstLoadEntrance } from '@/lib/motion';
 
@@ -182,8 +183,9 @@ export function PaddockScreen() {
   );
   const offers = useOffers(scope);
   const charity = useCharity(scope);
-  // S13-12 (founding-member flag) is not served yet: no badge, so the journey card stays hidden.
-  const badges: JourneyBadge[] = [];
+  const membership = useMembership(user?.id);
+  // No badge (and so no journey card) until the member is flagged a founding member.
+  const badges: JourneyBadge[] = membership.data?.foundingMember ? ['founding-member'] : [];
 
   return (
     <PaddockHubView

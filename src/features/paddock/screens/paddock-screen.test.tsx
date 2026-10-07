@@ -1,7 +1,16 @@
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import * as React from 'react';
 
-import { PaddockHubView } from '@/features/paddock/screens/paddock-screen';
+import { PaddockHubView, PaddockScreen } from '@/features/paddock/screens/paddock-screen';
+
+const mockMembership = jest.fn();
+jest.mock('expo-router', () => ({ useRouter: () => ({ push: jest.fn() }) }));
+jest.mock('@/features/auth/use-auth-store', () => ({
+  useAuthStore: { use: { user: () => ({ id: 'member-1' }) } },
+}));
+jest.mock('@/features/paddock/api/use-offers', () => ({ useOffers: () => ({ data: { offers: [] }, isLoading: false }) }));
+jest.mock('@/features/paddock/api/use-charity', () => ({ useCharity: () => ({ data: undefined, isLoading: false }) }));
+jest.mock('@/features/settings/api/use-membership', () => ({ useMembership: (...args: unknown[]) => mockMembership(...args) }));
 
 jest.mock('@/components/ui', () => {
   const actual = jest.requireActual('@/components/ui');
@@ -68,5 +77,23 @@ describe('paddockHubView', () => {
     expect(screen.queryByText('Restaurants, hotels, lifestyle partners')).not.toBeOnTheScreen();
     expect(screen.getAllByLabelText('Loading')).toHaveLength(1);
     expect(screen.getByText('\u20AC24,500 raised to date. Vote on what\u2019s next')).toBeOnTheScreen();
+  });
+});
+
+describe('paddockScreen journey card', () => {
+  it('shows the Founding Member badge for a founding member', () => {
+    mockMembership.mockReturnValue({ data: { since: '2026-03-02T00:00:00.000Z', foundingMember: true, status: 'active' } });
+    render(<PaddockScreen />);
+    expect(mockMembership).toHaveBeenCalledWith('member-1');
+    expect(screen.getByTestId('badge-founding-member')).toBeOnTheScreen();
+  });
+
+  it('hides the journey card for a regular member or while loading', () => {
+    mockMembership.mockReturnValue({ data: { since: null, foundingMember: false, status: 'active' } });
+    const { rerender } = render(<PaddockScreen />);
+    expect(screen.queryByTestId('journey-card')).not.toBeOnTheScreen();
+    mockMembership.mockReturnValue({ data: undefined });
+    rerender(<PaddockScreen />);
+    expect(screen.queryByTestId('journey-card')).not.toBeOnTheScreen();
   });
 });

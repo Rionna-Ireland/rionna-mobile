@@ -28,14 +28,24 @@ jest.mock('@/features/auth/use-auth-store', () => ({
   },
 }));
 
-describe('profileScreen', () => {
-  beforeEach(() => jest.clearAllMocks());
+const mockMembership = jest.fn();
+jest.mock('@/features/settings/api/use-membership', () => ({
+  useMembership: () => mockMembership(),
+}));
 
-  it('shows the member identity (email as subline until S13-12) and log out', () => {
+const ACTIVE = { since: '2026-03-12T12:00:00.000Z', foundingMember: false, status: 'active' };
+
+describe('profileScreen', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockMembership.mockReturnValue({ data: ACTIVE });
+  });
+
+  it('shows the member identity with the membership line and log out', () => {
     render(<ProfileScreen />);
 
     expect(screen.getByText('Jane Member')).toBeOnTheScreen();
-    expect(screen.getByText('jane@example.com')).toBeOnTheScreen();
+    expect(screen.getByText('Member since March 2026')).toBeOnTheScreen();
     fireEvent.press(screen.getByTestId('sign-out-button'));
     expect(mockSignOut).toHaveBeenCalled();
   });
@@ -48,6 +58,33 @@ describe('profileScreen', () => {
     expect(screen.queryByText(/subscription/i)).toBeNull();
     expect(screen.queryByText(/payment/i)).toBeNull();
     expect(screen.getByText('Active')).toBeOnTheScreen();
+  });
+
+  it('shows the founding member line', () => {
+    mockMembership.mockReturnValue({ data: { ...ACTIVE, foundingMember: true } });
+    render(<ProfileScreen />);
+    expect(screen.getByText('Founding member, since March 2026')).toBeOnTheScreen();
+  });
+
+  it('falls back to the email while membership is loading or has no start date', () => {
+    mockMembership.mockReturnValue({ data: undefined });
+    const { rerender } = render(<ProfileScreen />);
+    expect(screen.getByText('jane@example.com')).toBeOnTheScreen();
+    expect(screen.queryByTestId('membership-status')).toBeNull();
+    mockMembership.mockReturnValue({ data: { ...ACTIVE, since: null } });
+    rerender(<ProfileScreen />);
+    expect(screen.getByText('jane@example.com')).toBeOnTheScreen();
+  });
+
+  it.each([
+    ['past_due', 'Past due'],
+    ['cancelled', 'Ended'],
+    ['none', 'Not a member'],
+  ])('shows the %s status pill without billing words', (status, label) => {
+    mockMembership.mockReturnValue({ data: { ...ACTIVE, status } });
+    render(<ProfileScreen />);
+    expect(screen.getByText(label)).toBeOnTheScreen();
+    expect(screen.queryByText(/renew|billing|subscription|payment/i)).toBeNull();
   });
 
   it('has no Notifications row (the Home bell owns it)', () => {
