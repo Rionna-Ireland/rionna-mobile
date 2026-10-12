@@ -33,7 +33,6 @@ import { translate } from '@/lib/i18n';
 import { EntranceItem, isFirstLoad, SkeletonSwap, useFirstLoadEntrance } from '@/lib/motion';
 
 const TILE_PLUM: TileSpec = { kind: 'gem', colourway: 'plum', turn: 0 };
-const TILE_NAVY: TileSpec = { kind: 'gem', colourway: 'navy', turn: 0 };
 const TILE_GREEN: TileSpec = { kind: 'gem', colourway: 'green', turn: 0 };
 
 /** Frame 12: a 40pt tile, r6. */
@@ -155,9 +154,6 @@ export function PaddockHubView({ offersCount, charitySummary, offersLoading, cha
               />
             </EntranceItem>
             <EntranceItem entering={entering(1)}>
-              <HubRow title={translate('paddock.rows.merch')} subtitle={translate('paddock.rows.merchSubtitle')} spec={TILE_NAVY} comingSoon />
-            </EntranceItem>
-            <EntranceItem entering={entering(2)}>
               <HubRow
                 title={translate('paddock.rows.charity')}
                 subtitle={charitySummary}

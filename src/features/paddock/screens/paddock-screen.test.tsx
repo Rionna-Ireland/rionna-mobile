@@ -43,11 +43,9 @@ describe('paddockHubView', () => {
     expect(onOpenCharity).toHaveBeenCalledTimes(1);
   });
 
-  it('shows Merchandise as a disabled coming-soon row', () => {
+  it('does not render a Merchandise row', () => {
     renderHub();
-    expect(screen.getByText('Merchandise')).toBeOnTheScreen();
-    expect(screen.getByText('Coming soon')).toBeOnTheScreen();
-    expect(screen.getByTestId('paddock-row-Merchandise')).toHaveProp('accessibilityState', { disabled: true });
+    expect(screen.queryByText('Merchandise')).not.toBeOnTheScreen();
   });
 
   it('does not render a Competitions row', () => {
