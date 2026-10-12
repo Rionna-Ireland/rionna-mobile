@@ -33,7 +33,7 @@ import { FeedItemRenderer } from '@/features/member-content/components/feed-item
 import { FeedSkeleton } from '@/features/member-content/components/feed-skeletons';
 import { announcementSpaceIdsFromChips, selectAnnouncements } from '@/features/member-content/lib/announcements';
 import { chipToFilter } from '@/features/member-content/lib/chip-filter';
-import { toFeaturedCardData } from '@/features/member-content/lib/featured-card';
+import { featuredCardHref, toFeaturedCardData } from '@/features/member-content/lib/featured-card';
 import { useFeedChipSelection } from '@/features/member-content/lib/use-feed-chip-selection';
 import { usePollVote } from '@/features/polls/api/use-poll-vote';
 import { translate } from '@/lib/i18n';
@@ -238,7 +238,7 @@ function SignedInCommunityFeed({ member }: { member: AuthUser }) {
         emptyCopy={emptyCopyForChip(chipSelection.selectedChip)}
         headerRight={<NewPostButton scope={scope} />}
         featuredCard={featuredCard}
-        onOpenFeaturedCard={eventId => router.push({ pathname: '/event/[event-id]', params: { 'event-id': eventId } })}
+        onOpenFeaturedCard={() => featuredCard && router.push(featuredCardHref(featuredCard))}
       />
     </View>
   );

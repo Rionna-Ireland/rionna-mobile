@@ -1,4 +1,4 @@
-import { formatFeaturedWhen, toFeaturedCardData } from '@/features/member-content/lib/featured-card';
+import { featuredCardHref, formatFeaturedWhen, toFeaturedCardData } from '@/features/member-content/lib/featured-card';
 
 // Local-time constructor so the output doesn't depend on the TZ. 2030-09-05 is a Thursday.
 function local(h: number, m = 0) {
@@ -29,10 +29,30 @@ describe('featured card mapping', () => {
     });
   });
 
+  it('carries the questions thread when the backend provides one', () => {
+    expect(toFeaturedCardData({
+      kind: 'qa',
+      eventId: 'evt-1',
+      title: 'Ask',
+      startsAt: local(20),
+      cta: 'Submit questions now',
+      questionsPostId: '900',
+      questionsSpaceId: '12',
+    })?.questionsPost).toEqual({ spaceId: '12', postId: '900' });
+  });
+
   it('is null without a featured card and degrades on a bad date', () => {
     expect(toFeaturedCardData(null)).toBeNull();
     expect(toFeaturedCardData(undefined)).toBeNull();
     expect(toFeaturedCardData({ kind: 'qa', eventId: 'e', title: 'T', startsAt: 'x', cta: '' }))
       .toEqual({ id: 'e', kicker: 'Live Q&A', title: 'T', subtitle: undefined });
+  });
+});
+
+describe('featuredCardHref', () => {
+  it('opens the questions thread when present, otherwise the event', () => {
+    const base = { id: 'evt-1', kicker: 'k', title: 't' };
+    expect(featuredCardHref({ ...base, questionsPost: { spaceId: '12', postId: '900' } })).toBe('/post/12/900');
+    expect(featuredCardHref(base)).toEqual({ pathname: '/event/[event-id]', params: { 'event-id': 'evt-1' } });
   });
 });

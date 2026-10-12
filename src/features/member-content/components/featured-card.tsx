@@ -17,6 +17,8 @@ export type FeaturedCardData = {
   kicker: string;
   title: string;
   subtitle?: string;
+  /** When set, tapping opens this post thread instead of the event. */
+  questionsPost?: { spaceId: string; postId: string };
 };
 
 /**

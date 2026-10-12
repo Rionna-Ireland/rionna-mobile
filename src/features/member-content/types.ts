@@ -50,6 +50,9 @@ export type FeaturedQa = {
   title: string;
   startsAt: string;
   cta: string;
+  /** Companion questions thread (comments are the questions); absent on older events/backends. */
+  questionsPostId?: string;
+  questionsSpaceId?: string;
 };
 
 export type MemberFeedResult = {

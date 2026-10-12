@@ -34,5 +34,16 @@ export function toFeaturedCardData(featured: FeaturedQa | null | undefined): Fea
       : translate('community.featured.kickerNoDate'),
     title: featured.title,
     subtitle: featured.cta || undefined,
+    ...(featured.questionsPostId && featured.questionsSpaceId
+      ? { questionsPost: { spaceId: featured.questionsSpaceId, postId: featured.questionsPostId } }
+      : {}),
   };
+}
+
+/** Questions thread when the event has one (members comment their questions), else the event. */
+export function featuredCardHref(card: FeaturedCardData) {
+  const q = card.questionsPost;
+  return q
+    ? `/post/${encodeURIComponent(q.spaceId)}/${encodeURIComponent(q.postId)}` as const
+    : { pathname: '/event/[event-id]', params: { 'event-id': card.id } } as const;
 }
