@@ -11,7 +11,9 @@ const EXPO_ACCOUNT_OWNER = 'rionna_ireland';
 const EAS_PROJECT_ID = '4b0041b1-d0cb-4d08-96f1-ef2ef7dda3b3';
 
 const appIconBadgeConfig: AppIconBadgeConfig = {
-  enabled: Env.EXPO_PUBLIC_APP_ENV !== 'production',
+  // Off: app-icon-badge 0.1.2 writes the badged icons without awaiting them, so
+  // prebuild can read an empty file ("Could not find MIME for Buffer <null>" on EAS Android).
+  enabled: false,
   badges: [
     {
       text: Env.EXPO_PUBLIC_APP_ENV,
