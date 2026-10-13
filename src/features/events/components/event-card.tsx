@@ -8,7 +8,7 @@ import { PatternFill } from '@/components/brand/pattern';
 import { Button, Card, Text, View } from '@/components/ui';
 import { a11yCardProps, a11ySummary } from '@/components/ui/a11y-card';
 import { rsvpButtonState } from '@/features/events/lib/calendar-grid';
-import { eventStripColourway } from '@/features/events/lib/event-type';
+import { eventStripColourway, hasEventCategory } from '@/features/events/lib/event-type';
 import { formatEventDateLine } from '@/features/events/lib/format-event-date';
 import { translate } from '@/lib/i18n';
 import { haptics } from '@/lib/motion';
@@ -81,7 +81,7 @@ export function EventCard({
   past = false,
 }: EventCardProps) {
   const dateLine = formatEventDateLine(event.startsAt);
-  const meta = [dateLine, event.type?.toLowerCase()].filter(Boolean).join(' · ');
+  const meta = [dateLine, hasEventCategory(event) ? event.type?.toLowerCase() : null].filter(Boolean).join(' · ');
   const state = rsvpButtonState(event);
   const interactive = !past && state !== 'hidden';
   const label = a11ySummary([
@@ -108,7 +108,7 @@ export function EventCard({
       <View className="flex-row">
         <View testID={`event-card-${event.id}-strip`} style={STRIP_WIDTH_STYLE}>
           <PatternFill
-            spec={past ? PAST_SPEC : stripSpec(eventStripColourway(event.type))}
+            spec={past ? PAST_SPEC : stripSpec(eventStripColourway(event))}
             tileSize={36}
             style={STRIP_STYLE}
           />

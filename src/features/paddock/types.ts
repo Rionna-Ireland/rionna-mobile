@@ -19,7 +19,13 @@ export type OffersResult = { ok: boolean; offers: Offer[] };
 
 export type CharityStoryTeaser = {
   id: string;
-  slug: string;
+  /** S13-18: absent on older backends (treated as news). */
+  source?: 'news' | 'circle';
+  /** News stories: opens /news/{slug}. Null for circle stories. */
+  slug: string | null;
+  /** Circle stories: opens the post thread. */
+  spaceId?: string | null;
+  postId?: string | null;
   title: string;
   subtitle: string | null;
   featuredImageUrl: string | null;

@@ -128,4 +128,26 @@ describe('useMemberFeed filtering', () => {
     expect(getCachedMemberFeed).toHaveBeenCalledWith(SCOPE);
     expect(setCachedMemberFeed).toHaveBeenCalled();
   });
+
+  it('exposes the featured Q&A from the unfiltered first page', async () => {
+    const featured = { kind: 'qa', eventId: 'evt-1', title: 'Ask', startsAt: '2030-09-05T19:00:00.000Z', cta: 'Submit' };
+    mockGet.mockResolvedValue({ data: { ok: true, items: [ITEM], page: 1, hasNextPage: false, featured } });
+    const { result } = renderHook(() => useMemberFeed(SCOPE), { wrapper });
+    await waitFor(() => expect(result.current.featured).toEqual(featured));
+  });
+
+  it('has no featured card when the backend sends null or omits it', async () => {
+    mockGet.mockResolvedValue({ data: { ok: true, items: [ITEM], page: 1, hasNextPage: false } });
+    const { result } = renderHook(() => useMemberFeed(SCOPE), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.featured).toBeNull();
+  });
+
+  it('ignores featured on a chip-filtered feed', async () => {
+    const featured = { kind: 'qa', eventId: 'evt-1', title: 'Ask', startsAt: '2030-09-05T19:00:00.000Z', cta: 'Submit' };
+    mockGet.mockResolvedValue({ data: { ok: true, items: [ITEM], page: 1, hasNextPage: false, featured } });
+    const { result } = renderHook(() => useMemberFeed(SCOPE, { kind: 'poll' }), { wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(result.current.featured).toBeNull();
+  });
 });

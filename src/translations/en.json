@@ -47,6 +47,7 @@
       "readA11y": "Read {{title}}"
     },
     "comment": {
+      "actionsTitle": "Comment",
       "delete": "Delete",
       "deleteAction": "Delete comment",
       "deleteCancel": "Cancel",
@@ -55,9 +56,11 @@
       "deleteConfirmTitle": "Delete this comment?",
       "emptyBody": "Be the first to join the conversation.",
       "emptyTitle": "No comments yet",
+      "pinAction": "Pin as expert answer",
       "repliesLabel": "Replies ({{count}})",
       "reportAction": "Report comment",
-      "unavailable": "Comments couldn’t load."
+      "unavailable": "Comments couldn’t load.",
+      "unpinAction": "Unpin"
     },
     "compose": {
       "addPhoto": "Add photo",
@@ -86,6 +89,10 @@
       "inputA11y": "Write a comment",
       "placeholder": "Write a reply…",
       "sendA11y": "Send comment"
+    },
+    "featured": {
+      "kicker": "Live Q&A · {{when}}",
+      "kickerNoDate": "Live Q&A"
     },
     "feed": {
       "emptyBody": "New updates from your live circles will appear here.",
@@ -122,6 +129,10 @@
       "unsupportedA11y": "Unsupported Circle content: {{type}}",
       "view": "View media"
     },
+    "pinned": {
+      "a11y": "Pinned expert answer from {{name}}",
+      "tag": "Pinned expert answer"
+    },
     "post": {
       "anonymousAuthor": "Rionna member",
       "commentCountOne": "{{count}} comment",
@@ -156,6 +167,7 @@
       "title": "Report"
     },
     "role": {
+      "expert": "Expert",
       "staff": "Staff",
       "trainer": "Trainer"
     },
@@ -255,6 +267,8 @@
     "insideTrack": {
       "a11y": "Inside Track: {{title}}",
       "kicker": "Inside Track",
+      "minWatchOne": "{{count}} min watch",
+      "minWatchOther": "{{count}} min watch",
       "new": "NEW",
       "play": "Play"
     },
@@ -358,9 +372,7 @@
     },
     "rows": {
       "benefits": "Membership Benefits",
-      "charity": "Charity Snapshot",
-      "merch": "Merchandise",
-      "merchSubtitle": "Caps, jackets, polos, accessories"
+      "charity": "Charity Snapshot"
     },
     "story": {
       "kicker": "Impact story",
@@ -464,14 +476,19 @@
       "club": "Club",
       "fallbackName": "Rionna member",
       "followedHorses": "Followed horses",
+      "foundingSince": "Founding member, since {{since}}",
       "help": "Help & support",
       "helpSubject": "Rionna app support",
       "logout": "Log out",
+      "memberSince": "Member since {{since}}",
       "membership": "Membership",
       "membershipStatus": "Status",
       "membershipStatusValue": "Active member",
       "personalDetails": "Personal details",
       "statusActive": "Active",
+      "statusCancelled": "Ended",
+      "statusNone": "Not a member",
+      "statusPastDue": "Past due",
       "title": "Profile"
     },
     "rate": "Rate",
@@ -523,6 +540,21 @@
         "wellbeing": "Wellbeing"
       },
       "updatesLabel": "Updates",
+      "wellbeing": {
+        "load": {
+          "building": "building",
+          "full": "full",
+          "light": "light",
+          "resting": "resting"
+        },
+        "trainingLoad": "Training load — {{load}}",
+        "vetCheck": "Vet check — {{status}}",
+        "vetStatus": {
+          "allClear": "all clear",
+          "monitoring": "monitoring",
+          "treatment": "in treatment"
+        }
+      },
       "wellbeingLabel": "Wellbeing",
       "wellbeingRowA11y": "Open update: {{title}}"
     },

@@ -153,7 +153,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   android: {
     adaptiveIcon: {
       foregroundImage: './assets/adaptive-icon.png',
-      backgroundColor: '#ffffff', // S13-02: equals the JS first frame (top of bg-welcome-light); takes effect at next native build (S14-01)
+      backgroundColor: '#172741', // ink navy behind the lilac submark; takes effect at next native build
     },
     package: Env.EXPO_PUBLIC_PACKAGE,
     // S14-02 §4: platform predictive back (Android 13+). Native change: ships with the S14 binary.

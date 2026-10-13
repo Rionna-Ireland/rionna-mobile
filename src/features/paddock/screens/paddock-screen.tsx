@@ -28,11 +28,11 @@ import { useOffers } from '@/features/paddock/api/use-offers';
 import { JourneyCard } from '@/features/paddock/components/journey-card';
 import { HubSubtitleSkeleton } from '@/features/paddock/components/paddock-skeletons';
 import { charitySubtitle, offersSubtitle } from '@/features/paddock/lib/hub-copy';
+import { useMembership } from '@/features/settings/api/use-membership';
 import { translate } from '@/lib/i18n';
 import { EntranceItem, isFirstLoad, SkeletonSwap, useFirstLoadEntrance } from '@/lib/motion';
 
 const TILE_PLUM: TileSpec = { kind: 'gem', colourway: 'plum', turn: 0 };
-const TILE_NAVY: TileSpec = { kind: 'gem', colourway: 'navy', turn: 0 };
 const TILE_GREEN: TileSpec = { kind: 'gem', colourway: 'green', turn: 0 };
 
 /** Frame 12: a 40pt tile, r6. */
@@ -154,9 +154,6 @@ export function PaddockHubView({ offersCount, charitySummary, offersLoading, cha
               />
             </EntranceItem>
             <EntranceItem entering={entering(1)}>
-              <HubRow title={translate('paddock.rows.merch')} subtitle={translate('paddock.rows.merchSubtitle')} spec={TILE_NAVY} comingSoon />
-            </EntranceItem>
-            <EntranceItem entering={entering(2)}>
               <HubRow
                 title={translate('paddock.rows.charity')}
                 subtitle={charitySummary}
@@ -182,8 +179,9 @@ export function PaddockScreen() {
   );
   const offers = useOffers(scope);
   const charity = useCharity(scope);
-  // S13-12 (founding-member flag) is not served yet: no badge, so the journey card stays hidden.
-  const badges: JourneyBadge[] = [];
+  const membership = useMembership(user?.id);
+  // No badge (and so no journey card) until the member is flagged a founding member.
+  const badges: JourneyBadge[] = membership.data?.foundingMember ? ['founding-member'] : [];
 
   return (
     <PaddockHubView

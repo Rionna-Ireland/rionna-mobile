@@ -1,7 +1,7 @@
 import type { LayoutChangeEvent } from 'react-native';
 import type { EntryExitAnimationFunction, SharedValue } from 'react-native-reanimated';
 import type { HeroDestination } from '@/features/hero-transition/use-hero-destination';
-import type { PedigreeRow } from '@/features/stables/lib/horse-facts';
+import type { PedigreeRow, WellbeingRow } from '@/features/stables/lib/horse-facts';
 import type { HorseSectionKey } from '@/features/stables/lib/horse-sections';
 import type { ScrollMetrics } from '@/features/stables/lib/use-section-scroll-sync';
 import type { Entry, HorseDetail, HorseUpdate } from '@/features/stables/types';
@@ -46,6 +46,7 @@ import {
   getPedigreeRows,
   getResults,
   getStoryText,
+  getWellbeingRows,
   getWellbeingUpdates,
 } from '@/features/stables/lib/horse-facts';
 import { getVisibleHorseSections } from '@/features/stables/lib/horse-sections';
@@ -122,6 +123,7 @@ type SectionsProps = {
   results: Entry[];
   updates: HorseUpdate[];
   wellbeing: HorseUpdate[];
+  wellbeingRows: WellbeingRow[];
   onSectionLayout: (key: HorseSectionKey) => (event: LayoutChangeEvent) => void;
   onUpdateLayout: (id: string, y: number) => void;
   onOpenUpdate: (update: HorseUpdate) => void;
@@ -147,7 +149,7 @@ function HorseSections(props: SectionsProps) {
       {visible.includes('story') ? section('story', <StorySection story={props.story} pedigree={props.pedigree} />) : null}
       {visible.includes('racing') ? section('racing', <RacingSection nextEntry={props.nextEntry} results={props.results} />) : null}
       {visible.includes('updates') ? section('updates', <HorseUpdatesTimeline updates={props.updates} onItemLayout={props.onUpdateLayout} />) : null}
-      {visible.includes('wellbeing') ? section('wellbeing', <WellbeingSection updates={props.wellbeing} onOpenUpdate={props.onOpenUpdate} />) : null}
+      {visible.includes('wellbeing') ? section('wellbeing', <WellbeingSection rows={props.wellbeingRows} updates={props.wellbeing} onOpenUpdate={props.onOpenUpdate} />) : null}
 
       {horse.circleSpaceId
         ? (
@@ -172,15 +174,16 @@ function useHorseDetailModel(horse: HorseDetail, updates: HorseUpdate[] | undefi
   const pedigree = getPedigreeRows(horse);
   const updateList = updates ?? [];
   const wellbeing = getWellbeingUpdates(updateList);
+  const wellbeingRows = getWellbeingRows(horse.wellbeing);
   const visible = getVisibleHorseSections({
     hasStory: Boolean(story),
     hasPedigree: pedigree.length > 0,
     hasNextEntry: Boolean(nextEntry),
     resultCount: results.length,
     updateCount: updateList.length,
-    wellbeingCount: wellbeing.length,
+    wellbeingCount: wellbeing.length + wellbeingRows.length,
   });
-  return { nextEntry, results, story, pedigree, updateList, wellbeing, visible };
+  return { nextEntry, results, story, pedigree, updateList, wellbeing, wellbeingRows, visible };
 }
 
 /**
@@ -334,6 +337,7 @@ function HorseDetailBody({ horse, updates, pull, dest, hadSkeleton }: { horse: H
           results={model.results}
           updates={model.updateList}
           wellbeing={model.wellbeing}
+          wellbeingRows={model.wellbeingRows}
           onSectionLayout={sync.onSectionLayout}
           onUpdateLayout={actions.handleUpdateLayout}
           onOpenUpdate={actions.openUpdate}

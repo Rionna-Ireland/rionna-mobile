@@ -39,7 +39,7 @@ import {
   shiftMonth,
 } from '@/features/events/lib/calendar-grid';
 import { useEventReminder } from '@/features/events/lib/event-reminders';
-import { eventDayColour } from '@/features/events/lib/event-type';
+import { eventDayColour, hasEventCategory } from '@/features/events/lib/event-type';
 import { translate } from '@/lib/i18n';
 import { EntranceItem, isFirstLoad, SkeletonSwap, useContentEntrance } from '@/lib/motion';
 
@@ -93,16 +93,20 @@ function useEventsModel(
   pastAll: ClubEvent[] | undefined,
   typeFilter: string,
 ) {
-  // Type filter chips: one per type present. Hidden until S13-11 ships `type`.
+  // Type filter chips: one per type present. Hidden when every event is OTHER / untyped.
   const typeChips = React.useMemo(() => {
     const counts = new Map<string, number>();
     let total = 0;
+    let categorised = 0;
     for (const event of [...(upcomingAll ?? []), ...(pastAll ?? [])]) {
       total += 1;
       if (event.type)
         counts.set(event.type, (counts.get(event.type) ?? 0) + 1);
+      if (hasEventCategory(event))
+        categorised += 1;
     }
-    if (counts.size === 0)
+    // Nothing but OTHER / untyped events: a filter would be pointless.
+    if (categorised === 0)
       return [];
     return [
       { key: ALL, label: translate('events.all'), count: total },
@@ -121,7 +125,7 @@ function useEventsModel(
     const fills = new Map<string, string>();
     const counts = new Map<string, number>();
     for (const [key, list] of groupEventsByDay([...upcoming, ...past])) {
-      fills.set(key, eventDayColour(list[0].type));
+      fills.set(key, eventDayColour(list[0]));
       counts.set(key, list.length);
     }
     return { eventDays: fills, eventCounts: counts };

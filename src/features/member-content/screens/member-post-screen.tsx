@@ -32,6 +32,7 @@ import { useMemberPost } from '@/features/member-content/api/use-member-post';
 import {
   useAddComment,
   useDeleteComment,
+  usePinAnswer,
   usePostComments,
 } from '@/features/member-content/api/use-post-comments';
 import { usePostLike } from '@/features/member-content/api/use-post-like';
@@ -67,6 +68,8 @@ type MemberPostViewProps = CommentHandlers & {
   likePending?: boolean;
   /** The post's comments; undefined hides the whole comments section. */
   comments?: PostComment[];
+  /** S13-19: pinned expert answer (lilac card). */
+  pinnedAnswer?: PostComment | null;
   /** Server total for the "Replies (N)" label; falls back to the loaded count. */
   commentsTotal?: number | null;
   /** Comments failed to load (post itself may still be fine). */
@@ -128,6 +131,7 @@ function PostCard({
         spaceName={post.spaceName}
         spaceId={post.spaceId}
         role={post.authorRole}
+        roleLabelText={post.authorRoleLabel}
       />
       {post.title ? <Text variant="display-sm">{post.title}</Text> : null}
       {post.imageUrl
@@ -173,6 +177,7 @@ function ThreadBody({
   onToggleLike,
   likePending,
   comments,
+  pinnedAnswer,
   commentsTotal,
   commentsUnavailable = false,
   onSubmitComment,
@@ -213,6 +218,7 @@ function ThreadBody({
                 <CommentsSection
                   postId={post.id}
                   comments={comments}
+                  pinnedAnswer={pinnedAnswer}
                   total={commentsTotal ?? comments?.length ?? 0}
                   commentsUnavailable={commentsUnavailable}
                   onRetryComments={onRetryComments}
@@ -294,6 +300,8 @@ function SignedInMemberPost({
   const comments = usePostComments(scope, postId);
   const addComment = useAddComment(scope, memberName);
   const deleteComment = useDeleteComment(scope);
+  const pin = usePinAnswer(scope);
+  const canPin = comments.data?.canPin === true;
   const [reportTarget, setReportTarget] = React.useState<ReportTarget | null>(null);
 
   const reportPost = React.useCallback(() => {
@@ -349,6 +357,9 @@ function SignedInMemberPost({
         onToggleLike={(likedPostId, liked) => like.toggleLike({ postId: likedPostId, liked })}
         likePending={like.isPending}
         comments={comments.data?.comments}
+        pinnedAnswer={comments.data?.pinnedAnswer}
+        onPinComment={canPin ? (pinPostId, commentId) => pin.mutate({ postId: pinPostId, commentId }) : undefined}
+        onUnpinAnswer={canPin ? pinPostId => pin.mutate({ postId: pinPostId, commentId: null }) : undefined}
         commentsTotal={comments.data?.totalCount}
         commentsUnavailable={comments.isError}
         onSubmitComment={(commentPostId, body) => addComment.addComment({ postId: commentPostId, body })}

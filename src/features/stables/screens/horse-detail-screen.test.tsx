@@ -356,3 +356,30 @@ describe('horseDetailScreen hero and states', () => {
     expect(mockShowError).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('horseDetailScreen wellbeing', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockUseHorseUpdates.mockReturnValue({ data: [] });
+  });
+
+  it('renders structured wellbeing rows with no updates needed', () => {
+    withHorse(baseHorse({
+      wellbeing: { vetCheckStatus: 'ALL_CLEAR', vetCheckedAt: '2026-07-10T12:00:00.000Z', trainingLoad: 'BUILDING' },
+    }));
+
+    render(<HorseProfileScreen />);
+
+    expect(screen.getByTestId('wellbeing-section')).toBeOnTheScreen();
+    expect(screen.getByText('Vet check — all clear')).toBeOnTheScreen();
+    expect(screen.getByText('10 July')).toBeOnTheScreen();
+    expect(screen.getByText('Training load — building')).toBeOnTheScreen();
+    expect(screen.getByTestId('horse-section-chips-wellbeing')).toBeOnTheScreen();
+  });
+
+  it('keeps today\'s behaviour when wellbeing is null', () => {
+    withHorse(baseHorse({ wellbeing: null }));
+    render(<HorseProfileScreen />);
+    expect(screen.queryByTestId('wellbeing-section')).toBeNull();
+  });
+});

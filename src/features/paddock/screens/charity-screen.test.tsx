@@ -76,7 +76,7 @@ describe('charityView', () => {
   it('opens the latest story and shows read time only when measurable', () => {
     const { rerender } = render(<CharityView {...base} charity={CHARITY} poll={POLL} />);
     fireEvent.press(screen.getByTestId('charity-story-n1'));
-    expect(base.onOpenStory).toHaveBeenCalledWith('six-horses');
+    expect(base.onOpenStory).toHaveBeenCalledWith(expect.objectContaining({ slug: 'six-horses' }));
     expect(screen.queryByTestId('story-read-time')).toBeNull();
     rerender(<CharityView {...base} poll={POLL} charity={{ ...CHARITY, stories: [{ ...CHARITY.stories[0], wordCount: 500 }] }} />);
     expect(screen.getByText('3 min read')).toBeOnTheScreen();

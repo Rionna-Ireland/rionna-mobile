@@ -31,13 +31,22 @@ export function SpaceTag({ name, spaceId }: { name: string | null | undefined; s
 }
 
 /** Lilac-tint role badge. Renders only when the backend supplies `authorRole` (S13-11). */
-export function RoleBadge({ role }: { role: AuthorRole | null | undefined }) {
+export function RoleBadge({ role, label }: { role: AuthorRole | null | undefined; label?: string | null }) {
   if (!role) {
     return null;
   }
   return (
     <View testID="role-badge" className="rounded-[5px] bg-white px-2.5 py-1.5">
-      <MonoLabel>{roleLabel(role)}</MonoLabel>
+      <MonoLabel>{roleLabel(role, label)}</MonoLabel>
+    </View>
+  );
+}
+
+/** White mono tag (frame 11 "PINNED EXPERT ANSWER"). */
+export function WhiteTag({ label, testID }: { label: string; testID?: string }) {
+  return (
+    <View testID={testID} className="rounded-[5px] bg-white px-2.5 py-1.5">
+      <MonoLabel>{label}</MonoLabel>
     </View>
   );
 }
@@ -49,6 +58,8 @@ export function AuthorHeader({
   spaceName,
   spaceId,
   role,
+  roleLabelText,
+  tag,
   showSpaceTag = true,
 }: {
   name: string | null;
@@ -57,6 +68,10 @@ export function AuthorHeader({
   spaceName?: string | null;
   spaceId?: string | null;
   role?: AuthorRole | null;
+  /** S13-19: expert tag shown in the role badge. */
+  roleLabelText?: string | null;
+  /** Replaces the role badge with a custom white tag (the pinned answer card). */
+  tag?: string;
   showSpaceTag?: boolean;
 }) {
   const displayName = authorDisplayName(name);
@@ -67,7 +82,7 @@ export function AuthorHeader({
         <View className="flex-row flex-wrap items-center gap-2">
           <Text variant="title" numberOfLines={1} className="shrink">{displayName}</Text>
           {showSpaceTag ? <SpaceTag name={spaceName} spaceId={spaceId} /> : null}
-          <RoleBadge role={role} />
+          {tag ? <WhiteTag testID="pinned-answer-tag" label={tag} /> : <RoleBadge role={role} label={roleLabelText} />}
         </View>
         {time ? <Text variant="body-sm" className="text-label opacity-60">{time}</Text> : null}
       </View>

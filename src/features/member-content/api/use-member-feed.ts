@@ -1,4 +1,5 @@
 import type {
+  FeaturedQa,
   FeedFilter,
   MemberContentScope,
   MemberContentState,
@@ -6,7 +7,7 @@ import type {
   MemberFeedResult,
 } from '@/features/member-content/types';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import * as React from 'react';
 
 import {
@@ -58,10 +59,14 @@ export function resolveMemberFeedContentState({
   return 'fresh';
 }
 
-export async function fetchMemberFeed(
+function featuredKey(scope: MemberContentScope) {
+  return [MEMBER_CONTENT_QUERY_ROOT, 'featured', scope.organizationId, scope.memberId] as const;
+}
+
+export async function fetchMemberFeedPage(
   scope: MemberContentScope,
   filter?: FeedFilter,
-): Promise<MemberFeedItem[]> {
+): Promise<{ items: MemberFeedItem[]; featured: FeaturedQa | null }> {
   const { data } = await client.get<MemberFeedResult>('/api/circle/member-feed', {
     params: {
       organizationId: scope.organizationId,
@@ -73,7 +78,14 @@ export async function fetchMemberFeed(
   if (data.ok !== true || !Array.isArray(data.items)) {
     throw new Error('Member feed unavailable');
   }
-  return data.items.slice(0, FEED_LIMIT);
+  return { items: data.items.slice(0, FEED_LIMIT), featured: data.featured ?? null };
+}
+
+export async function fetchMemberFeed(
+  scope: MemberContentScope,
+  filter?: FeedFilter,
+): Promise<MemberFeedItem[]> {
+  return (await fetchMemberFeedPage(scope, filter)).items;
 }
 
 export function useMemberFeed(scope: MemberContentScope, filter?: FeedFilter) {
@@ -84,6 +96,7 @@ export function useMemberFeed(scope: MemberContentScope, filter?: FeedFilter) {
     () => (isFiltered ? undefined : getCachedMemberFeed({ memberId, organizationId })),
     [memberId, organizationId, isFiltered],
   );
+  const queryClient = useQueryClient();
   const query = useQuery({
     queryKey: [
       MEMBER_CONTENT_QUERY_ROOT,
@@ -92,7 +105,14 @@ export function useMemberFeed(scope: MemberContentScope, filter?: FeedFilter) {
       memberId,
       keyPart,
     ],
-    queryFn: () => fetchMemberFeed({ memberId, organizationId }, filter),
+    queryFn: async () => {
+      const page = await fetchMemberFeedPage({ memberId, organizationId }, filter);
+      // Featured comes from the unfiltered first page only; a chip-filtered
+      // fetch must not replace (or clear) the card.
+      if (!isFiltered)
+        queryClient.setQueryData(featuredKey({ memberId, organizationId }), page.featured);
+      return page.items;
+    },
     initialData: cached?.data,
     initialDataUpdatedAt: cached?.fetchedAt,
     staleTime: 0,
@@ -114,6 +134,15 @@ export function useMemberFeed(scope: MemberContentScope, filter?: FeedFilter) {
     isFiltered,
   ]);
 
+  const featuredQuery = useQuery<FeaturedQa | null>({
+    queryKey: featuredKey({ memberId, organizationId }),
+    queryFn: () => null,
+    enabled: false,
+    initialData: null,
+    staleTime: Infinity,
+    gcTime: MEMBER_CONTENT_CACHE_TTL_MS,
+  });
+
   const contentState = resolveMemberFeedContentState({
     data: query.data,
     isError: query.isError,
@@ -121,6 +150,7 @@ export function useMemberFeed(scope: MemberContentScope, filter?: FeedFilter) {
 
   return {
     ...query,
+    featured: featuredQuery.data ?? null,
     contentState,
     savedAt: contentState === 'saved'
       ? (cached?.fetchedAt ?? query.dataUpdatedAt ?? null)

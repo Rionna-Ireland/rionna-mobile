@@ -1,4 +1,4 @@
-import type { Charity } from '@/features/paddock/types';
+import type { Charity, CharityStoryTeaser } from '@/features/paddock/types';
 import type { Poll } from '@/features/polls/types';
 
 import Env from 'env';
@@ -26,6 +26,7 @@ import { CharityVoteCard } from '@/features/paddock/components/charity-vote-card
 import { CurrentCharitiesCard } from '@/features/paddock/components/current-charities-card';
 import { CharitySkeleton } from '@/features/paddock/components/paddock-skeletons';
 import { currentCharities } from '@/features/paddock/lib/current-charities';
+import { storyHref } from '@/features/paddock/lib/story-href';
 import { useActivePolls } from '@/features/polls/api/use-active-polls';
 import { usePollVote } from '@/features/polls/api/use-poll-vote';
 import { translate } from '@/lib/i18n';
@@ -40,7 +41,7 @@ type CharityViewProps = {
   isRefetching: boolean;
   /** Pull-to-refresh and retry; resolve when done so the branded refresher can settle. */
   onRefresh: () => unknown;
-  onOpenStory: (slug: string) => void;
+  onOpenStory: (story: CharityStoryTeaser) => void;
   onOpenWebsite: (url: string) => void;
   onVote: (pollId: string, optionId: string) => void;
   pendingPollIds: string[];
@@ -121,7 +122,7 @@ export function CharityScreen() {
       isError={charity.isError}
       isRefetching={charity.isRefetching}
       onRefresh={() => Promise.all([charity.refetch(), polls.refetch()])}
-      onOpenStory={slug => router.push(`/news/${slug}`)}
+      onOpenStory={story => router.push(storyHref(story))}
       onOpenWebsite={openExternalLink}
       onVote={(id, optionId) => vote({ pollId: id, optionId })}
       pendingPollIds={pendingPollIds}
