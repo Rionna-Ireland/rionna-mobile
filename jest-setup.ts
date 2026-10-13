@@ -81,6 +81,7 @@ jest.mock('react-native-reanimated', () => {
     SlideInLeft: { duration: jest.fn(() => ({})) },
     SlideInRight: { duration: jest.fn(() => ({})) },
     Layout: {},
+    LinearTransition: { duration: jest.fn(() => ({ easing: jest.fn(() => ({})) })) },
     Keyframe: jest.fn(),
   };
 });

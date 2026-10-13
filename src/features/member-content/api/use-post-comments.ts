@@ -11,8 +11,11 @@ import type {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
+import { showErrorMessage } from '@/components/ui/utils';
+
 import { MEMBER_CONTENT_QUERY_ROOT } from '@/features/member-content/types';
 import { client } from '@/lib/api/client';
+import { haptics } from '@/lib/motion';
 
 export function commentsQueryKey(scope: MemberContentScope, postId: string) {
   return [
@@ -261,4 +264,64 @@ export function useDeleteComment(scope: MemberContentScope) {
     deleteComment: mutation.mutate,
     pendingCommentId: mutation.isPending ? (mutation.variables?.commentId ?? null) : null,
   };
+}
+
+function byOldest(a: PostComment, b: PostComment) {
+  return (a.createdAt ? Date.parse(a.createdAt) : 0) - (b.createdAt ? Date.parse(b.createdAt) : 0);
+}
+
+/**
+ * Pure optimistic pin (S13-19): `commentId` leaves the list (top level or
+ * reply) and becomes the pinned answer; a previous pin returns to the list.
+ * `null` unpins. Returns the page unchanged when the comment isn't found.
+ */
+export function applyPin(page: PostCommentsPage, commentId: string | null): PostCommentsPage {
+  if (commentId === null) {
+    const old = page.pinnedAnswer;
+    if (!old) {
+      return page;
+    }
+    return { ...page, pinnedAnswer: null, comments: [...page.comments, old].sort(byOldest) };
+  }
+  const target = page.comments.find(c => c.id === commentId)
+    ?? page.comments.flatMap(c => c.replies).find(r => r.id === commentId);
+  if (!target) {
+    return page;
+  }
+  const rest = removeCommentById(page.comments, commentId);
+  const old = page.pinnedAnswer;
+  return { ...page, pinnedAnswer: target, comments: (old ? [...rest, old] : rest).sort(byOldest) };
+}
+
+/** `commentId: null` unpins. */
+export async function sendPin(scope: MemberContentScope, { postId, commentId }: { postId: string; commentId: string | null }): Promise<void> {
+  const url = `/api/community/posts/${encodeURIComponent(postId)}/pinned-answer`;
+  if (commentId === null) {
+    await client.delete(url, { data: { organizationId: scope.organizationId } });
+  }
+  else {
+    await client.post(url, { organizationId: scope.organizationId, commentId });
+  }
+}
+
+/** Optimistic pin / unpin; rolls back to the snapshot with the house error toast, one success haptic on landing. */
+export function usePinAnswer(scope: MemberContentScope) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (vars: { postId: string; commentId: string | null }) => sendPin(scope, vars),
+    onMutate: async ({ postId, commentId }) => {
+      const queryKey = commentsQueryKey(scope, postId);
+      await queryClient.cancelQueries({ queryKey });
+      const snapshot = queryClient.getQueryData<PostCommentsPage>(queryKey);
+      queryClient.setQueryData<PostCommentsPage>(queryKey, current => (current ? applyPin(current, commentId) : current));
+      return { snapshot };
+    },
+    onError: (_error, { postId }, context) => {
+      if (context?.snapshot) {
+        queryClient.setQueryData(commentsQueryKey(scope, postId), context.snapshot);
+      }
+      showErrorMessage();
+    },
+    onSuccess: () => haptics.success(),
+  });
 }

@@ -30,6 +30,7 @@ function CardContent({ item, onToggleLike, likePending }: CardContentProps) {
         spaceName={item.spaceName}
         spaceId={item.spaceId}
         role={item.authorRole}
+        roleLabelText={item.authorRoleLabel}
       />
       {item.title ? <Text variant="title">{item.title}</Text> : null}
       {item.excerpt

@@ -4,7 +4,7 @@ import { a11ySummary } from '@/components/ui/a11y-card';
 import { formatRelativeTime } from '@/features/member-content/lib/space-tag';
 import { translate } from '@/lib/i18n';
 
-const ROLE_KEY = { trainer: 'community.role.trainer', staff: 'community.role.staff' } as const;
+const ROLE_KEY = { trainer: 'community.role.trainer', expert: 'community.role.expert', staff: 'community.role.staff' } as const;
 
 /** Display name for a post or comment author; a blank name reads as "Rionna member". */
 export function authorDisplayName(name: string | null | undefined): string {
@@ -21,9 +21,9 @@ export function commentCountLabel(count: number): string {
   return translate(count === 1 ? 'community.post.commentCountOne' : 'community.post.commentCountOther', { count });
 }
 
-/** Role badge text ("Trainer" / "Staff"). */
-export function roleLabel(role: AuthorRole): string {
-  return translate(ROLE_KEY[role]);
+/** Role badge text ("Trainer" / "Staff"); an expert shows their own tag ("Vet"). */
+export function roleLabel(role: AuthorRole, label?: string | null): string {
+  return (role === 'expert' && label?.trim()) || translate(ROLE_KEY[role]);
 }
 
 /**

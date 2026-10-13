@@ -47,6 +47,7 @@
       "readA11y": "Read {{title}}"
     },
     "comment": {
+      "actionsTitle": "Comment",
       "delete": "Delete",
       "deleteAction": "Delete comment",
       "deleteCancel": "Cancel",
@@ -55,9 +56,11 @@
       "deleteConfirmTitle": "Delete this comment?",
       "emptyBody": "Be the first to join the conversation.",
       "emptyTitle": "No comments yet",
+      "pinAction": "Pin as expert answer",
       "repliesLabel": "Replies ({{count}})",
       "reportAction": "Report comment",
-      "unavailable": "Comments couldn’t load."
+      "unavailable": "Comments couldn’t load.",
+      "unpinAction": "Unpin"
     },
     "compose": {
       "addPhoto": "Add photo",
@@ -126,6 +129,10 @@
       "unsupportedA11y": "Unsupported Circle content: {{type}}",
       "view": "View media"
     },
+    "pinned": {
+      "a11y": "Pinned expert answer from {{name}}",
+      "tag": "Pinned expert answer"
+    },
     "post": {
       "anonymousAuthor": "Rionna member",
       "commentCountOne": "{{count}} comment",
@@ -160,6 +167,7 @@
       "title": "Report"
     },
     "role": {
+      "expert": "Expert",
       "staff": "Staff",
       "trainer": "Trainer"
     },

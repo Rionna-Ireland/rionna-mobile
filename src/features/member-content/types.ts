@@ -13,7 +13,7 @@ export type MemberPostCacheLocator = MemberContentScope & {
 export const MEMBER_CONTENT_QUERY_ROOT = 'member-content';
 
 /** S13-11 author role badge values. */
-export type AuthorRole = 'trainer' | 'staff';
+export type AuthorRole = 'trainer' | 'expert' | 'staff';
 
 export type MemberFeedItem = {
   id: string;
@@ -37,6 +37,8 @@ export type MemberFeedItem = {
   isAnnouncement?: boolean;
   /** S13-11: author's club role (shows a badge). Absent until it ships. */
   authorRole?: AuthorRole | null;
+  /** S13-19: free-text tag for experts ("vet"); shown instead of the role name. */
+  authorRoleLabel?: string | null;
   /** Avatar URL when the feed payload carries one. */
   authorAvatarUrl?: string | null;
   /** Inside Track items: video length in seconds, when known. */
@@ -93,6 +95,8 @@ export type MemberPostDetail = {
   isOwn?: boolean;
   /** S13-11: author's club role. Absent until it ships. */
   authorRole?: AuthorRole | null;
+  /** S13-19: free-text tag for experts ("vet"); shown instead of the role name. */
+  authorRoleLabel?: string | null;
 };
 
 export type PostComment = {
@@ -108,6 +112,8 @@ export type PostComment = {
   canDelete: boolean;
   /** S13-11: author's club role. Absent until it ships. */
   authorRole?: AuthorRole | null;
+  /** S13-19: free-text tag for experts ("vet"); shown instead of the role name. */
+  authorRoleLabel?: string | null;
   replies: PostComment[];
 };
 
@@ -116,6 +122,10 @@ export type PostCommentsPage = {
   comments: PostComment[];
   hasNextPage: boolean;
   totalCount: number | null;
+  /** S13-19: the thread's pinned expert answer; never also in `comments`. */
+  pinnedAnswer?: PostComment | null;
+  /** S13-19: the viewer may pin/unpin answers. */
+  canPin?: boolean;
 };
 
 export type FeedChipKind = 'all' | 'horses' | 'news' | 'charity' | 'polls' | 'space';
