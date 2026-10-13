@@ -5,7 +5,7 @@ import { ArticleIcon } from '@/features/paddock/components/paddock-icons';
 import { readTimeLabel } from '@/features/paddock/lib/read-time';
 import { translate } from '@/lib/i18n';
 
-type Props = { story: CharityStoryTeaser; onOpen: (slug: string) => void };
+type Props = { story: CharityStoryTeaser; onOpen: (story: CharityStoryTeaser) => void };
 
 /** Latest impact story: photo on top, forest display title, read-time tag. */
 export function CharityStoryCard({ story, onOpen }: Props) {
@@ -15,7 +15,7 @@ export function CharityStoryCard({ story, onOpen }: Props) {
       testID={`charity-story-${story.id}`}
       accessibilityRole="button"
       accessibilityLabel={story.title}
-      onPress={() => onOpen(story.slug)}
+      onPress={() => onOpen(story)}
       className="overflow-hidden rounded-lg bg-white"
     >
       <View className="h-[219px]">
@@ -32,7 +32,7 @@ export function CharityStoryCard({ story, onOpen }: Props) {
       <View className="gap-6 p-4">
         <Text variant="display-md" className="text-forest">{story.title}</Text>
         <View className="flex-row items-center justify-between">
-          <IconButton variant="circle" accessibilityLabel={translate('paddock.story.read')} onPress={() => onOpen(story.slug)} className="bg-sage">
+          <IconButton variant="circle" accessibilityLabel={translate('paddock.story.read')} onPress={() => onOpen(story)} className="bg-sage">
             <ArticleIcon size={14} color={colors.forest} />
           </IconButton>
           {readTime
