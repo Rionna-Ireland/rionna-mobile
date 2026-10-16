@@ -10,18 +10,32 @@ export type ListPostableSpacesResult = {
   spaces: PostableSpace[];
 };
 
-export type PostImage = {
+export type MediaKind = 'image' | 'video';
+
+export type PickedMedia = {
   uri: string;
-  fileName: string;
+  kind: MediaKind;
   mimeType: string;
+  fileName: string;
   fileSize: number;
+  /** Video length in milliseconds. */
+  duration?: number;
+};
+
+export type MediaUploadUrlResult = {
+  kind: MediaKind;
+  uploadUrl: string;
+  uploadHeaders: Record<string, string>;
+  signedId: string;
+  cdnUrl: string;
+  mediaToken: string;
 };
 
 export type CreatePostInput = {
   spaceId: string;
   title?: string;
   body: string;
-  image?: PostImage;
+  media?: { mediaToken: string }[];
 };
 
 export type CreatePostFailure = 'blocked' | 'not_allowed' | 'rate_limited' | 'circle_failed' | 'image_failed';
@@ -29,11 +43,6 @@ export type CreatePostFailure = 'blocked' | 'not_allowed' | 'rate_limited' | 'ci
 export type CreatePostResult
   = | { ok: true; post: { circlePostId: string; spaceId: string } }
     | { ok: false; reason: CreatePostFailure };
-
-export type ImageUploadUrlResult = {
-  signedUploadUrl: string;
-  path: string;
-};
 
 export type DeletePostInput = {
   spaceId: string;

@@ -1,6 +1,6 @@
 import type { AuthUser } from '@/lib/auth/utils';
 
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import * as React from 'react';
 
 import { ComposePostScreen } from '@/features/community-posting/screens/compose-post-screen';
@@ -63,8 +63,14 @@ jest.mock('@/features/community-posting/api/use-create-post', () => ({
   useCreatePost: () => mockUseCreatePost(),
 }));
 
-jest.mock('@/features/community-posting/lib/pick-image', () => ({
-  pickImage: jest.fn(),
+const mockPickMedia = jest.fn();
+jest.mock('@/features/community-posting/lib/pick-media', () => ({
+  pickMedia: (...args: unknown[]) => mockPickMedia(...args),
+}));
+
+const mockUploadMedia = jest.fn();
+jest.mock('@/features/community-posting/lib/upload-media', () => ({
+  uploadMedia: (...args: unknown[]) => mockUploadMedia(...args),
 }));
 
 const mockSetItem = jest.fn();
@@ -262,5 +268,71 @@ describe('composePostScreen last-used space', () => {
     await screen.findByText('Our auto-moderation held back this post. Please edit it to keep things friendly and respectful, then try again.');
 
     expect(mockSetItem).not.toHaveBeenCalled();
+  });
+});
+
+describe('composePostScreen media', () => {
+  const PHOTO = { uri: 'file:///a.jpg', kind: 'image', mimeType: 'image/jpeg', fileName: 'a.jpg', fileSize: 10 };
+  let resolveUpload: (token: string) => void;
+  let rejectUpload: (error: Error) => void;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockParams = {};
+    mockUseAuthStoreUser.mockReturnValue(MEMBER);
+    mockUsePostableSpaces.mockReturnValue({ data: { ok: true, spaces: SPACES }, refetch: mockRefetch, isError: false, isPending: false, isSuccess: true });
+    mockUseCreatePost.mockReturnValue({ create: mockCreate, isPending: false, failure: null });
+    mockPickMedia.mockResolvedValue({ items: [PHOTO], error: null });
+    mockUploadMedia.mockImplementation(() => new Promise<string>((resolve, reject) => {
+      resolveUpload = resolve;
+      rejectUpload = reject;
+    }));
+  });
+
+  async function addPhoto() {
+    typeEnoughBody();
+    fireEvent.press(screen.getByTestId('compose-media-add'));
+    await waitFor(() => expect(mockUploadMedia).toHaveBeenCalled());
+  }
+
+  const submitDisabled = () => screen.getByTestId('compose-post-submit').props.accessibilityState.disabled;
+
+  it('disables Post while an upload is pending and enables it when done', async () => {
+    render(<ComposePostScreen />);
+    await addPhoto();
+    expect(mockUploadMedia).toHaveBeenCalledWith(PHOTO, expect.objectContaining({ organizationId: 'org-1' }));
+    expect(submitDisabled()).toBe(true);
+
+    await act(async () => resolveUpload('tok-1'));
+    expect(submitDisabled()).toBe(false);
+
+    fireEvent.press(screen.getByTestId('compose-post-submit'));
+    expect(mockCreate).toHaveBeenCalledWith(expect.objectContaining({ media: [{ mediaToken: 'tok-1' }] }));
+  });
+
+  it('keeps Post disabled on failure and retries on tap', async () => {
+    render(<ComposePostScreen />);
+    await addPhoto();
+    await act(async () => rejectUpload(new Error('boom')));
+    expect(screen.getByText('Couldn\'t upload, tap to retry')).toBeOnTheScreen();
+    expect(submitDisabled()).toBe(true);
+
+    fireEvent.press(screen.getByLabelText('Couldn\'t upload, tap to retry'));
+    await waitFor(() => expect(mockUploadMedia).toHaveBeenCalledTimes(2));
+    expect(mockUploadMedia).toHaveBeenCalledTimes(2);
+    await act(async () => resolveUpload('tok-2'));
+    expect(submitDisabled()).toBe(false);
+  });
+
+  it('removing an in-flight item aborts it and ignores its result', async () => {
+    render(<ComposePostScreen />);
+    await addPhoto();
+    const signal = (mockUploadMedia.mock.calls[0][1] as { signal: AbortSignal }).signal;
+    const removeButton = screen.getByLabelText('Remove');
+    fireEvent.press(removeButton);
+    expect(signal.aborted).toBe(true);
+    await act(async () => resolveUpload('late'));
+    expect(screen.queryByLabelText('Remove')).toBeNull();
+    expect(submitDisabled()).toBe(false);
   });
 });
