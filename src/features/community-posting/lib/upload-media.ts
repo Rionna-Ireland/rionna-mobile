@@ -1,6 +1,6 @@
 import type { MediaUploadUrlResult, PickedMedia } from '@/features/community-posting/types';
 
-import { md5Base64 } from '@/features/community-posting/lib/md5';
+import { fileDigest } from '@/features/community-posting/lib/md5';
 import { client } from '@/lib/api/client';
 
 const MAX_CONCURRENT = 3;
@@ -48,12 +48,12 @@ type UploadOptions = {
 
 async function attempt(media: PickedMedia, { organizationId, onProgress, signal }: UploadOptions): Promise<string> {
   const FileSystem = require('expo-file-system/legacy') as typeof import('expo-file-system/legacy');
-  const checksum = await md5Base64(media.uri);
+  const { checksum, byteSize } = await fileDigest(media.uri);
   const { data } = await client.post<MediaUploadUrlResult>('/api/community/media-upload', {
     organizationId,
     filename: safeFilename(media.fileName),
     contentType: media.mimeType,
-    byteSize: media.fileSize,
+    byteSize,
     checksum,
   });
 

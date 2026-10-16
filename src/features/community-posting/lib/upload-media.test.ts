@@ -4,7 +4,7 @@ import { uploadMedia } from '@/features/community-posting/lib/upload-media';
 import { client } from '@/lib/api/client';
 
 jest.mock('@/lib/api/client', () => ({ client: { post: jest.fn() } }));
-jest.mock('@/features/community-posting/lib/md5', () => ({ md5Base64: jest.fn(async () => 'md5b64==') }));
+jest.mock('@/features/community-posting/lib/md5', () => ({ fileDigest: jest.fn(async () => ({ checksum: 'md5b64==', byteSize: 1234 })) }));
 
 const mockUploadAsync = jest.fn();
 const mockCancel = jest.fn();

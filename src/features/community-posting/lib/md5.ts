@@ -8,16 +8,17 @@ export function hexToBase64(hex: string): string {
 }
 
 /**
- * Base64 MD5 of a file on disk. Uses the async legacy `getInfoAsync` (native
+ * Base64 MD5 and byte size of a file on disk. The size comes from disk, not the
+ * picker: picker sizes can be 0 or pre-transcode, and S3 signs the exact length. Uses the async legacy `getInfoAsync` (native
  * hashing off the JS thread, no whole-file read) so a 200 MB video doesn't
  * freeze the composer — the sync `new File(uri).md5` would. Lazily required:
  * never touch native modules at module top level (New Architecture).
  */
-export async function md5Base64(uri: string): Promise<string> {
+export async function fileDigest(uri: string): Promise<{ checksum: string; byteSize: number }> {
   const FileSystem = require('expo-file-system/legacy') as typeof import('expo-file-system/legacy');
   const info = await FileSystem.getInfoAsync(uri, { md5: true });
-  if (!info.exists || !info.md5) {
+  if (!info.exists || !info.md5 || !info.size) {
     throw new Error('Could not hash file');
   }
-  return hexToBase64(info.md5);
+  return { checksum: hexToBase64(info.md5), byteSize: info.size };
 }
