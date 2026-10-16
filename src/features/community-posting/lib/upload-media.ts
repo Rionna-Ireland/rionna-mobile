@@ -46,6 +46,12 @@ type UploadOptions = {
   signal?: AbortSignal;
 };
 
+/** Our API said no (bad type/size, rate limit, forbidden): a retry can't succeed. */
+function isClientRejection(e: unknown): boolean {
+  const status = (e as { response?: { status?: number } } | null)?.response?.status;
+  return status !== undefined && status >= 400 && status < 500;
+}
+
 async function attempt(media: PickedMedia, { organizationId, onProgress, signal }: UploadOptions): Promise<string> {
   const FileSystem = require('expo-file-system/legacy') as typeof import('expo-file-system/legacy');
   const { checksum, byteSize } = await fileDigest(media.uri);
@@ -56,6 +62,10 @@ async function attempt(media: PickedMedia, { organizationId, onProgress, signal 
     byteSize,
     checksum,
   });
+  // Removed while hashing or presigning: don't start a PUT nobody will use.
+  if (signal?.aborted) {
+    throw new Error('aborted');
+  }
 
   // Streams from disk (no whole-file read) and reports progress.
   const task = FileSystem.createUploadTask(
@@ -99,7 +109,7 @@ export async function uploadMedia(media: PickedMedia, options: UploadOptions): P
         return await attempt(media, options);
       }
       catch (e) {
-        if (tries >= 1 || options.signal?.aborted) {
+        if (tries >= 1 || options.signal?.aborted || isClientRejection(e)) {
           throw e;
         }
       }

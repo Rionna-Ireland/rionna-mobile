@@ -49,6 +49,22 @@ describe('uploadMedia', () => {
     expect(onProgress).toHaveBeenLastCalledWith(0.5);
   });
 
+  it('does not start the PUT when removed during presign', async () => {
+    const controller = new AbortController();
+    mockPost.mockImplementationOnce(async () => {
+      controller.abort();
+      return PRESIGN;
+    });
+    await expect(uploadMedia(MEDIA, { organizationId: 'org-1', signal: controller.signal })).rejects.toThrow('aborted');
+    expect(mockCreateTask).not.toHaveBeenCalled();
+  });
+
+  it('does not retry when our API rejects the file', async () => {
+    mockPost.mockRejectedValue(Object.assign(new Error('400'), { response: { status: 400 } }));
+    await expect(uploadMedia(MEDIA, { organizationId: 'org-1' })).rejects.toThrow('400');
+    expect(mockPost).toHaveBeenCalledTimes(1);
+  });
+
   it('retries once then succeeds', async () => {
     mockUploadAsync.mockResolvedValueOnce({ status: 500 }).mockResolvedValueOnce({ status: 200 });
     await expect(uploadMedia(MEDIA, { organizationId: 'org-1' })).resolves.toBe('tok');
