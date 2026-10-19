@@ -9,7 +9,7 @@
       "distribution": "store",
       "environment": "production",
       "ios": {
-        "image": "latest"
+        "image": "macos-tahoe-26.5-xcode-26.6"
       },
       "android": {
         "buildType": "app-bundle",
@@ -29,7 +29,7 @@
       "autoIncrement": true,
       "distribution": "store",
       "ios": {
-        "image": "latest"
+        "image": "macos-tahoe-26.5-xcode-26.6"
       },
       "android": {
         "buildType": "apk",
@@ -51,7 +51,7 @@
       "distribution": "internal",
       "environment": "preview",
       "ios": {
-        "image": "latest"
+        "image": "macos-tahoe-26.5-xcode-26.6"
       },
       "env": {
         "EXPO_PUBLIC_APP_ENV": "preview",
@@ -68,7 +68,7 @@
       "distribution": "internal",
       "environment": "preview",
       "ios": {
-        "image": "latest"
+        "image": "macos-tahoe-26.5-xcode-26.6"
       },
       "env": {
         "EXPO_PUBLIC_APP_ENV": "preview",
@@ -83,7 +83,7 @@
       "extends": "staging",
       "distribution": "store",
       "ios": {
-        "image": "latest"
+        "image": "macos-tahoe-26.5-xcode-26.6"
       }
     },
     "development": {
@@ -91,7 +91,7 @@
       "distribution": "internal",
       "environment": "development",
       "ios": {
-        "image": "latest"
+        "image": "macos-tahoe-26.5-xcode-26.6"
       },
       "android": {
         "image": "latest"
@@ -104,7 +104,7 @@
       "environment": "development",
       "ios": {
         "simulator": true,
-        "image": "latest"
+        "image": "macos-tahoe-26.5-xcode-26.6"
       },
       "android": {
         "image": "latest"
