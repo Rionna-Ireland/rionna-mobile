@@ -63,7 +63,7 @@
       "unpinAction": "Unpin"
     },
     "compose": {
-      "addPhoto": "Add photo",
+      "addMedia": "Add photo or video",
       "bodyA11y": "Post body",
       "bodyPlaceholder": "What's on your mind?",
       "cancel": "Cancel",
@@ -72,16 +72,21 @@
       "failureNotAllowed": "You can't post in that space.",
       "failurePublish": "Couldn't publish right now. Try again.",
       "failureRateLimited": "You've posted a lot today — try again later.",
-      "imageTooBig": "Choose a photo under 10 MB.",
+      "imageTooBig": "Photos must be under 10 MB.",
       "kicker": "New post",
       "noSpaces": "You can't post in any spaces yet.",
       "post": "Post",
       "postIn": "Post in",
       "posting": "Posting…",
-      "removePhoto": "Remove photo",
+      "removeMedia": "Remove",
       "spacesFailed": "Couldn't load your spaces.",
       "titleA11y": "Post title",
-      "titlePlaceholder": "Title (optional)"
+      "titlePlaceholder": "Title (optional)",
+      "tooManyPhotos": "You can add up to 6 photos.",
+      "tooManyVideos": "You can add one video per post.",
+      "unsupportedType": "That file type isn't supported. Use JPEG, PNG, WebP or HEIC photos, or MP4 or MOV video.",
+      "uploadFailedRetry": "Couldn't upload, tap to retry",
+      "videoTooBig": "Videos must be under 200 MB."
     },
     "composer": {
       "blocked": "Our auto-moderation held back this comment. Please edit it and try again.",

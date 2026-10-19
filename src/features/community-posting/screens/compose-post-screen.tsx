@@ -1,4 +1,4 @@
-import type { CreatePostFailure, CreatePostInput, PostableSpace, PostImage } from '@/features/community-posting/types';
+import type { CreatePostFailure, CreatePostInput, PostableSpace } from '@/features/community-posting/types';
 
 import Env from 'env';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -10,15 +10,14 @@ import { ActivityIndicator, Button, ChipRow, FormField, MonoLabel, ScreenHeader,
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { useCreatePost } from '@/features/community-posting/api/use-create-post';
 import { usePostableSpaces } from '@/features/community-posting/api/use-postable-spaces';
-import { ComposeImageRow } from '@/features/community-posting/components/compose-image-row';
-import { pickImage } from '@/features/community-posting/lib/pick-image';
+import { ComposeMediaStrip } from '@/features/community-posting/components/compose-media-strip';
+import { useComposeMedia } from '@/features/community-posting/lib/use-compose-media';
 import { translate } from '@/lib/i18n';
 import { getItem, setItem } from '@/lib/storage';
 
 const TITLE_MAX = 120;
 const BODY_MAX = 2000;
 const MIN_BODY_LENGTH = 10;
-const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 
 const FAILURE_KEY = {
   blocked: 'community.compose.failureBlocked',
@@ -186,31 +185,6 @@ function ComposeFooter({ errorMessage, isPending, canSubmit, onSubmit }: Compose
   );
 }
 
-function useComposeImageState() {
-  const [image, setImage] = React.useState<PostImage | null>(null);
-  const [imageError, setImageError] = React.useState<string | null>(null);
-
-  const onPickImage = React.useCallback(async () => {
-    const picked = await pickImage();
-    if (!picked) {
-      return;
-    }
-    if (picked.fileSize > MAX_IMAGE_BYTES) {
-      setImageError(translate('community.compose.imageTooBig'));
-      return;
-    }
-    setImageError(null);
-    setImage(picked);
-  }, []);
-
-  const onRemoveImage = React.useCallback(() => {
-    setImage(null);
-    setImageError(null);
-  }, []);
-
-  return { image, imageError, onPickImage, onRemoveImage };
-}
-
 // iOS presents this route as a page sheet, which already sits below the status
 // bar, so the root safe-area top inset would leave a gap above the header.
 function ComposeHeader({ onCancel }: { onCancel: () => void }) {
@@ -243,7 +217,7 @@ export function ComposePostScreen() {
   const [selectedSpaceId, setSelectedSpaceId] = useInitialSpaceId(member?.id, params.spaceId, spaces);
   const [title, setTitle] = React.useState('');
   const [body, setBody] = React.useState('');
-  const { image, imageError, onPickImage, onRemoveImage } = useComposeImageState();
+  const media = useComposeMedia(scope.organizationId);
 
   const refetchSpacesRef = React.useRef(spacesQuery.refetch);
   refetchSpacesRef.current = spacesQuery.refetch;
@@ -269,7 +243,7 @@ export function ComposePostScreen() {
       spaceId: selectedSpaceId,
       title: title.trim() || undefined,
       body: body.trim(),
-      image: image ?? undefined,
+      media: media.items.length > 0 ? media.items.map(item => ({ mediaToken: item.mediaToken! })) : undefined,
     };
     const result = await create(input);
     if (result?.ok === true) {
@@ -278,7 +252,7 @@ export function ComposePostScreen() {
       }
       router.replace(`/post/${result.post.spaceId}/${result.post.circlePostId}`);
     }
-  }, [selectedSpaceId, title, body, image, create, router, member?.id]);
+  }, [selectedSpaceId, title, body, media.items, create, router, member?.id]);
 
   if (!member) {
     return null;
@@ -315,11 +289,13 @@ export function ComposePostScreen() {
                   <SpaceChips spaces={spaces} selectedSpaceId={selectedSpaceId} onSelect={onSelectSpace} />
                   <ComposeFields title={title} onChangeTitle={setTitle} body={body} onChangeBody={setBody} />
                   <View className="mt-1">
-                    <ComposeImageRow
-                      image={image}
-                      imageError={imageError}
-                      onPickImage={() => void onPickImage()}
-                      onRemoveImage={onRemoveImage}
+                    <ComposeMediaStrip
+                      items={media.items}
+                      canAdd={media.canAdd}
+                      error={media.error}
+                      onAdd={() => void media.add()}
+                      onRemove={media.remove}
+                      onRetry={media.retry}
                     />
                   </View>
                 </>
@@ -327,7 +303,7 @@ export function ComposePostScreen() {
         <ComposeFooter
           errorMessage={failure ? translate(FAILURE_KEY[failure]) : null}
           isPending={isPending}
-          canSubmit={canSubmitPost(title, body) && Boolean(selectedSpaceId)}
+          canSubmit={canSubmitPost(title, body) && Boolean(selectedSpaceId) && !media.isBusy}
           onSubmit={() => void onSubmit()}
         />
       </ScrollView>
