@@ -10,6 +10,7 @@ import { CircleEmbedBlock } from '@/features/member-content/components/circle-em
 import { CircleFileBlock } from '@/features/member-content/components/circle-file-block';
 import { CircleImageBlock } from '@/features/member-content/components/circle-image-block';
 import { CircleUnsupportedBlock } from '@/features/member-content/components/circle-unsupported-block';
+import { ImageLightbox, OpenImageContext } from '@/features/member-content/components/image-lightbox';
 import { nonEmptyString, safeExternalUrl } from '@/features/member-content/lib/content-format';
 import { circleDocHasContent } from '@/features/member-content/tiptap/native-support';
 import { translate } from '@/lib/i18n';
@@ -32,19 +33,44 @@ function nodeKey(parentKey: string, node: HydratedNode, index: number): string {
   return `${parentKey}-${node.type ?? 'node'}-${identity ?? index}`;
 }
 
+/** Every image uri in the doc, in reading order (the lightbox pages through them). */
+function collectImageUris(node: HydratedNode | null, out: string[] = []): string[] {
+  if (!node)
+    return out;
+  if (node.type === 'image') {
+    const uri = nonEmptyString(node.attrs?.url) ?? nonEmptyString(node.attrs?.src);
+    if (uri)
+      out.push(uri);
+  }
+  node.content?.forEach(child => collectImageUris(child, out));
+  return out;
+}
+
 export function CircleTiptapRenderer({
   doc,
   onOpenUrl,
 }: CircleTiptapRendererProps) {
+  const imageUris = React.useMemo(() => collectImageUris(doc), [doc]);
+  const [openIndex, setOpenIndex] = React.useState<number | null>(null);
+  const openImage = React.useCallback((uri: string) => {
+    const index = imageUris.indexOf(uri);
+    setOpenIndex(index === -1 ? null : index);
+  }, [imageUris]);
+
   if (!circleDocHasContent(doc))
     return null;
 
   return (
-    <View style={styles.document}>
-      {doc.content?.map((node, index) =>
-        renderBlock(node, `${index}`, { onOpenUrl }),
-      )}
-    </View>
+    <OpenImageContext value={openImage}>
+      <View style={styles.document}>
+        {doc.content?.map((node, index) =>
+          renderBlock(node, `${index}`, { onOpenUrl }),
+        )}
+      </View>
+      {openIndex !== null
+        ? <ImageLightbox uris={imageUris} index={openIndex} onClose={() => setOpenIndex(null)} />
+        : null}
+    </OpenImageContext>
   );
 }
 
