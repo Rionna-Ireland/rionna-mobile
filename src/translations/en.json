@@ -132,7 +132,9 @@
       "unlikeAction": "Unlike"
     },
     "media": {
+      "closeImage": "Close image",
       "downloadFile": "Download file",
+      "openImage": "View image full screen",
       "unavailable": "Media unavailable",
       "unsupported": "Unsupported content: {{type}}",
       "unsupportedA11y": "Unsupported Circle content: {{type}}",

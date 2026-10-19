@@ -51,6 +51,8 @@ jest.mock('react-native-reanimated', () => {
       return sv;
     }),
     useAnimatedRef: jest.fn(() => ({ current: null })),
+    // GestureDetector (gesture-handler) attaches its handlers through this.
+    useEvent: jest.fn(() => jest.fn()),
     measure: jest.fn(() => null),
     useReducedMotion: jest.fn(() => false),
     withTiming: jest.fn(value => value),

@@ -1,7 +1,9 @@
+import type { HydratedNode } from '@/features/member-content/tiptap/hydrate';
+
 import { fireEvent, render, screen } from '@testing-library/react-native';
 
 import * as React from 'react';
-
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { CircleTiptapRenderer } from '@/features/member-content/components/circle-tiptap-renderer';
 import {
   EMBED_TIPTAP_BODY,
@@ -173,5 +175,28 @@ describe('circleTiptapRenderer file blocks', () => {
     expect(onOpenUrl).toHaveBeenCalledWith(
       'https://assets-v2.circle.so/gallops-notes.pdf',
     );
+  });
+
+  it('opens tapped images in a swipeable lightbox at that image', () => {
+    const doc = {
+      type: 'doc',
+      content: [
+        { type: 'image', attrs: { url: 'https://cdn.example/1.jpg' } },
+        { type: 'paragraph', content: [{ type: 'text', text: 'Between the photos' }] },
+        { type: 'image', attrs: { url: 'https://cdn.example/2.jpg' } },
+      ],
+    } as HydratedNode;
+    render(
+      <SafeAreaProvider initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: { top: 47, left: 0, right: 0, bottom: 34 } }}>
+        <CircleTiptapRenderer doc={doc} />
+      </SafeAreaProvider>,
+    );
+
+    expect(screen.queryByTestId('image-lightbox-count')).toBeNull();
+    fireEvent.press(screen.getAllByTestId('circle-image-open')[1]);
+    expect(screen.getByTestId('image-lightbox-count')).toHaveTextContent('2 / 2');
+
+    fireEvent.press(screen.getByTestId('image-lightbox-close'));
+    expect(screen.queryByTestId('image-lightbox-count')).toBeNull();
   });
 });

@@ -6,7 +6,10 @@ import { StyleSheet, View } from 'react-native';
 
 import colors from '@/components/ui/colors';
 import { Image } from '@/components/ui/image';
+import { MotionPressable } from '@/components/ui/pressable';
+import { OpenImageContext } from '@/features/member-content/components/image-lightbox';
 import { nonEmptyString } from '@/features/member-content/lib/content-format';
+import { translate } from '@/lib/i18n';
 
 type CircleImageBlockProps = {
   node: HydratedNode;
@@ -28,6 +31,7 @@ function imageAlignment(value: unknown) {
 
 /** Uses the shared Image: cream placeholder + fade-in like every remote image (A-009). */
 export function CircleImageBlock({ node }: CircleImageBlockProps) {
+  const openImage = React.use(OpenImageContext);
   const uri = nonEmptyString(node.attrs?.url) ?? nonEmptyString(node.attrs?.src);
   if (!uri)
     return null;
@@ -37,16 +41,31 @@ export function CircleImageBlock({ node }: CircleImageBlockProps) {
     width: imageWidth(node.attrs?.width),
   };
 
+  const image = (
+    <Image
+      testID="circle-image-content"
+      accessibilityLabel={nonEmptyString(node.attrs?.alt) ?? undefined}
+      cachePolicy="memory-disk"
+      contentFit="contain"
+      source={{ uri }}
+      style={styles.image}
+    />
+  );
+
   return (
     <View testID="circle-image" style={layoutStyle}>
-      <Image
-        testID="circle-image-content"
-        accessibilityLabel={nonEmptyString(node.attrs?.alt) ?? undefined}
-        cachePolicy="memory-disk"
-        contentFit="contain"
-        source={{ uri }}
-        style={styles.image}
-      />
+      {openImage
+        ? (
+            <MotionPressable
+              testID="circle-image-open"
+              accessibilityRole="imagebutton"
+              accessibilityLabel={translate('community.media.openImage')}
+              onPress={() => openImage(uri)}
+            >
+              {image}
+            </MotionPressable>
+          )
+        : image}
     </View>
   );
 }
