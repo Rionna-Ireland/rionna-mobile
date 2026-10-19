@@ -314,7 +314,7 @@ describe('composePostScreen media', () => {
     render(<ComposePostScreen />);
     await addPhoto();
     await act(async () => rejectUpload(new Error('boom')));
-    expect(screen.getByText('Couldn\'t upload, tap to retry')).toBeOnTheScreen();
+    expect(screen.getByText('Retry')).toBeOnTheScreen();
     expect(submitDisabled()).toBe(true);
 
     fireEvent.press(screen.getByLabelText('Couldn\'t upload, tap to retry'));
