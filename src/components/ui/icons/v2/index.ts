@@ -2,6 +2,7 @@ export * from './bell';
 export * from './calendar';
 export * from './caret-right';
 export * from './chat';
+export * from './close';
 export * from './home';
 export * from './horseshoe';
 export * from './pencil';

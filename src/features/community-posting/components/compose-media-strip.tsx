@@ -3,7 +3,9 @@ import type { ComposeMediaItem } from '@/features/community-posting/lib/use-comp
 import * as React from 'react';
 import { ScrollView, View } from 'react-native';
 
-import { Image, MotionPressable, Text } from '@/components/ui';
+import { Button, colors, IconButton, Image, MonoLabel, MotionPressable, ProgressBar, Text } from '@/components/ui';
+import { CloseV2, PlayV2 } from '@/components/ui/icons/v2';
+import { MAX_IMAGES, MAX_VIDEOS } from '@/features/community-posting/lib/limits';
 import { translate } from '@/lib/i18n';
 
 type ComposeMediaStripProps = {
@@ -23,77 +25,89 @@ function formatDuration(ms: number) {
 function Thumb({ item, onRemove, onRetry }: { item: ComposeMediaItem; onRemove: () => void; onRetry: () => void }) {
   const { media, status, progress } = item;
   return (
-    <View className="relative" testID={`compose-media-${item.id}`}>
-      <View className="size-24 overflow-hidden rounded-lg bg-ink">
-        {media.kind === 'image'
-          ? <Image source={{ uri: media.uri }} className="size-24" />
-          : (
-              <View className="size-24 items-center justify-center">
-                <Text variant="body" className="text-white">▶</Text>
-                {media.duration
-                  ? <Text variant="body-sm" className="absolute right-1 bottom-1 text-white">{formatDuration(media.duration)}</Text>
-                  : null}
-              </View>
-            )}
-        {status === 'uploading'
-          ? (
-              <View className="absolute inset-0 items-center justify-center bg-black/40">
-                <Text variant="body-sm" className="font-sans-semibold text-white">{`${Math.round(progress * 100)}%`}</Text>
-              </View>
-            )
-          : null}
-        {status === 'failed'
-          ? (
-              <MotionPressable
-                size="small"
-                testID={`compose-media-retry-${item.id}`}
-                accessibilityRole="button"
-                accessibilityLabel={translate('community.compose.uploadFailedRetry')}
-                onPress={onRetry}
-                className="absolute inset-0 items-center justify-center bg-black/60 p-1"
-              >
-                <Text variant="body-sm" className="text-center text-white">{translate('community.compose.uploadFailedRetry')}</Text>
-              </MotionPressable>
-            )
-          : null}
-      </View>
-      <MotionPressable
-        size="small"
+    <View className="size-28 overflow-hidden rounded-lg bg-secondary-container" testID={`compose-media-${item.id}`}>
+      {media.kind === 'image'
+        ? <Image source={{ uri: media.uri }} className="size-28" />
+        : (
+            <View className="size-28 items-center justify-center bg-ink">
+              <PlayV2 color={colors.white} size={28} />
+              {media.duration
+                ? <MonoLabel tone="white" className="absolute bottom-2 left-2">{formatDuration(media.duration)}</MonoLabel>
+                : null}
+            </View>
+          )}
+      {status === 'uploading'
+        ? (
+            <View className="absolute inset-x-0 bottom-0 bg-ink/40 p-2">
+              <ProgressBar
+                value={progress * 100}
+                tone="on-plum"
+                height={4}
+                accessibilityLabel={translate('community.compose.uploading')}
+              />
+            </View>
+          )
+        : null}
+      {status === 'failed'
+        ? (
+            <MotionPressable
+              size="small"
+              testID={`compose-media-retry-${item.id}`}
+              accessibilityRole="button"
+              accessibilityLabel={translate('community.compose.uploadFailedRetry')}
+              onPress={onRetry}
+              className="absolute inset-0 items-center justify-center bg-plum/80"
+            >
+              <MonoLabel tone="white">{translate('community.compose.retry')}</MonoLabel>
+            </MotionPressable>
+          )
+        : null}
+      <IconButton
+        variant="circle"
         testID={`compose-media-remove-${item.id}`}
-        accessibilityRole="button"
         accessibilityLabel={translate('community.compose.removeMedia')}
         onPress={onRemove}
-        hitSlop={8}
-        className="absolute -top-2 -right-2 size-6 items-center justify-center overflow-hidden rounded-full bg-primary"
+        className="absolute top-1.5 right-1.5"
       >
-        <Text variant="body-sm" className="font-sans-semibold text-white">×</Text>
-      </MotionPressable>
+        <CloseV2 size={16} strokeWidth={2} />
+      </IconButton>
     </View>
   );
 }
 
-/** Horizontal strip of picked photos/videos with upload state, remove, retry and an "Add" tile. */
+/** Composer photos/video: labelled thumbnail row with upload progress, retry and remove, then the add button. */
 export function ComposeMediaStrip({ items, canAdd, error, onAdd, onRemove, onRetry }: ComposeMediaStripProps) {
   return (
-    <View className="gap-2">
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3 pt-2 pr-2">
-        {items.map(item => (
-          <Thumb key={item.id} item={item} onRemove={() => onRemove(item.id)} onRetry={() => onRetry(item.id)} />
-        ))}
-        {canAdd
-          ? (
-              <MotionPressable
+    <View className="gap-3">
+      {items.length > 0
+        ? (
+            <>
+              <View className="flex-row justify-between">
+                <MonoLabel>{translate('community.compose.mediaLabel')}</MonoLabel>
+                <MonoLabel>{`${items.length}/${MAX_IMAGES + MAX_VIDEOS}`}</MonoLabel>
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="gap-3">
+                {items.map(item => (
+                  <Thumb key={item.id} item={item} onRemove={() => onRemove(item.id)} onRetry={() => onRetry(item.id)} />
+                ))}
+              </ScrollView>
+            </>
+          )
+        : null}
+      {canAdd
+        ? (
+            <View className="self-start">
+              <Button
                 testID="compose-media-add"
-                accessibilityRole="button"
-                accessibilityLabel={translate('community.compose.addMedia')}
+                variant="secondary"
+                size="md"
+                fullWidth={false}
+                label={translate(items.length > 0 ? 'community.compose.addMore' : 'community.compose.addMedia')}
                 onPress={onAdd}
-                className="size-24 items-center justify-center rounded-lg border border-dashed border-ink-variant"
-              >
-                <Text variant="body-sm" className="text-ink-variant">{translate('community.compose.addMedia')}</Text>
-              </MotionPressable>
-            )
-          : null}
-      </ScrollView>
+              />
+            </View>
+          )
+        : null}
       {error
         ? <Text variant="body-sm" className="text-plum">{error}</Text>
         : null}

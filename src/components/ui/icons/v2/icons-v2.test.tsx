@@ -12,7 +12,7 @@ const names = Object.keys(icons).filter(k => k.endsWith('V2')) as (keyof typeof 
 describe('v2 icons', () => {
   it('exports the expected set', () => {
     expect(names.sort()).toEqual(
-      ['BellV2', 'CalendarV2', 'CaretRightV2', 'ChatV2', 'HomeV2', 'HorseshoeV2', 'PencilV2', 'PlayV2', 'StarV2', 'WalletV2'],
+      ['BellV2', 'CalendarV2', 'CaretRightV2', 'ChatV2', 'CloseV2', 'HomeV2', 'HorseshoeV2', 'PencilV2', 'PlayV2', 'StarV2', 'WalletV2'],
     );
   });
 

@@ -64,6 +64,7 @@
     },
     "compose": {
       "addMedia": "Add photo or video",
+      "addMore": "Add more",
       "bodyA11y": "Post body",
       "bodyPlaceholder": "What's on your mind?",
       "cancel": "Cancel",
@@ -74,11 +75,13 @@
       "failureRateLimited": "You've posted a lot today — try again later.",
       "imageTooBig": "Photos must be under 10 MB.",
       "kicker": "New post",
+      "mediaLabel": "Photos & video",
       "noSpaces": "You can't post in any spaces yet.",
       "post": "Post",
       "postIn": "Post in",
       "posting": "Posting…",
       "removeMedia": "Remove",
+      "retry": "Retry",
       "spacesFailed": "Couldn't load your spaces.",
       "titleA11y": "Post title",
       "titlePlaceholder": "Title (optional)",
@@ -86,6 +89,7 @@
       "tooManyVideos": "You can add one video per post.",
       "unsupportedType": "That file type isn't supported. Use JPEG, PNG, WebP or HEIC photos, or MP4 or MOV video.",
       "uploadFailedRetry": "Couldn't upload, tap to retry",
+      "uploading": "Uploading",
       "videoTooBig": "Videos must be under 200 MB."
     },
     "composer": {
