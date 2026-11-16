@@ -10,6 +10,7 @@ const mockSetToken = jest.fn();
 const mockSetUser = jest.fn();
 const mockRemoveToken = jest.fn();
 const mockRemoveUser = jest.fn();
+const mockPost = jest.fn();
 
 jest.mock('expo-router', () => ({
   useRouter: () => ({ replace: mockReplace }),
@@ -29,6 +30,10 @@ jest.mock('@/lib/auth/utils', () => ({
   setUser: (...args: unknown[]) => mockSetUser(...args),
   removeToken: () => mockRemoveToken(),
   removeUser: () => mockRemoveUser(),
+}));
+
+jest.mock('@/lib/api/client', () => ({
+  client: { post: (...args: unknown[]) => mockPost(...args) },
 }));
 
 jest.mock('./use-auth-store', () => ({
@@ -66,6 +71,7 @@ describe('loginScreen', () => {
     mockSetUser.mockReset();
     mockRemoveToken.mockReset();
     mockRemoveUser.mockReset();
+    mockPost.mockReset().mockResolvedValue({});
   });
 
   it('does not flip signIn until membership bootstrap succeeds', async () => {
@@ -96,5 +102,19 @@ describe('loginScreen', () => {
     expect(mockRemoveUser).toHaveBeenCalled();
     expect(mockSignIn).not.toHaveBeenCalled();
     expect(mockReplace).not.toHaveBeenCalled();
+  });
+
+  it('ends the server session before dropping the token when the membership check fails', async () => {
+    mockBootstrap.mockRejectedValue(new Error('not a member'));
+    mockPost.mockImplementation(() => {
+      expect(mockRemoveToken).not.toHaveBeenCalled();
+      return Promise.reject(new Error('offline'));
+    });
+
+    render(<LoginScreen />);
+    fireEvent.press(screen.getByTestId('login-success'));
+
+    await waitFor(() => expect(mockRemoveToken).toHaveBeenCalled());
+    expect(mockPost).toHaveBeenCalledWith('/api/auth/sign-out');
   });
 });

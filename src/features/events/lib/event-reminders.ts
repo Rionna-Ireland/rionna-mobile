@@ -153,6 +153,17 @@ export async function cancelEventReminder(eventId: string): Promise<ReminderOutc
   }
 }
 
+/** Sign-out (M-19): the next member on this device must not inherit these reminders. */
+export async function clearAllEventReminders(): Promise<void> {
+  cache = {};
+  try {
+    void storageModule()?.removeItem(STORAGE_KEY);
+  }
+  catch {}
+  listeners.forEach(listener => listener());
+  await notifications()?.cancelAllScheduledNotificationsAsync();
+}
+
 function subscribe(listener: () => void) {
   listeners.add(listener);
   return () => {

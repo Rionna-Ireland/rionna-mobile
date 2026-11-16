@@ -5,6 +5,7 @@ import * as React from 'react';
 
 import { FocusAwareStatusBar, ScreenBackground, View } from '@/components/ui';
 import { useArrival } from '@/features/arrival/arrival-context';
+import { client } from '@/lib/api/client';
 import { bootstrapMobileOrganization } from '@/lib/auth/mobile-org-bootstrap';
 import { removeToken, removeUser, setToken, setUser } from '@/lib/auth/utils';
 import { LoginForm } from './components/login-form';
@@ -28,6 +29,8 @@ export function LoginScreen() {
       beginWelcome({ id: data.user.id, name: data.user.name }, () => router.replace('/'));
     }
     catch (error) {
+      // Login created a server session; end it, not just the local copy (M-02).
+      await client.post('/api/auth/sign-out').catch(() => {});
       removeToken();
       removeUser();
       throw error;
