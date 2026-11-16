@@ -38,9 +38,13 @@ export function setToken(value: TokenType): void {
   secureStore().setItem(TOKEN_KEY, value);
 }
 
+/** Never throws: sign-out and hydrate must always reach 'signOut'. */
 export function removeToken(): void {
-  void secureStore().deleteItemAsync(TOKEN_KEY).catch(() => {});
-  void removeItem(TOKEN_KEY);
+  try {
+    void secureStore().deleteItemAsync(TOKEN_KEY).catch(() => {});
+  }
+  catch {}
+  Promise.resolve(removeItem(TOKEN_KEY)).catch(() => {});
 }
 
 export function getUser(): AuthUser | null {

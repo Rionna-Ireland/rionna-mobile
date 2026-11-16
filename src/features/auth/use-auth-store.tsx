@@ -145,9 +145,9 @@ const _useAuthStore = create<AuthState>((set, get) => ({
   signOut: () => {
     if (pendingSignOut)
       return pendingSignOut;
-    pendingSignOut = (async () => {
+    const run = (async () => {
+      const signedInMember = get().user;
       try {
-        const signedInMember = get().user;
         // Both calls need the bearer token, so they go before it is dropped.
         await unregisterPushToken();
         await client.post('/api/auth/sign-out', undefined, { timeout: SIGN_OUT_TIMEOUT_MS }).catch(() => {});
@@ -158,14 +158,22 @@ const _useAuthStore = create<AuthState>((set, get) => ({
 
         removeToken();
         removeUser();
+      }
+      catch (e) {
+        console.warn('[auth] Sign-out step failed (continuing logout):', e);
+      }
+      // Drop the in-memory token and unmount member screens before clearing
+      // their caches, so nothing refetches the previous member's data.
+      set({ status: 'signOut', token: null, user: null });
+      try {
         await clearMemberData(signedInMember);
-        set({ status: 'signOut', token: null, user: null });
       }
       finally {
         pendingSignOut = null;
       }
     })();
-    return pendingSignOut;
+    pendingSignOut = run;
+    return run;
   },
   hydrate: () => {
     try {
@@ -188,7 +196,9 @@ const _useAuthStore = create<AuthState>((set, get) => ({
     }
     catch (e) {
       console.error('Auth hydration error:', e);
-      get().signOut();
+      // Local only, no network before the login screen (M-04).
+      removeToken();
+      set({ status: 'signOut' });
     }
   },
 }));
