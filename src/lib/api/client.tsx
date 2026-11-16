@@ -1,6 +1,7 @@
 import axios from 'axios';
 import Env from 'env';
 import { getAuthStatus, signOut } from '@/features/auth/use-auth-store';
+import { isMembershipInactiveError, openMembershipEnded } from '@/features/membership/lib/membership-ended';
 import { getToken } from '@/lib/auth/utils';
 
 function getApiOrigin() {
@@ -35,6 +36,10 @@ client.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401 && getAuthStatus() === 'signIn') {
       void signOut();
+    }
+    // S17-02: a lapsed member stays signed in; route once instead of per-screen errors.
+    if (isMembershipInactiveError(error) && getAuthStatus() === 'signIn') {
+      openMembershipEnded();
     }
     return Promise.reject(error);
   },
