@@ -171,14 +171,18 @@ const _useAuthStore = create<AuthState>((set, get) => ({
     try {
       const userToken = getToken();
       const userData = getUser();
-      if (userToken !== null) {
+      // Keychain outlives an iOS uninstall; MMKV (the user) does not, so a
+      // token without a user is a leftover from a previous install.
+      if (userToken !== null && userData !== null) {
         set({ status: 'signIn', token: userToken, user: userData });
         bootstrapMobileOrganization().catch((e) => {
           console.warn('Mobile organization bootstrap failed during hydration:', e);
         });
       }
       else {
-        // Nothing to clean up, and no network before the login screen (M-04).
+        // No network before the login screen (M-04).
+        if (userToken !== null)
+          removeToken();
         set({ status: 'signOut' });
       }
     }
@@ -196,6 +200,14 @@ export function signOut() {
 }
 export function signIn(token: TokenType, user: AuthUser) {
   return _useAuthStore.getState().signIn(token, user);
+}
+/** The in-memory token every request sends (M-01: never read from storage per request). */
+export function getAuthToken() {
+  return _useAuthStore.getState().token;
+}
+/** Login: hold the token in memory for the membership check, persist only on signIn. */
+export function stageAuthToken(token: TokenType | null) {
+  _useAuthStore.setState({ token });
 }
 export function getAuthStatus() {
   return _useAuthStore.getState().status;

@@ -158,6 +158,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       backgroundColor: '#172741', // ink navy behind the lilac submark; takes effect at next native build
     },
     package: Env.EXPO_PUBLIC_PACKAGE,
+    // M-01: keep app data (MMKV, offline snapshots) out of Android backups. Native change.
+    allowBackup: false,
     // S14-02 §4: platform predictive back (Android 13+). Native change: ships with the S14 binary.
     predictiveBackGestureEnabled: true,
   },

@@ -1,3 +1,5 @@
+import type * as SecureStoreType from 'expo-secure-store';
+
 import { getItem, removeItem, setItem } from '@/lib/storage';
 
 const TOKEN_KEY = 'auth-token';
@@ -12,16 +14,33 @@ export type AuthUser = {
   lastActiveOrganizationId?: string | null;
 };
 
+// M-01: the bearer token lives in Keychain / Keystore, not plain MMKV.
+// Required lazily (native module, house rule: no top-level access).
+function secureStore(): typeof SecureStoreType {
+  return require('expo-secure-store');
+}
+
+/** Read once at hydrate; requests use the zustand copy. */
 export function getToken(): TokenType | null {
-  return getItem<TokenType>(TOKEN_KEY);
+  const token = secureStore().getItem(TOKEN_KEY);
+  if (token)
+    return token;
+  // One-time migration for installs from before S17-03 (token in MMKV).
+  const legacy = getItem<TokenType>(TOKEN_KEY);
+  if (legacy) {
+    secureStore().setItem(TOKEN_KEY, legacy);
+    void removeItem(TOKEN_KEY);
+  }
+  return legacy;
 }
 
 export function setToken(value: TokenType): void {
-  setItem<TokenType>(TOKEN_KEY, value);
+  secureStore().setItem(TOKEN_KEY, value);
 }
 
 export function removeToken(): void {
-  removeItem(TOKEN_KEY);
+  void secureStore().deleteItemAsync(TOKEN_KEY).catch(() => {});
+  void removeItem(TOKEN_KEY);
 }
 
 export function getUser(): AuthUser | null {

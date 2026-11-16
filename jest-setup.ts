@@ -108,6 +108,16 @@ jest.mock('expo-localization', () => ({
 // Mock expo-clipboard
 jest.mock('expo-clipboard', () => ({ setStringAsync: jest.fn(() => Promise.resolve(true)) }));
 
+// Mock expo-secure-store (Keychain / Keystore) with an in-memory map
+jest.mock('expo-secure-store', () => {
+  const items = new Map<string, string>();
+  return {
+    getItem: jest.fn((key: string) => items.get(key) ?? null),
+    setItem: jest.fn((key: string, value: string) => void items.set(key, value)),
+    deleteItemAsync: jest.fn(async (key: string) => void items.delete(key)),
+  };
+});
+
 // Mock react-native-mmkv
 jest.mock('react-native-mmkv', () => ({
   MMKV: jest.fn(() => ({

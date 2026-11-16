@@ -1,6 +1,7 @@
 import type { AxiosAdapter, InternalAxiosRequestConfig } from 'axios';
 
 import * as Notifications from 'expo-notifications';
+import * as SecureStore from 'expo-secure-store';
 
 import { hydrateAuth, signOut, useAuthStore } from '@/features/auth/use-auth-store';
 import { client } from '@/lib/api/client';
@@ -81,6 +82,31 @@ describe('hydrate', () => {
     await flush();
     expect(calls).toEqual([]);
     expect(Notifications.getExpoPushTokenAsync).not.toHaveBeenCalled();
+  });
+});
+
+describe('hydrate with a stored token (M-01)', () => {
+  it('signs in from SecureStore and sends that token from memory', async () => {
+    SecureStore.setItem('auth-token', 'token-a');
+    (getItem as jest.Mock).mockImplementation(key => (key === 'auth-user' ? { id: 'member-a', email: 'a@example.com' } : null));
+
+    hydrateAuth();
+    await client.get('/api/me/membership');
+
+    expect(useAuthStore.getState().status).toBe('signIn');
+    expect(calls.at(-1)?.authorization).toBe('Bearer token-a');
+    await SecureStore.deleteItemAsync('auth-token');
+  });
+
+  it('treats a Keychain token without a user (iOS reinstall) as signed out', async () => {
+    SecureStore.setItem('auth-token', 'leftover');
+
+    hydrateAuth();
+    await flush();
+
+    expect(useAuthStore.getState().status).toBe('signOut');
+    expect(SecureStore.getItem('auth-token')).toBeNull();
+    expect(calls).toEqual([]);
   });
 });
 
