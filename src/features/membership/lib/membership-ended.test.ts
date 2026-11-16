@@ -61,6 +61,14 @@ describe('membership_inactive handling', () => {
     expect(router.push).toHaveBeenCalledTimes(2);
   });
 
+  it('does not reopen from background badge polls', async () => {
+    respondWith(403, inactiveBody);
+    await client.get('/api/inbox/badge-count').catch(() => {});
+    await client.get('/api/circle/notification-badge-count').catch(() => {});
+
+    expect(router.push).not.toHaveBeenCalled();
+  });
+
   it('ignores other 403s and lapses seen before sign-in completes', async () => {
     respondWith(403, { code: 'FORBIDDEN', status: 403 });
     await client.get('/api/admin').catch(() => {});

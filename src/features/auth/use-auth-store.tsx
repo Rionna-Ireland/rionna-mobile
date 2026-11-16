@@ -87,6 +87,9 @@ async function clearMemberData(signedInMember: AuthUser | null): Promise<void> {
   }
 }
 
+// Sign-out must finish on a bad network: each network step gives up after this.
+const SIGN_OUT_TIMEOUT_MS = 5000;
+
 /**
  * Best-effort push unregister. Runs while the token is still held, and the
  * backend also accepts it without a session (M-06) so the 401 tear-down path
@@ -106,11 +109,12 @@ async function unregisterPushToken(): Promise<void> {
     return;
 
   try {
-    const token = await Notifications.getExpoPushTokenAsync({
-      projectId: Constants.expoConfig?.extra?.eas?.projectId,
-    });
+    const token = await Promise.race([
+      Notifications.getExpoPushTokenAsync({ projectId: Constants.expoConfig?.extra?.eas?.projectId }),
+      new Promise<null>(resolve => setTimeout(resolve, SIGN_OUT_TIMEOUT_MS, null)),
+    ]);
     if (token?.data)
-      await client.post('/api/push/unregister', { expoPushToken: token.data });
+      await client.post('/api/push/unregister', { expoPushToken: token.data }, { timeout: SIGN_OUT_TIMEOUT_MS });
   }
   catch (e) {
     console.warn('Failed to unregister Expo push token:', e);
@@ -146,7 +150,7 @@ const _useAuthStore = create<AuthState>((set, get) => ({
         const signedInMember = get().user;
         // Both calls need the bearer token, so they go before it is dropped.
         await unregisterPushToken();
-        await client.post('/api/auth/sign-out').catch(() => {});
+        await client.post('/api/auth/sign-out', undefined, { timeout: SIGN_OUT_TIMEOUT_MS }).catch(() => {});
 
         // Best-effort cleanup of any legacy Circle WebView state a device
         // upgrading from a pre-native build may still be carrying.

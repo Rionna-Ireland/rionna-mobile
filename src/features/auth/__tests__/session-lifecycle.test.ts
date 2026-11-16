@@ -31,7 +31,7 @@ jest.mock('@/features/community/lib/circle-cookie-clear', () => ({
   clearCircleWebViewCookies: jest.fn(() => Promise.resolve('cleared')),
 }));
 
-type Call = { method: string; url: string; authorization?: string };
+type Call = { method: string; url: string; authorization?: string; timeout?: number };
 let calls: Call[] = [];
 let respond: (config: InternalAxiosRequestConfig) => { status: number; data?: unknown } | Error;
 
@@ -40,6 +40,7 @@ const adapter: AxiosAdapter = async (config) => {
     method: (config.method ?? 'get').toUpperCase(),
     url: config.url ?? '',
     authorization: config.headers?.Authorization as string | undefined,
+    timeout: config.timeout,
   });
   const result = respond(config);
   if (result instanceof Error)
@@ -97,6 +98,23 @@ describe('401 tear-down', () => {
     expect(useAuthStore.getState().status).toBe('signOut');
   });
 
+  it('ignores a late 401 for a token that is no longer current', async () => {
+    signInAs('token-a');
+    respond = (config) => {
+      if (config.url !== '/api/content/slow')
+        return { status: 200 };
+      signInAs('token-b'); // password change / account switch lands meanwhile
+      return { status: 401 };
+    };
+
+    await client.get('/api/content/slow').catch(() => {});
+    await flush();
+
+    expect(calls[0].authorization).toBe('Bearer token-a');
+    expect(signOutCalls()).toHaveLength(0);
+    expect(useAuthStore.getState()).toMatchObject({ status: 'signIn', token: 'token-b' });
+  });
+
   it('does not sign out on a 401 from the login request', async () => {
     useAuthStore.setState({ status: 'signOut' });
     respond = () => ({ status: 401 });
@@ -115,7 +133,7 @@ describe('signOut', () => {
 
     await signOut();
 
-    expect(signOutCalls()).toEqual([{ method: 'POST', url: '/api/auth/sign-out', authorization: 'Bearer token-a' }]);
+    expect(signOutCalls()).toEqual([{ method: 'POST', url: '/api/auth/sign-out', authorization: 'Bearer token-a', timeout: 5000 }]);
     expect(useAuthStore.getState()).toMatchObject({ status: 'signOut', token: null, user: null });
   });
 
@@ -127,6 +145,28 @@ describe('signOut', () => {
 
     expect(signOutCalls()).toHaveLength(1);
     expect(useAuthStore.getState().status).toBe('signOut');
+  });
+
+  it('bounds every sign-out network step so a bad network cannot hang it', async () => {
+    signInAs('token-a');
+    jest.useFakeTimers();
+    try {
+      (Notifications.getExpoPushTokenAsync as jest.Mock).mockReturnValueOnce(new Promise(() => {}));
+      const done = signOut();
+      await jest.advanceTimersByTimeAsync(5000);
+      await done;
+    }
+    finally {
+      jest.useRealTimers();
+    }
+
+    expect(useAuthStore.getState().status).toBe('signOut');
+    expect(signOutCalls()[0].timeout).toBe(5000);
+
+    calls = [];
+    signInAs('token-a');
+    await signOut();
+    expect(unregisterCalls()[0].timeout).toBe(5000);
   });
 
   it('leaves no query cache or scheduled reminders behind', async () => {

@@ -10,6 +10,14 @@ export function isMembershipInactiveError(error: unknown): boolean {
   return response?.status === 403 && response.data?.data?.reason === 'membership_inactive';
 }
 
+// Badge syncs run on every foreground; they fail quietly instead of
+// reopening the screen each time the app comes back.
+const BACKGROUND_POLLS = ['/api/inbox/badge-count', '/api/circle/notification-badge-count'];
+
+export function isBackgroundPoll(url: string | undefined): boolean {
+  return !!url && BACKGROUND_POLLS.includes(url.split('?')[0]);
+}
+
 // One push per lapse: the many content queries that 403 together must not
 // stack screens. The screen re-arms this on unmount.
 let isOpen = false;
