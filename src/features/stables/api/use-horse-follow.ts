@@ -32,14 +32,14 @@ export async function sendHorseFollow(
 ): Promise<SetHorseFollowResult> {
   if (following) {
     const { data } = await client.post<{ ok?: boolean; inviteOnly?: boolean }>(
-      `/api/horses/${horseId}/follow`,
+      `/api/horses/${encodeURIComponent(horseId)}/follow`,
     );
     if (data?.ok === false && data?.inviteOnly === true) {
       throw new InviteOnlyFollowError();
     }
   }
   else {
-    await client.delete(`/api/horses/${horseId}/follow`);
+    await client.delete(`/api/horses/${encodeURIComponent(horseId)}/follow`);
   }
   return { isFollowing: following };
 }
