@@ -9,7 +9,7 @@ export function useHorse(horseId: string | undefined) {
   return useQuery({
     queryKey: [STABLES_QUERY_ROOT, horseId],
     queryFn: async () => {
-      const { data } = await client.get(`/api/horses/${horseId}`);
+      const { data } = await client.get(`/api/horses/${encodeURIComponent(horseId ?? '')}`);
       return data as HorseDetail;
     },
     enabled: !!horseId,

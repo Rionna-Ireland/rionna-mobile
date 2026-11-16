@@ -18,7 +18,7 @@ export function useNewsPost(slug: string) {
   return useQuery({
     queryKey: ['news-post', slug],
     queryFn: async () => {
-      const { data } = await client.get(`/api/news/${slug}`, {
+      const { data } = await client.get(`/api/news/${encodeURIComponent(slug)}`, {
         params: { organizationId: Env.EXPO_PUBLIC_CLUB_ID },
       });
       return data as NewsPost;

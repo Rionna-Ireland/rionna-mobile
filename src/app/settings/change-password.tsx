@@ -15,6 +15,7 @@ import {
 } from '@/components/ui';
 import { getFieldError } from '@/components/ui/form-utils';
 import { describeAuthError } from '@/features/auth/lib/auth-error';
+import { signIn, useAuthStore } from '@/features/auth/use-auth-store';
 import { PageHeader } from '@/features/settings/components/page-header';
 import { client } from '@/lib/api/client';
 import { translate } from '@/lib/i18n';
@@ -78,11 +79,15 @@ export default function ChangePasswordScreen() {
     onSubmit: async ({ value }) => {
       setError(null);
       try {
-        await client.post('/api/auth/change-password', {
+        // M-09: end every other session; Better Auth also replaces this one and returns its token.
+        const { data } = await client.post('/api/auth/change-password', {
           currentPassword: value.currentPassword,
           newPassword: value.newPassword,
-          revokeOtherSessions: false,
+          revokeOtherSessions: true,
         });
+        const user = useAuthStore.getState().user;
+        if (data?.token && user)
+          signIn(data.token, user);
         setSuccess(true);
         setTimeout(() => router.back(), 800);
       }

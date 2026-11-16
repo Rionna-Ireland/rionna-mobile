@@ -6,10 +6,12 @@ import Env from 'env';
 import Constants from 'expo-constants';
 import { create } from 'zustand';
 import { clearCircleWebViewCookies } from '@/features/community/lib/circle-cookie-clear';
-import { clearEventsStorage } from '@/features/events/lib/events-logout';
-import { clearMemberContentForMember } from '@/features/member-content/lib/member-content-logout';
-import { clearInboxStorage } from '@/features/notification-centre/lib/inbox-logout';
+import { EVENTS_SNAPSHOT_PREFIX } from '@/features/events/api/use-events';
+import { clearAllEventReminders } from '@/features/events/lib/event-reminders';
+import { clearMemberContentCache } from '@/features/member-content/cache/member-content-cache';
+import { INBOX_SNAPSHOT_PREFIX } from '@/features/notification-centre/api/use-inbox';
 import { client } from '@/lib/api/client';
+import { queryClient } from '@/lib/api/query-client';
 import { bootstrapMobileOrganization } from '@/lib/auth/mobile-org-bootstrap';
 import {
   getToken,
@@ -19,7 +21,7 @@ import {
   setToken,
   setUser,
 } from '@/lib/auth/utils';
-import { removeItem } from '@/lib/storage';
+import { removeItem, removeItemsWithPrefix } from '@/lib/storage';
 import { createSelectors } from '@/lib/utils';
 
 // Legacy MMKV keys from the retired Circle WebView build (S6-03/S6-04). The
@@ -62,39 +64,65 @@ async function clearLegacyCircleState(): Promise<void> {
 }
 
 /**
- * Clear every per-member feature cache on sign-out (member content, events,
- * notification centre): best-effort, so one feature's failure never blocks
- * the rest or logout itself. Call AFTER the Circle session teardown.
+ * Leave nothing of this member behind (M-05, M-19): every in-memory query, the
+ * MMKV offline snapshots and scheduled event reminders. Best-effort per step,
+ * so one failure never blocks the rest or logout itself.
  */
-function clearFeatureCaches(signedInMember: AuthUser | null): void {
-  if (signedInMember) {
-    try {
-      clearMemberContentForMember({
-        organizationId: Env.EXPO_PUBLIC_CLUB_ID,
-        memberId: signedInMember.id,
-      });
-    }
-    catch (e) {
-      console.warn('[auth] Failed to clear member content (continuing logout):', e);
-    }
-  }
-
-  // Clear every persisted events snapshot (any member/org) + the in-memory
-  // events query cache so the next member on this device starts clean.
+async function clearMemberData(signedInMember: AuthUser | null): Promise<void> {
+  queryClient.clear();
   try {
-    clearEventsStorage();
+    if (signedInMember)
+      clearMemberContentCache({ organizationId: Env.EXPO_PUBLIC_CLUB_ID, memberId: signedInMember.id });
+    removeItemsWithPrefix(EVENTS_SNAPSHOT_PREFIX);
+    removeItemsWithPrefix(INBOX_SNAPSHOT_PREFIX);
   }
   catch (e) {
-    console.warn('[auth] Failed to clear events cache (continuing logout):', e);
+    console.warn('[auth] Failed to clear offline snapshots (continuing logout):', e);
   }
-
   try {
-    clearInboxStorage();
+    await clearAllEventReminders();
   }
   catch (e) {
-    console.warn('[auth] Failed to clear notification centre cache (continuing logout):', e);
+    console.warn('[auth] Failed to clear event reminders (continuing logout):', e);
   }
 }
+
+// Sign-out must finish on a bad network: each network step gives up after this.
+const SIGN_OUT_TIMEOUT_MS = 5000;
+
+/**
+ * Best-effort push unregister. Runs while the token is still held, and the
+ * backend also accepts it without a session (M-06) so the 401 tear-down path
+ * still stops this device getting the old member's pushes.
+ */
+async function unregisterPushToken(): Promise<void> {
+  // Lazy-require native modules so sign-out still works on a dev client that
+  // hasn't been rebuilt with expo-device / expo-notifications yet.
+  let Device: typeof DeviceType | null = null;
+  let Notifications: typeof NotificationsType | null = null;
+  try {
+    Device = require('expo-device');
+    Notifications = require('expo-notifications');
+  }
+  catch {}
+  if (!Device?.isDevice || !Notifications)
+    return;
+
+  try {
+    const token = await Promise.race([
+      Notifications.getExpoPushTokenAsync({ projectId: Constants.expoConfig?.extra?.eas?.projectId }),
+      new Promise<null>(resolve => setTimeout(resolve, SIGN_OUT_TIMEOUT_MS, null)),
+    ]);
+    if (token?.data)
+      await client.post('/api/push/unregister', { expoPushToken: token.data }, { timeout: SIGN_OUT_TIMEOUT_MS });
+  }
+  catch (e) {
+    console.warn('Failed to unregister Expo push token:', e);
+  }
+}
+
+// Every 401 calls signOut (M-08): concurrent callers share one tear-down.
+let pendingSignOut: Promise<void> | null = null;
 
 type AuthState = {
   token: TokenType | null;
@@ -114,53 +142,30 @@ const _useAuthStore = create<AuthState>((set, get) => ({
     setUser(user);
     set({ status: 'signIn', token, user });
   },
-  signOut: async () => {
-    const signedInMember = get().user;
-    // Lazy-require native modules so sign-out still works on a dev client that
-    // hasn't been rebuilt with expo-device / expo-notifications yet.
-    let Device: typeof DeviceType | null = null;
-    let Notifications: typeof NotificationsType | null = null;
-    try {
-      Device = require('expo-device');
-    }
-    catch {}
-    try {
-      Notifications = require('expo-notifications');
-    }
-    catch {}
-
-    if (Device?.isDevice && Notifications) {
-      let expoPushToken: string | null = null;
+  signOut: () => {
+    if (pendingSignOut)
+      return pendingSignOut;
+    pendingSignOut = (async () => {
       try {
-        const token = await Notifications.getExpoPushTokenAsync({
-          projectId: Constants.expoConfig?.extra?.eas?.projectId,
-        });
-        expoPushToken = token?.data ?? null;
+        const signedInMember = get().user;
+        // Both calls need the bearer token, so they go before it is dropped.
+        await unregisterPushToken();
+        await client.post('/api/auth/sign-out', undefined, { timeout: SIGN_OUT_TIMEOUT_MS }).catch(() => {});
+
+        // Best-effort cleanup of any legacy Circle WebView state a device
+        // upgrading from a pre-native build may still be carrying.
+        await clearLegacyCircleState();
+
+        removeToken();
+        removeUser();
+        await clearMemberData(signedInMember);
+        set({ status: 'signOut', token: null, user: null });
       }
-      catch (e) {
-        console.warn('Failed to get Expo push token during sign-out:', e);
+      finally {
+        pendingSignOut = null;
       }
-
-      if (expoPushToken) {
-        try {
-          await client.post('/api/push/unregister', { expoPushToken });
-        }
-        catch (e) {
-          console.warn('Failed to unregister Expo push token:', e);
-        }
-      }
-    }
-
-    // Best-effort cleanup of any legacy Circle WebView state a device
-    // upgrading from a pre-native build may still be carrying. Never blocks
-    // logout.
-    await clearLegacyCircleState();
-
-    clearFeatureCaches(signedInMember);
-
-    removeToken();
-    removeUser();
-    set({ status: 'signOut', token: null, user: null });
+    })();
+    return pendingSignOut;
   },
   hydrate: () => {
     try {
@@ -173,7 +178,8 @@ const _useAuthStore = create<AuthState>((set, get) => ({
         });
       }
       else {
-        get().signOut();
+        // Nothing to clean up, and no network before the login screen (M-04).
+        set({ status: 'signOut' });
       }
     }
     catch (e) {

@@ -82,6 +82,12 @@ describe('sendHorseFollow', () => {
     expect(mockPost).not.toHaveBeenCalled();
   });
 
+  it('encodes a deep-linked horse id so it cannot reach another API path (M-20)', async () => {
+    mockDelete.mockResolvedValue({ data: {} });
+    await sendHorseFollow({ horseId: '../me', following: false });
+    expect(mockDelete).toHaveBeenCalledWith('/api/horses/..%2Fme/follow');
+  });
+
   it('rejects when the backend refuses an invite-only follow', async () => {
     mockPost.mockResolvedValue({ data: { ok: false, inviteOnly: true } });
     await expect(sendHorseFollow({ horseId: 'horse-1', following: true })).rejects.toThrow();

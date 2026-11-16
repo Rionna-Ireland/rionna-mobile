@@ -1,6 +1,7 @@
 import axios from 'axios';
 import Env from 'env';
 import { getAuthStatus, signOut } from '@/features/auth/use-auth-store';
+import { isBackgroundPoll, isMembershipInactiveError, openMembershipEnded } from '@/features/membership/lib/membership-ended';
 import { getToken } from '@/lib/auth/utils';
 
 function getApiOrigin() {
@@ -33,8 +34,15 @@ client.interceptors.request.use((config) => {
 client.interceptors.response.use(
   response => response,
   (error) => {
-    if (error.response?.status === 401 && getAuthStatus() === 'signIn') {
+    // Only for the current token: a late 401 for a replaced one (password
+    // change, account switch) must not end the new session.
+    const sentToken = error.config?.headers?.Authorization;
+    if (error.response?.status === 401 && getAuthStatus() === 'signIn' && sentToken === `Bearer ${getToken()}`) {
       void signOut();
+    }
+    // S17-02: a lapsed member stays signed in; route once instead of per-screen errors.
+    if (isMembershipInactiveError(error) && !isBackgroundPoll(error.config?.url) && getAuthStatus() === 'signIn') {
+      openMembershipEnded();
     }
     return Promise.reject(error);
   },

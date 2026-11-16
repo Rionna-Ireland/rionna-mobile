@@ -299,6 +299,12 @@
     },
     "yardKicker": "Today at the yard"
   },
+  "membershipEnded": {
+    "body": "Club content is paused while your membership is inactive. You can still manage your account from your profile. If you think this is a mistake, email hello@rionna.com.",
+    "kicker": "Membership",
+    "profile": "Go to profile",
+    "title": "Your membership has ended"
+  },
   "nav": {
     "back": "Back",
     "cancel": "Cancel",

@@ -1,9 +1,7 @@
 import { clearCircleWebViewCookies } from '@/features/community/lib/circle-cookie-clear';
-import { clearEventsStorage } from '@/features/events/lib/events-logout';
-import { clearMemberContentForMember } from '@/features/member-content/lib/member-content-logout';
-import { clearInboxStorage } from '@/features/notification-centre/lib/inbox-logout';
+import { clearMemberContentCache } from '@/features/member-content/cache/member-content-cache';
 import { client } from '@/lib/api/client';
-import { removeItem } from '@/lib/storage';
+import { removeItem, removeItemsWithPrefix } from '@/lib/storage';
 
 import { signOut, useAuthStore } from './use-auth-store';
 
@@ -27,16 +25,8 @@ jest.mock('@/features/community/lib/circle-cookie-clear', () => ({
   clearCircleWebViewCookies: jest.fn().mockResolvedValue('cleared'),
 }));
 
-jest.mock('@/features/events/lib/events-logout', () => ({
-  clearEventsStorage: jest.fn(),
-}));
-
-jest.mock('@/features/member-content/lib/member-content-logout', () => ({
-  clearMemberContentForMember: jest.fn(),
-}));
-
-jest.mock('@/features/notification-centre/lib/inbox-logout', () => ({
-  clearInboxStorage: jest.fn(),
+jest.mock('@/features/member-content/cache/member-content-cache', () => ({
+  clearMemberContentCache: jest.fn(),
 }));
 
 jest.mock('expo-device', () => ({
@@ -48,14 +38,15 @@ describe('signOut', () => {
     jest.clearAllMocks();
   });
 
-  it('clears legacy Circle keys, clears WebView cookies, clears feature caches and never revokes a server-side Circle session', async () => {
+  it('clears legacy Circle keys, clears WebView cookies, clears offline snapshots and never revokes a server-side Circle session', async () => {
     await signOut();
 
     expect(removeItem).toHaveBeenCalledWith('circle.session.v1');
     expect(removeItem).toHaveBeenCalledWith('circle.communityBaseUrl.v1');
     expect(clearCircleWebViewCookies).toHaveBeenCalled();
-    expect(clearInboxStorage).toHaveBeenCalled();
-    expect(clearEventsStorage).toHaveBeenCalled();
+    expect(removeItemsWithPrefix).toHaveBeenCalledWith('inbox-snapshot:');
+    expect(removeItemsWithPrefix).toHaveBeenCalledWith('events-snapshot:');
+    expect(removeItem).toHaveBeenCalledWith('event-reminders');
     expect(client.post).not.toHaveBeenCalledWith(
       '/api/circle/revoke-session',
       expect.anything(),
@@ -80,7 +71,7 @@ describe('signOut', () => {
 
     await signOut();
 
-    expect(clearMemberContentForMember).toHaveBeenCalledWith({
+    expect(clearMemberContentCache).toHaveBeenCalledWith({
       organizationId: 'org-1',
       memberId: 'member-1',
     });

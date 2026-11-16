@@ -7,8 +7,10 @@ import { EVENTS_QUERY_ROOT } from '@/features/events/types';
 import { client } from '@/lib/api/client';
 import { getItem, setItem } from '@/lib/storage';
 
+export const EVENTS_SNAPSHOT_PREFIX = 'events-snapshot:';
+
 function snapshotKey(scope: MemberContentScope, eventScope: EventScope) {
-  return `events-snapshot:${scope.organizationId}:${scope.memberId}:${eventScope}`;
+  return `${EVENTS_SNAPSHOT_PREFIX}${scope.organizationId}:${scope.memberId}:${eventScope}`;
 }
 
 export async function fetchEvents(
