@@ -5,6 +5,7 @@ import {
   setCachedMemberFeed,
   setCachedMemberPost,
 } from '@/features/member-content/cache/member-content-cache';
+import { setItem } from '@/lib/storage';
 
 const mockStore = new Map<string, unknown>();
 
@@ -129,12 +130,15 @@ describe('member content cache', () => {
     expect(getCachedMemberPost(postLocator('post-50'), NOW + 100)).not.toBeNull();
   });
 
-  it('promotes an opened post so LRU eviction keeps it', () => {
+  it('promotes a refetched post so eviction keeps it, without a write on read', () => {
     for (let index = 0; index < 50; index += 1) {
       setCachedMemberPost(postLocator(`post-${index}`), postDetail(`post-${index}`), NOW + index);
     }
 
+    const setItemCalls = (setItem as jest.Mock).mock.calls.length;
     getCachedMemberPost(postLocator('post-0'), NOW + 100);
+    expect((setItem as jest.Mock).mock.calls.length).toBe(setItemCalls);
+    setCachedMemberPost(postLocator('post-0'), postDetail('post-0'), NOW + 100);
     setCachedMemberPost(postLocator('post-50'), postDetail('post-50'), NOW + 101);
 
     expect(getCachedMemberPost(postLocator('post-0'), NOW + 102)).not.toBeNull();

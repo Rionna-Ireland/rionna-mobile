@@ -16,9 +16,8 @@ export const MEMBER_CONTENT_CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const MAX_CACHED_POSTS = 50;
 
 type FeedEntry = CachedContent<MemberFeedItem[]>;
-type PostEntry = CachedContent<MemberPostDetail> & {
-  lastAccessedAt: number;
-};
+// Older envelopes also carry `lastAccessedAt`; it is ignored now (M-15).
+type PostEntry = CachedContent<MemberPostDetail>;
 
 type MemberContentEnvelope = {
   schemaVersion: typeof CACHE_SCHEMA_VERSION;
@@ -48,10 +47,13 @@ function postKey(spaceId: string, postId: string): string {
   return `${encodeURIComponent(spaceId)}:${encodeURIComponent(postId)}`;
 }
 
+// Keeps the most recently fetched posts. Opening a post online refetches and
+// rewrites it, so that is also the most recently opened; a read alone no longer
+// writes the snapshot back (M-15).
 function cappedPosts(posts: Record<string, PostEntry>): Record<string, PostEntry> {
   return Object.fromEntries(
     Object.entries(posts)
-      .sort(([, left], [, right]) => right.lastAccessedAt - left.lastAccessedAt)
+      .sort(([, left], [, right]) => right.fetchedAt - left.fetchedAt)
       .slice(0, MAX_CACHED_POSTS),
   );
 }
@@ -149,7 +151,6 @@ function isPostEntry(value: unknown): value is PostEntry {
   return (
     isRecord(value)
     && Number.isFinite(value.fetchedAt)
-    && Number.isFinite(value.lastAccessedAt)
     && isPostDetail(value.data)
   );
 }
@@ -215,21 +216,10 @@ export function getCachedMemberPost(
   locator: MemberPostCacheLocator,
   now: number = Date.now(),
 ): CachedContent<MemberPostDetail> | null {
-  const scope = locator;
-  const envelope = readEnvelope(scope);
-  const key = postKey(locator.spaceId, locator.postId);
-  const post = envelope?.posts[key] ?? null;
-  if (!envelope || !post || now >= post.fetchedAt + MEMBER_CONTENT_CACHE_TTL_MS) {
+  const post = readEnvelope(locator)?.posts[postKey(locator.spaceId, locator.postId)] ?? null;
+  if (!post || now >= post.fetchedAt + MEMBER_CONTENT_CACHE_TTL_MS) {
     return null;
   }
-
-  void setItem<MemberContentEnvelope>(cacheKey(scope), {
-    ...envelope,
-    posts: {
-      ...envelope.posts,
-      [key]: { ...post, lastAccessedAt: now },
-    },
-  });
   return { data: post.data, fetchedAt: post.fetchedAt };
 }
 
@@ -245,7 +235,7 @@ export function setCachedMemberPost(
     ...envelope,
     posts: cappedPosts({
       ...envelope.posts,
-      [key]: { data, fetchedAt, lastAccessedAt: fetchedAt },
+      [key]: { data, fetchedAt },
     }),
   });
 }
