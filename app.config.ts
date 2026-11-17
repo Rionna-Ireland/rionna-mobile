@@ -158,6 +158,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       backgroundColor: '#172741', // ink navy behind the lilac submark; takes effect at next native build
     },
     package: Env.EXPO_PUBLIC_PACKAGE,
+    // M-03: Firebase config for FCM push, from the GOOGLE_SERVICES_JSON EAS file variable (never committed).
+    // Unset in local builds, which then have no Android push. Native change.
+    googleServicesFile: process.env.GOOGLE_SERVICES_JSON,
+    // M-01: keep app data (MMKV, offline snapshots) out of Android backups. Native change.
+    allowBackup: false,
     // S14-02 §4: platform predictive back (Android 13+). Native change: ships with the S14 binary.
     predictiveBackGestureEnabled: true,
   },

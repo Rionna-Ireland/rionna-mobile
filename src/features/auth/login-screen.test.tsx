@@ -6,9 +6,8 @@ import { LoginScreen } from './login-screen';
 const mockReplace = jest.fn();
 const mockSignIn = jest.fn();
 const mockBootstrap = jest.fn();
-const mockSetToken = jest.fn();
+const mockStageToken = jest.fn();
 const mockSetUser = jest.fn();
-const mockRemoveToken = jest.fn();
 const mockRemoveUser = jest.fn();
 const mockPost = jest.fn();
 
@@ -26,9 +25,7 @@ jest.mock('@/lib/auth/mobile-org-bootstrap', () => ({
 }));
 
 jest.mock('@/lib/auth/utils', () => ({
-  setToken: (...args: unknown[]) => mockSetToken(...args),
   setUser: (...args: unknown[]) => mockSetUser(...args),
-  removeToken: () => mockRemoveToken(),
   removeUser: () => mockRemoveUser(),
 }));
 
@@ -37,6 +34,7 @@ jest.mock('@/lib/api/client', () => ({
 }));
 
 jest.mock('./use-auth-store', () => ({
+  stageAuthToken: (...args: unknown[]) => mockStageToken(...args),
   useAuthStore: {
     use: {
       signIn: () => mockSignIn,
@@ -67,9 +65,8 @@ describe('loginScreen', () => {
     mockReplace.mockReset();
     mockSignIn.mockReset();
     mockBootstrap.mockReset();
-    mockSetToken.mockReset();
+    mockStageToken.mockReset();
     mockSetUser.mockReset();
-    mockRemoveToken.mockReset();
     mockRemoveUser.mockReset();
     mockPost.mockReset().mockResolvedValue({});
   });
@@ -83,7 +80,7 @@ describe('loginScreen', () => {
     render(<LoginScreen />);
     fireEvent.press(screen.getByTestId('login-success'));
 
-    await waitFor(() => expect(mockSetToken).toHaveBeenCalledWith('tok'));
+    await waitFor(() => expect(mockStageToken).toHaveBeenCalledWith('tok'));
     expect(mockBootstrap).toHaveBeenCalledWith({ verifyMembership: true });
     expect(mockSignIn).not.toHaveBeenCalled();
 
@@ -98,7 +95,7 @@ describe('loginScreen', () => {
     render(<LoginScreen />);
     fireEvent.press(screen.getByTestId('login-success'));
 
-    await waitFor(() => expect(mockRemoveToken).toHaveBeenCalled());
+    await waitFor(() => expect(mockStageToken).toHaveBeenLastCalledWith(null));
     expect(mockRemoveUser).toHaveBeenCalled();
     expect(mockSignIn).not.toHaveBeenCalled();
     expect(mockReplace).not.toHaveBeenCalled();
@@ -107,14 +104,14 @@ describe('loginScreen', () => {
   it('ends the server session before dropping the token when the membership check fails', async () => {
     mockBootstrap.mockRejectedValue(new Error('not a member'));
     mockPost.mockImplementation(() => {
-      expect(mockRemoveToken).not.toHaveBeenCalled();
+      expect(mockStageToken).not.toHaveBeenCalledWith(null);
       return Promise.reject(new Error('offline'));
     });
 
     render(<LoginScreen />);
     fireEvent.press(screen.getByTestId('login-success'));
 
-    await waitFor(() => expect(mockRemoveToken).toHaveBeenCalled());
+    await waitFor(() => expect(mockStageToken).toHaveBeenLastCalledWith(null));
     expect(mockPost).toHaveBeenCalledWith('/api/auth/sign-out');
   });
 });
