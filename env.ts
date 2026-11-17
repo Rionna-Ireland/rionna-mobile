@@ -57,6 +57,12 @@ const _env: z.infer<typeof envSchema> = {
   EXPO_PUBLIC_COMMUNITY_DOMAIN: process.env.EXPO_PUBLIC_COMMUNITY_DOMAIN,
 };
 
+// M-10: a production bundle (EAS build, `eas update`, or the app at launch) must never
+// talk to a non-https API, e.g. a laptop .env pointing at localhost.
+if (_env.EXPO_PUBLIC_APP_ENV === 'production' && !_env.EXPO_PUBLIC_API_URL.startsWith('https://')) {
+  throw new Error(`EXPO_PUBLIC_API_URL must be https:// in production (got "${_env.EXPO_PUBLIC_API_URL}"). Publish OTA updates with pnpm update:production.`);
+}
+
 function getValidatedEnv(env: z.infer<typeof envSchema>) {
   const parsed = envSchema.safeParse(env);
 

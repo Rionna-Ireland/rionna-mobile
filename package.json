@@ -36,6 +36,8 @@
     "build:preview:android": "eas build --profile preview --platform android",
     "build:production:ios": "eas build --profile production --platform ios",
     "build:production:android": "eas build --profile production --platform android",
+    "update:production": "node scripts/eas-update.mjs production",
+    "update:staging": "node scripts/eas-update.mjs staging",
     "prepare": "husky",
     "app-release": "cross-env SKIP_BRANCH_PROTECTION=true np --no-publish --no-cleanup --no-release-draft",
     "lint": "eslint .",

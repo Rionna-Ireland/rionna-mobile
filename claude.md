@@ -70,6 +70,7 @@ pnpm lint                 # ESLint (+ lint:translations for i18n JSON)
 pnpm type-check           # tsc --noemit
 pnpm check-all            # lint + type-check + translations + tests
 pnpm prebuild:development # Expo prebuild with strict env validation
+pnpm update:production     # the ONLY way to publish a production OTA (never raw `eas update`)
 ```
 
 ## Conventions
