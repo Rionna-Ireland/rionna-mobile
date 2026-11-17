@@ -15,6 +15,8 @@ function getApiOrigin() {
 
 export const client = axios.create({
   baseURL: Env.EXPO_PUBLIC_API_URL,
+  // M-07: RN Android has no default timeout, so a dead connection spins forever.
+  timeout: 15000,
 });
 
 // Attach auth token to every request
