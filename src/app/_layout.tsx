@@ -72,7 +72,8 @@ function useNotificationRegistration(status: ReturnType<typeof useAuth.use.statu
     if (status === 'signIn') {
       registerForPushNotifications()
         .then(() => syncNotificationBadgeCount())
-        .catch(() => {});
+        // M-03: a failed registration means no pushes on this device; never fail silently.
+        .catch(err => console.warn('Push registration failed', err));
     }
     if (status === 'signOut') {
       clearNotificationBadgeCount().catch(() => {});
