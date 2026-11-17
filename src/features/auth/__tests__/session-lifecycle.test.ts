@@ -28,9 +28,6 @@ jest.mock('@/lib/storage', () => ({
 jest.mock('@/lib/auth/mobile-org-bootstrap', () => ({
   bootstrapMobileOrganization: jest.fn(() => Promise.resolve()),
 }));
-jest.mock('@/features/community/lib/circle-cookie-clear', () => ({
-  clearCircleWebViewCookies: jest.fn(() => Promise.resolve('cleared')),
-}));
 
 type Call = { method: string; url: string; authorization?: string; timeout?: number };
 let calls: Call[] = [];

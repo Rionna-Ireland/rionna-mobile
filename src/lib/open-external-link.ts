@@ -21,10 +21,14 @@ catch {
  * settings legal links, etc.
  */
 export function openExternalLink(url: string) {
-  if (WebBrowser) {
-    WebBrowser.openBrowserAsync(url).catch(() => {});
+  if (/^https?:/i.test(url)) {
+    if (WebBrowser)
+      WebBrowser.openBrowserAsync(url).catch(() => {});
+    else
+      Linking.openURL(url).catch(() => {});
   }
-  else {
+  // mailto: and tel: go to the OS; any other scheme is ignored.
+  else if (/^(?:mailto|tel):/i.test(url)) {
     Linking.openURL(url).catch(() => {});
   }
 }

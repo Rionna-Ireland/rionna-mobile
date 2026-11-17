@@ -1,4 +1,3 @@
-import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 import type { TileSpec } from '@/components/brand/pattern';
 import type { AddToCalendarOutcome } from '@/features/events/lib/add-to-calendar';
 import type { ReminderOutcome } from '@/features/events/lib/event-reminders';
@@ -7,7 +6,7 @@ import type { ClubEvent } from '@/features/events/types';
 import Env from 'env';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
-import { Alert, Linking, Share, StyleSheet, Switch } from 'react-native';
+import { Alert, Share, StyleSheet, Switch } from 'react-native';
 
 import { PatternFill } from '@/components/brand/pattern';
 import {
@@ -27,6 +26,7 @@ import {
 import colors from '@/components/ui/colors';
 import { CaretRightV2 } from '@/components/ui/icons/v2';
 import { useScreenTopPadding } from '@/components/ui/screen-layout';
+import { usePastHeader } from '@/components/ui/use-past-header';
 import { useAuthStore } from '@/features/auth/use-auth-store';
 import { RsvpError, useEventRsvp } from '@/features/events/api/use-event-rsvp';
 import { findEventById, useEvents } from '@/features/events/api/use-events';
@@ -292,22 +292,6 @@ function RemindCard({
   );
 }
 
-/** Status bar flips to dark once the plum header has scrolled out from under it (A-012). */
-function usePastHeader() {
-  const topInset = useScreenTopPadding(0);
-  const headerHeight = React.useRef(0);
-  const [pastHeader, setPastHeader] = React.useState(false);
-  const onHeaderHeight = React.useCallback((height: number) => {
-    headerHeight.current = height;
-  }, []);
-  const onScroll = React.useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
-    const height = headerHeight.current;
-    const next = height > 0 && e.nativeEvent.contentOffset.y > height - topInset;
-    setPastHeader(prev => (prev === next ? prev : next));
-  }, [topInset]);
-  return { pastHeader, onHeaderHeight, onScroll };
-}
-
 /**
  * Going -> confirm before giving up the spot (A-045): a limited-capacity race
  * day is costly to lose on a stray tap. Going in stays one tap.
@@ -383,7 +367,7 @@ function EventDetailBody({
               ? (
                   <CircleTiptapRenderer
                     doc={hydratedDoc}
-                    onOpenUrl={url => void Linking.openURL(url)}
+                    onOpenUrl={openExternalLink}
                   />
                 )
               : event.bodyText

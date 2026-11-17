@@ -41,26 +41,3 @@ export type LatestResult = {
     };
   };
 };
-
-export type TrainerUpdate = {
-  id: string;
-  horseId: string;
-  horseName: string;
-  title: string;
-  bodyText: string;
-  publishedAt: string;
-};
-
-export type CircleFeedItem = {
-  id: string;
-  kind: 'news' | 'post';
-  title: string;
-  excerpt: string | null;
-  createdAt: string | null;
-  spaceName: string | null;
-  authorName: string | null;
-  commentCount: number;
-  likeCount: number;
-  imageUrl: string | null;
-  url: string | null;
-};

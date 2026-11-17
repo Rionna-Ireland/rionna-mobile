@@ -10,9 +10,9 @@ export function isMembershipInactiveError(error: unknown): boolean {
   return response?.status === 403 && response.data?.data?.reason === 'membership_inactive';
 }
 
-// Badge syncs run on every foreground; they fail quietly instead of
+// The badge sync runs on every foreground; it fails quietly instead of
 // reopening the screen each time the app comes back.
-const BACKGROUND_POLLS = ['/api/inbox/badge-count', '/api/circle/notification-badge-count'];
+const BACKGROUND_POLLS = ['/api/inbox/badge-count'];
 
 export function isBackgroundPoll(url: string | undefined): boolean {
   return !!url && BACKGROUND_POLLS.includes(url.split('?')[0]);

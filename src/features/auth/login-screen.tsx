@@ -22,8 +22,9 @@ export function LoginScreen() {
     stageAuthToken(data.token);
     setUser(data.user);
     try {
-      await bootstrapMobileOrganization({ verifyMembership: true });
-      signIn(data.token, data.user);
+      const clubId = await bootstrapMobileOrganization({ verifyMembership: true });
+      // Keep the club bootstrap just recorded, so the next cold start skips it (M-16).
+      signIn(data.token, clubId ? { ...data.user, lastActiveOrganizationId: clubId } : data.user);
       // S14-04: the welcome covers this screen, Home mounts underneath, and the
       // mark hands off to Home's header once Home is ready.
       beginWelcome({ id: data.user.id, name: data.user.name }, () => router.replace('/'));

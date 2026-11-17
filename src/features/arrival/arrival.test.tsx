@@ -1,10 +1,9 @@
-import { act, render, screen } from '@testing-library/react-native';
+import { render, screen } from '@testing-library/react-native';
 import { useVideoPlayer } from 'expo-video';
 import * as React from 'react';
 
 import { ArrivalSplash } from './arrival-splash';
 import { LoginMedia } from './login-media';
-import { WelcomeLoader } from './welcome-loader';
 import { firstName } from './welcome-name';
 
 jest.mock('@/components/ui', () => {
@@ -22,32 +21,6 @@ describe('firstName', () => {
     expect(firstName(undefined)).toBeNull();
     expect(firstName(null)).toBeNull();
     expect(firstName('   ')).toBeNull();
-  });
-});
-
-describe('welcomeLoader', () => {
-  beforeEach(() => jest.useFakeTimers());
-  afterEach(() => jest.useRealTimers());
-
-  it('shows the first name on a second line', () => {
-    render(<WelcomeLoader name="Sarah Kavanagh" />);
-    expect(screen.getByTestId('welcome-name')).toHaveTextContent('Sarah');
-    expect(screen.queryByText(/Kavanagh/)).toBeNull();
-  });
-
-  it('shows Welcome alone without a name', () => {
-    render(<WelcomeLoader />);
-    expect(screen.getByTestId('welcome-heading')).toHaveTextContent('Welcome');
-    expect(screen.queryByTestId('welcome-name')).toBeNull();
-  });
-
-  it('calls onReady only after the minimum duration', () => {
-    const onReady = jest.fn();
-    render(<WelcomeLoader name="Sarah" onReady={onReady} />);
-    act(() => jest.advanceTimersByTime(599));
-    expect(onReady).not.toHaveBeenCalled();
-    act(() => jest.advanceTimersByTime(1));
-    expect(onReady).toHaveBeenCalledTimes(1);
   });
 });
 

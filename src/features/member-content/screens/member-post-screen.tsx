@@ -10,7 +10,7 @@ import { HeaderHeightContext } from '@react-navigation/elements';
 import Env from 'env';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { KeyboardAvoidingView } from 'react-native-keyboard-controller';
 
 import {
@@ -45,6 +45,7 @@ import { hydrateCircleDoc } from '@/features/member-content/tiptap/hydrate';
 import { circleDocHasContent } from '@/features/member-content/tiptap/native-support';
 import { translate } from '@/lib/i18n';
 import { SkeletonSwap } from '@/lib/motion';
+import { openExternalLink } from '@/lib/open-external-link';
 
 const REPORT_EXCERPT_MAX = 200;
 
@@ -337,7 +338,7 @@ function SignedInMemberPost({
         post={post.data}
         contentState={post.contentState}
         isLoading={post.isLoading}
-        onOpenUrl={url => void Linking.openURL(url)}
+        onOpenUrl={openExternalLink}
         onRetry={() => void post.refetch()}
         onRefresh={() => Promise.all([post.refetch(), comments.refetch()])}
         onRetryComments={() => void comments.refetch()}

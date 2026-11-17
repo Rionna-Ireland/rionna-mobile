@@ -1,14 +1,12 @@
-import type { QueryClient, QueryKey } from '@tanstack/react-query';
+import type { QueryClient } from '@tanstack/react-query';
 
-import type {
-  InsideTrackResult,
-  MemberContentScope,
-  MemberFeedItem,
-  MemberPostDetail,
-} from '@/features/member-content/types';
+import type { PostCacheSnapshot } from '@/features/member-content/api/post-cache';
+
+import type { MemberContentScope } from '@/features/member-content/types';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
+import { patchPostInCaches } from '@/features/member-content/api/post-cache';
 import { MEMBER_CONTENT_QUERY_ROOT } from '@/features/member-content/types';
 import { client } from '@/lib/api/client';
 
@@ -22,8 +20,6 @@ export type SetPostLikeResult = {
   liked: boolean;
   likeCount: number | null;
 };
-
-export type LikeSnapshot = [QueryKey, unknown];
 
 export async function sendPostLike(
   scope: MemberContentScope,
@@ -51,94 +47,17 @@ function flipCounts<T extends { likeCount: number; isLiked: boolean }>(
   };
 }
 
-/** Returns the same array when nothing changes so callers can skip snapshots. */
-export function applyLikeToFeedItems(
-  items: MemberFeedItem[],
-  postId: string,
-  liked: boolean,
-): MemberFeedItem[] {
-  if (!items.some(item => item.id === postId && item.isLiked !== liked)) {
-    return items;
-  }
-  return items.map(item =>
-    item.id === postId && item.isLiked !== liked ? flipCounts(item, liked) : item,
-  );
-}
-
-/** Returns the same object when the detail is not the target (or already matches). */
-export function applyLikeToPostDetail(
-  post: MemberPostDetail,
-  postId: string,
-  liked: boolean,
-): MemberPostDetail {
-  if (post.id !== postId || post.isLiked === liked) {
-    return post;
-  }
-  return flipCounts(post, liked);
-}
-
-function isFeedItems(data: unknown): data is MemberFeedItem[] {
-  return Array.isArray(data);
-}
-
-function isPostDetail(data: unknown): data is MemberPostDetail {
-  return Boolean(data) && typeof data === 'object' && !Array.isArray(data)
-    && typeof (data as MemberPostDetail).id === 'string'
-    && typeof (data as MemberPostDetail).isLiked === 'boolean';
-}
-
-/**
- * The Inside Track query caches `{ ok, configured, pinned, latest }` — not a
- * bare feed array or a post detail — so it fell through both guards above
- * and never got the optimistic flip applied (or reconciled on settle).
- */
-function isInsideTrackResult(data: unknown): data is InsideTrackResult {
-  return Boolean(data) && typeof data === 'object' && !Array.isArray(data)
-    && typeof (data as InsideTrackResult).ok === 'boolean'
-    && typeof (data as InsideTrackResult).configured === 'boolean'
-    && Array.isArray((data as InsideTrackResult).pinned)
-    && Array.isArray((data as InsideTrackResult).latest);
-}
-
 /**
  * Optimistically flips the post in every member-content cache it appears in
- * (merged feed, space feeds, post detail) and returns snapshots of the
- * caches that changed, for rollback on error.
+ * and returns snapshots of the caches that changed, for rollback on error.
  */
 export function applyOptimisticLike(
   queryClient: QueryClient,
   postId: string,
   liked: boolean,
-): LikeSnapshot[] {
-  const snapshots: LikeSnapshot[] = [];
-  const entries = queryClient.getQueriesData<unknown>({
-    queryKey: [MEMBER_CONTENT_QUERY_ROOT],
-  });
-  for (const [queryKey, data] of entries) {
-    if (isFeedItems(data)) {
-      const next = applyLikeToFeedItems(data, postId, liked);
-      if (next !== data) {
-        snapshots.push([queryKey, data]);
-        queryClient.setQueryData(queryKey, next);
-      }
-    }
-    else if (isPostDetail(data)) {
-      const next = applyLikeToPostDetail(data, postId, liked);
-      if (next !== data) {
-        snapshots.push([queryKey, data]);
-        queryClient.setQueryData(queryKey, next);
-      }
-    }
-    else if (isInsideTrackResult(data)) {
-      const nextPinned = applyLikeToFeedItems(data.pinned, postId, liked);
-      const nextLatest = applyLikeToFeedItems(data.latest, postId, liked);
-      if (nextPinned !== data.pinned || nextLatest !== data.latest) {
-        snapshots.push([queryKey, data]);
-        queryClient.setQueryData(queryKey, { ...data, pinned: nextPinned, latest: nextLatest });
-      }
-    }
-  }
-  return snapshots;
+): PostCacheSnapshot[] {
+  return patchPostInCaches(queryClient, postId, post =>
+    post.isLiked === liked ? post : flipCounts(post, liked));
 }
 
 /**
@@ -153,44 +72,15 @@ export function reconcileLikeCount(
   if (likeCount === null) {
     return;
   }
-  const entries = queryClient.getQueriesData<unknown>({
-    queryKey: [MEMBER_CONTENT_QUERY_ROOT],
-  });
-  for (const [queryKey, data] of entries) {
-    if (isFeedItems(data)) {
-      if (!data.some(item => item.id === postId
-        && (item.isLiked !== liked || item.likeCount !== likeCount))) {
-        continue;
-      }
-      queryClient.setQueryData(
-        queryKey,
-        data.map(item => (item.id === postId ? { ...item, isLiked: liked, likeCount } : item)),
-      );
-    }
-    else if (isPostDetail(data)) {
-      if (data.id !== postId || (data.isLiked === liked && data.likeCount === likeCount)) {
-        continue;
-      }
-      queryClient.setQueryData(queryKey, { ...data, isLiked: liked, likeCount });
-    }
-    else if (isInsideTrackResult(data)) {
-      const matches = (item: MemberFeedItem) =>
-        item.id === postId && (item.isLiked !== liked || item.likeCount !== likeCount);
-      if (!data.pinned.some(matches) && !data.latest.some(matches)) {
-        continue;
-      }
-      queryClient.setQueryData(queryKey, {
-        ...data,
-        pinned: data.pinned.map(item => (item.id === postId ? { ...item, isLiked: liked, likeCount } : item)),
-        latest: data.latest.map(item => (item.id === postId ? { ...item, isLiked: liked, likeCount } : item)),
-      });
-    }
-  }
+  patchPostInCaches(queryClient, postId, post =>
+    post.isLiked === liked && post.likeCount === likeCount
+      ? post
+      : { ...post, isLiked: liked, likeCount });
 }
 
 export function rollbackOptimisticLike(
   queryClient: QueryClient,
-  snapshots: LikeSnapshot[],
+  snapshots: PostCacheSnapshot[],
 ): void {
   for (const [queryKey, data] of snapshots) {
     queryClient.setQueryData(queryKey, data);
