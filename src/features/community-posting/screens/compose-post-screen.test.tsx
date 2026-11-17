@@ -55,6 +55,11 @@ jest.mock('@/features/community-posting/api/use-postable-spaces', () => ({
   usePostableSpaces: () => mockUsePostableSpaces(),
 }));
 
+let mockFeedChips: { id: string; label: string; kind: string; spaceIds: string[] }[] | undefined;
+jest.mock('@/features/member-content/api/use-feed-chips', () => ({
+  useFeedChips: () => ({ data: mockFeedChips ? { ok: true, chips: mockFeedChips } : undefined }),
+}));
+
 let mockFailure: string | null = null;
 const mockCreate = jest.fn();
 const mockUseCreatePost = jest.fn(() => ({ create: mockCreate, isPending: false, failure: mockFailure }));
@@ -95,6 +100,7 @@ describe('composePostScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockParams = {};
+    mockFeedChips = undefined;
     mockFailure = null;
     mockUseAuthStoreUser.mockReturnValue(MEMBER);
     mockUsePostableSpaces.mockReturnValue({ data: { ok: true, spaces: SPACES }, refetch: mockRefetch, isError: false, isPending: false, isSuccess: true });
@@ -184,12 +190,26 @@ describe('composePostScreen', () => {
     render(<ComposePostScreen />);
     expect(screen.getByTestId('compose-post-space-space-2').props.accessibilityState).toEqual(expect.objectContaining({ selected: true }));
   });
+
+  it('orders the space chips like the community feed chips', () => {
+    mockFeedChips = [
+      { id: 'all', label: 'All', kind: 'all', spaceIds: [] },
+      { id: 'space:space-2', label: 'Club News', kind: 'space', spaceIds: ['space-2'] },
+      { id: 'horses', label: 'Horses', kind: 'horses', spaceIds: ['space-1'] },
+    ];
+    render(<ComposePostScreen />);
+    expect(screen.getAllByTestId(/^compose-post-space-space-\d$/).map(chip => chip.props.testID)).toEqual([
+      'compose-post-space-space-2',
+      'compose-post-space-space-1',
+    ]);
+  });
 });
 
 describe('composePostScreen spaces status', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockParams = {};
+    mockFeedChips = undefined;
     mockFailure = null;
     mockUseAuthStoreUser.mockReturnValue(MEMBER);
     mockUsePostableSpaces.mockReturnValue({ data: { ok: true, spaces: SPACES }, refetch: mockRefetch, isError: false, isPending: false, isSuccess: true });
@@ -235,6 +255,7 @@ describe('composePostScreen last-used space', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockParams = {};
+    mockFeedChips = undefined;
     mockFailure = null;
     mockUseAuthStoreUser.mockReturnValue(MEMBER);
     mockUsePostableSpaces.mockReturnValue({ data: { ok: true, spaces: SPACES }, refetch: mockRefetch, isError: false, isPending: false, isSuccess: true });

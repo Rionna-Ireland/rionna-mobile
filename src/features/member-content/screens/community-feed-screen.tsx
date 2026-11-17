@@ -236,7 +236,7 @@ function SignedInCommunityFeed({ member }: { member: AuthUser }) {
         selectedChipId={chipSelection.selectedId}
         onSelectChip={chipSelection.select}
         emptyCopy={emptyCopyForChip(chipSelection.selectedChip)}
-        headerRight={<NewPostButton scope={scope} />}
+        headerRight={<NewPostButton scope={scope} spaceIds={chipSelection.selectedChip?.spaceIds} />}
         featuredCard={featuredCard}
         onOpenFeaturedCard={() => featuredCard && router.push(featuredCardHref(featuredCard))}
       />

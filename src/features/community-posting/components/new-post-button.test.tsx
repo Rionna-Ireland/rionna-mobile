@@ -50,4 +50,24 @@ describe('newPostButton', () => {
     fireEvent.press(button);
     expect(mockPush).toHaveBeenCalledWith('/post/new');
   });
+
+  it('preselects the first postable space of the selected feed chip', () => {
+    mockUsePostableSpaces.mockReturnValue({
+      data: { ok: true, spaces: [{ id: 'space-1', name: 'Laska', emoji: null, isHorse: true }] },
+      isError: false,
+    });
+    render(<NewPostButton scope={SCOPE} spaceIds={['space-9', 'space-1']} />);
+    fireEvent.press(screen.getByTestId('new-post-button'));
+    expect(mockPush).toHaveBeenCalledWith('/post/new?spaceId=space-1');
+  });
+
+  it('falls back to the default when the selected chip has no postable space', () => {
+    mockUsePostableSpaces.mockReturnValue({
+      data: { ok: true, spaces: [{ id: 'space-1', name: 'Laska', emoji: null, isHorse: true }] },
+      isError: false,
+    });
+    render(<NewPostButton scope={SCOPE} spaceIds={['space-9']} />);
+    fireEvent.press(screen.getByTestId('new-post-button'));
+    expect(mockPush).toHaveBeenCalledWith('/post/new');
+  });
 });

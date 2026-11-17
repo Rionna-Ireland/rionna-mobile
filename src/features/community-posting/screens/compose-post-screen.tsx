@@ -1,4 +1,5 @@
 import type { CreatePostFailure, CreatePostInput, PostableSpace } from '@/features/community-posting/types';
+import type { MemberContentScope } from '@/features/member-content/types';
 
 import Env from 'env';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -12,6 +13,7 @@ import { useCreatePost } from '@/features/community-posting/api/use-create-post'
 import { usePostableSpaces } from '@/features/community-posting/api/use-postable-spaces';
 import { ComposeMediaStrip } from '@/features/community-posting/components/compose-media-strip';
 import { useComposeMedia } from '@/features/community-posting/lib/use-compose-media';
+import { useFeedChips } from '@/features/member-content/api/use-feed-chips';
 import { translate } from '@/lib/i18n';
 import { getItem, setItem } from '@/lib/storage';
 
@@ -30,6 +32,23 @@ const FAILURE_KEY = {
 
 function lastSpaceKey(memberId: string) {
   return `community-posting:last-space:${memberId}`;
+}
+
+/** Sorts spaces into the community feed's chip order; spaces on no chip keep their place at the end. */
+function orderLikeFeedChips(spaces: PostableSpace[], chipSpaceIds: string[]) {
+  const rank = (id: string) => {
+    const index = chipSpaceIds.indexOf(id);
+    return index === -1 ? chipSpaceIds.length : index;
+  };
+  return [...spaces].sort((a, b) => rank(a.id) - rank(b.id));
+}
+
+function useSpacesInFeedOrder(scope: MemberContentScope, spaces: PostableSpace[] | undefined) {
+  const chips = useFeedChips(scope).data?.chips;
+  return React.useMemo(
+    () => orderLikeFeedChips(spaces ?? [], chips?.flatMap(chip => chip.spaceIds) ?? []),
+    [spaces, chips],
+  );
 }
 
 function canSubmitPost(title: string, body: string) {
@@ -212,7 +231,7 @@ export function ComposePostScreen() {
 
   const spacesQuery = usePostableSpaces(scope);
   const { create, isPending, failure } = useCreatePost(scope);
-  const spaces = React.useMemo(() => spacesQuery.data?.spaces ?? [], [spacesQuery.data]);
+  const spaces = useSpacesInFeedOrder(scope, spacesQuery.data?.spaces);
 
   const [selectedSpaceId, setSelectedSpaceId] = useInitialSpaceId(member?.id, params.spaceId, spaces);
   const [title, setTitle] = React.useState('');
