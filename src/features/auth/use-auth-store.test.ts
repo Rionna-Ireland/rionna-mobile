@@ -1,4 +1,3 @@
-import { clearCircleWebViewCookies } from '@/features/community/lib/circle-cookie-clear';
 import { clearMemberContentCache } from '@/features/member-content/cache/member-content-cache';
 import { client } from '@/lib/api/client';
 import { removeItem, removeItemsWithPrefix } from '@/lib/storage';
@@ -21,10 +20,6 @@ jest.mock('@/lib/storage', () => ({
   removeItemsWithPrefix: jest.fn(),
 }));
 
-jest.mock('@/features/community/lib/circle-cookie-clear', () => ({
-  clearCircleWebViewCookies: jest.fn().mockResolvedValue('cleared'),
-}));
-
 jest.mock('@/features/member-content/cache/member-content-cache', () => ({
   clearMemberContentCache: jest.fn(),
 }));
@@ -38,12 +33,9 @@ describe('signOut', () => {
     jest.clearAllMocks();
   });
 
-  it('clears legacy Circle keys, clears WebView cookies, clears offline snapshots and never revokes a server-side Circle session', async () => {
+  it('clears offline snapshots and never revokes a server-side Circle session', async () => {
     await signOut();
 
-    expect(removeItem).toHaveBeenCalledWith('circle.session.v1');
-    expect(removeItem).toHaveBeenCalledWith('circle.communityBaseUrl.v1');
-    expect(clearCircleWebViewCookies).toHaveBeenCalled();
     expect(removeItemsWithPrefix).toHaveBeenCalledWith('inbox-snapshot:');
     expect(removeItemsWithPrefix).toHaveBeenCalledWith('events-snapshot:');
     expect(removeItem).toHaveBeenCalledWith('event-reminders');
@@ -51,14 +43,6 @@ describe('signOut', () => {
       '/api/circle/revoke-session',
       expect.anything(),
     );
-    expect(useAuthStore.getState().status).toBe('signOut');
-  });
-
-  it('still completes sign-out when clearing Circle WebView cookies rejects', async () => {
-    (clearCircleWebViewCookies as jest.Mock).mockRejectedValueOnce(new Error('native module missing'));
-
-    await signOut();
-
     expect(useAuthStore.getState().status).toBe('signOut');
   });
 

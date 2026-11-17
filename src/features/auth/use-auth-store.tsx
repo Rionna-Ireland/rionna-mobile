@@ -5,7 +5,6 @@ import type { AuthUser, TokenType } from '@/lib/auth/utils';
 import Env from 'env';
 import Constants from 'expo-constants';
 import { create } from 'zustand';
-import { clearCircleWebViewCookies } from '@/features/community/lib/circle-cookie-clear';
 import { EVENTS_SNAPSHOT_PREFIX } from '@/features/events/api/use-events';
 import { clearAllEventReminders } from '@/features/events/lib/event-reminders';
 import { clearMemberContentCache } from '@/features/member-content/cache/member-content-cache';
@@ -21,47 +20,8 @@ import {
   setToken,
   setUser,
 } from '@/lib/auth/utils';
-import { removeItem, removeItemsWithPrefix } from '@/lib/storage';
+import { removeItemsWithPrefix } from '@/lib/storage';
 import { createSelectors } from '@/lib/utils';
-
-// Legacy MMKV keys from the retired Circle WebView build (S6-03/S6-04). The
-// app is now fully native — nothing writes these keys any more — but a device
-// upgrading from a WebView build may still have them on disk, so we keep
-// clearing them best-effort on sign-out.
-const CIRCLE_SESSION_KEY = 'circle.session.v1';
-const CIRCLE_COMMUNITY_BASE_URL_KEY = 'circle.communityBaseUrl.v1';
-
-/**
- * Best-effort cleanup of the retired Circle WebView's on-device state on
- * sign-out. There is no server-side revoke any more (the WebView, and the
- * session it held, are gone) — this only clears state a pre-native-migration
- * install may still be carrying:
- *
- *   1. The legacy cached-session MMKV keys (session token + community base
- *      URL), in case a device upgrading from a WebView build still has them.
- *   2. The live WebView cookies / web storage (modules/circle-cookies), in
- *      case a device upgrading from a WebView build still has an active
- *      Circle cookie session that could otherwise leak across members.
- *
- * Every step is best-effort: a failure in either MUST NOT block the rest, nor
- * block logout.
- */
-async function clearLegacyCircleState(): Promise<void> {
-  try {
-    void removeItem(CIRCLE_SESSION_KEY);
-    void removeItem(CIRCLE_COMMUNITY_BASE_URL_KEY);
-  }
-  catch (e) {
-    console.warn('[auth] Failed to clear legacy Circle session keys (continuing logout):', e);
-  }
-
-  try {
-    await clearCircleWebViewCookies();
-  }
-  catch (e) {
-    console.warn('[auth] Failed to clear live Circle WebView cookies (continuing logout):', e);
-  }
-}
 
 /**
  * Leave nothing of this member behind (M-05, M-19): every in-memory query, the
@@ -151,10 +111,6 @@ const _useAuthStore = create<AuthState>((set, get) => ({
         // Both calls need the bearer token, so they go before it is dropped.
         await unregisterPushToken();
         await client.post('/api/auth/sign-out', undefined, { timeout: SIGN_OUT_TIMEOUT_MS }).catch(() => {});
-
-        // Best-effort cleanup of any legacy Circle WebView state a device
-        // upgrading from a pre-native build may still be carrying.
-        await clearLegacyCircleState();
 
         removeToken();
         removeUser();
