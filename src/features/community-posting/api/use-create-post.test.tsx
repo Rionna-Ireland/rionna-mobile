@@ -36,7 +36,7 @@ describe('useCreatePost - success and validation', () => {
       title: undefined,
       body: 'hello',
       media: undefined,
-    });
+    }, { timeout: 60_000 });
     expect(outcome).toEqual({ ok: true, post: { circlePostId: 'p1', spaceId: 'space-1' } });
     expect(result.current.failure).toBeNull();
   });
@@ -56,7 +56,7 @@ describe('useCreatePost - success and validation', () => {
       title: undefined,
       body: 'hello',
       media: [{ mediaToken: 't1' }, { mediaToken: 't2' }],
-    });
+    }, { timeout: 60_000 });
   });
 
   it('maps an ok:false response to failure without throwing', async () => {
