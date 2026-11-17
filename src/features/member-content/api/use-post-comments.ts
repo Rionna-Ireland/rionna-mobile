@@ -2,8 +2,6 @@ import type { QueryClient } from '@tanstack/react-query';
 
 import type {
   MemberContentScope,
-  MemberFeedItem,
-  MemberPostDetail,
   PostComment,
   PostCommentsPage,
 } from '@/features/member-content/types';
@@ -13,6 +11,7 @@ import { useState } from 'react';
 
 import { showErrorMessage } from '@/components/ui/utils';
 
+import { patchPostInCaches } from '@/features/member-content/api/post-cache';
 import { MEMBER_CONTENT_QUERY_ROOT } from '@/features/member-content/types';
 import { client } from '@/lib/api/client';
 import { haptics } from '@/lib/motion';
@@ -108,50 +107,14 @@ export function removeCommentById(comments: PostComment[], id: string): PostComm
     );
 }
 
-function isFeedItems(data: unknown): data is MemberFeedItem[] {
-  return Array.isArray(data);
-}
-
-function isPostDetail(data: unknown): data is MemberPostDetail {
-  return Boolean(data) && typeof data === 'object' && !Array.isArray(data)
-    && typeof (data as MemberPostDetail).id === 'string'
-    && typeof (data as MemberPostDetail).commentCount === 'number';
-}
-
-/**
- * Bumps the post's commentCount across the merged feed, space feeds, and post
- * detail caches in place — the S7-03 A2 lesson: patch, never invalidate the
- * root on success (the refetch replaces every feed and jumps the list).
- */
+/** Bumps the post's commentCount in every member-content cache it appears in. */
 export function applyCommentCountDelta(
   queryClient: QueryClient,
   postId: string,
   delta: number,
 ): void {
-  const entries = queryClient.getQueriesData<unknown>({
-    queryKey: [MEMBER_CONTENT_QUERY_ROOT],
-  });
-  for (const [queryKey, data] of entries) {
-    if (isFeedItems(data)) {
-      if (!data.some(item => item.id === postId)) {
-        continue;
-      }
-      queryClient.setQueryData(
-        queryKey,
-        data.map(item =>
-          item.id === postId
-            ? { ...item, commentCount: Math.max(0, item.commentCount + delta) }
-            : item,
-        ),
-      );
-    }
-    else if (isPostDetail(data) && data.id === postId) {
-      queryClient.setQueryData(queryKey, {
-        ...data,
-        commentCount: Math.max(0, data.commentCount + delta),
-      });
-    }
-  }
+  patchPostInCaches(queryClient, postId, post =>
+    ({ ...post, commentCount: Math.max(0, post.commentCount + delta) }));
 }
 
 export function usePostComments(scope: MemberContentScope, postId: string) {

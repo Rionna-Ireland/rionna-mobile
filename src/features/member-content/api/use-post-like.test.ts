@@ -7,8 +7,6 @@ import type {
 import { QueryClient } from '@tanstack/react-query';
 
 import {
-  applyLikeToFeedItems,
-  applyLikeToPostDetail,
   applyOptimisticLike,
   reconcileLikeCount,
   rollbackOptimisticLike,
@@ -89,40 +87,6 @@ describe('sendPostLike', () => {
     await expect(sendPostLike(SCOPE, { postId: 'post-1', liked: true })).rejects.toThrow(
       'Post like failed',
     );
-  });
-});
-
-describe('applyLikeToFeedItems', () => {
-  it('flips isLiked and bumps the count on the target post only', () => {
-    const items = [feedItem(), feedItem({ id: 'post-2', likeCount: 7 })];
-    const next = applyLikeToFeedItems(items, 'post-1', true);
-    expect(next[0]).toMatchObject({ isLiked: true, likeCount: 4 });
-    expect(next[1]).toMatchObject({ isLiked: false, likeCount: 7 });
-  });
-
-  it('does not double-apply when the post is already in the desired state', () => {
-    const items = [feedItem({ isLiked: true, likeCount: 4 })];
-    expect(applyLikeToFeedItems(items, 'post-1', true)).toBe(items);
-  });
-
-  it('never drops the count below zero on unlike', () => {
-    const items = [feedItem({ isLiked: true, likeCount: 0 })];
-    const next = applyLikeToFeedItems(items, 'post-1', false);
-    expect(next[0]).toMatchObject({ isLiked: false, likeCount: 0 });
-  });
-});
-
-describe('applyLikeToPostDetail', () => {
-  it('flips the detail payload when it is the target post', () => {
-    expect(applyLikeToPostDetail(postDetail(), 'post-1', true)).toMatchObject({
-      isLiked: true,
-      likeCount: 4,
-    });
-  });
-
-  it('leaves other posts untouched', () => {
-    const other = postDetail({ id: 'post-9' });
-    expect(applyLikeToPostDetail(other, 'post-1', true)).toBe(other);
   });
 });
 

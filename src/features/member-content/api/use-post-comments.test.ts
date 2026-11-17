@@ -1,4 +1,5 @@
 import type {
+  InsideTrackResult,
   MemberFeedItem,
   MemberPostDetail,
   PostComment,
@@ -157,6 +158,7 @@ describe('removeCommentById', () => {
 describe('applyCommentCountDelta', () => {
   const FEED_KEY = [MEMBER_CONTENT_QUERY_ROOT, 'feed', 'org-1', 'member-1'];
   const POST_KEY = [MEMBER_CONTENT_QUERY_ROOT, 'post', 'org-1', 'member-1', 'space-1', 'post-1'];
+  const INSIDE_TRACK_KEY = [MEMBER_CONTENT_QUERY_ROOT, 'inside-track', 'org-1', 'member-1'];
 
   function feedItem(overrides: Partial<MemberFeedItem> = {}): MemberFeedItem {
     return {
@@ -206,15 +208,24 @@ describe('applyCommentCountDelta', () => {
     });
     queryClient.setQueryData(FEED_KEY, [feedItem(), feedItem({ id: 'post-2' })]);
     queryClient.setQueryData(POST_KEY, postDetail());
+    queryClient.setQueryData<InsideTrackResult>(INSIDE_TRACK_KEY, {
+      ok: true,
+      configured: true,
+      pinned: [feedItem({ id: 'pinned-1' })],
+      latest: [feedItem()],
+    });
     return queryClient;
   }
 
-  it('bumps the target post count in feed and detail caches, in place', () => {
+  it('bumps the target post count in feed, detail and Inside Track caches, in place', () => {
     const queryClient = seededClient();
     applyCommentCountDelta(queryClient, 'post-1', 1);
     expect(queryClient.getQueryData<MemberFeedItem[]>(FEED_KEY)?.[0]?.commentCount).toBe(3);
     expect(queryClient.getQueryData<MemberFeedItem[]>(FEED_KEY)?.[1]?.commentCount).toBe(2);
     expect(queryClient.getQueryData<MemberPostDetail>(POST_KEY)?.commentCount).toBe(3);
+    const insideTrack = queryClient.getQueryData<InsideTrackResult>(INSIDE_TRACK_KEY);
+    expect(insideTrack?.latest[0]?.commentCount).toBe(3);
+    expect(insideTrack?.pinned[0]?.commentCount).toBe(2);
   });
 
   it('never drops below zero and leaves untouched caches by reference', () => {
