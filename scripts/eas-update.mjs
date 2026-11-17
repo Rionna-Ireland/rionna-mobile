@@ -19,4 +19,6 @@ const result = spawnSync(
   ['update', '--channel', profile.channel, '--environment', profile.environment, ...args],
   { stdio: 'inherit', env: { ...process.env, ...profile.env } },
 );
+if (result.error)
+  console.error(result.error.message);
 process.exit(result.status ?? 1);
