@@ -21,7 +21,8 @@ catch {
  * settings legal links, etc.
  */
 export function openExternalLink(url: string) {
-  if (WebBrowser) {
+  // The in-app browser only takes http(s); mailto:, tel: etc. go to the OS.
+  if (WebBrowser && /^https?:/i.test(url)) {
     WebBrowser.openBrowserAsync(url).catch(() => {});
   }
   else {

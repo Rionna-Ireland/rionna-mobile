@@ -6,7 +6,7 @@ import type { ClubEvent } from '@/features/events/types';
 import Env from 'env';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import * as React from 'react';
-import { Alert, Linking, Share, StyleSheet, Switch } from 'react-native';
+import { Alert, Share, StyleSheet, Switch } from 'react-native';
 
 import { PatternFill } from '@/components/brand/pattern';
 import {
@@ -367,7 +367,7 @@ function EventDetailBody({
               ? (
                   <CircleTiptapRenderer
                     doc={hydratedDoc}
-                    onOpenUrl={url => void Linking.openURL(url)}
+                    onOpenUrl={openExternalLink}
                   />
                 )
               : event.bodyText
