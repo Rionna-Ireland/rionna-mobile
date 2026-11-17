@@ -8,6 +8,7 @@ import { isMembershipInactiveError, onMembershipEndedClosed } from './membership
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 jest.mock('@/features/auth/use-auth-store', () => ({
   getAuthStatus: jest.fn(() => 'signIn'),
+  getAuthToken: jest.fn(() => null),
   signOut: jest.fn(),
 }));
 

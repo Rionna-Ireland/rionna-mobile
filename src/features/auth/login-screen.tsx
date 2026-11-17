@@ -7,9 +7,9 @@ import { FocusAwareStatusBar, ScreenBackground, View } from '@/components/ui';
 import { useArrival } from '@/features/arrival/arrival-context';
 import { client } from '@/lib/api/client';
 import { bootstrapMobileOrganization } from '@/lib/auth/mobile-org-bootstrap';
-import { removeToken, removeUser, setToken, setUser } from '@/lib/auth/utils';
+import { removeUser, setUser } from '@/lib/auth/utils';
 import { LoginForm } from './components/login-form';
-import { useAuthStore } from './use-auth-store';
+import { stageAuthToken, useAuthStore } from './use-auth-store';
 
 export function LoginScreen() {
   const router = useRouter();
@@ -17,9 +17,9 @@ export function LoginScreen() {
   const { beginWelcome } = useArrival();
 
   const onSuccess = async (data: { token: string; user: AuthUser }) => {
-    // Token first so verify can send Bearer. Delay signIn status until after
+    // Token first (in memory only) so verify can send Bearer. Delay signIn status until after
     // bootstrap — that status starts push permission + Circle prewarm.
-    setToken(data.token);
+    stageAuthToken(data.token);
     setUser(data.user);
     try {
       const clubId = await bootstrapMobileOrganization({ verifyMembership: true });
@@ -32,7 +32,7 @@ export function LoginScreen() {
     catch (error) {
       // Login created a server session; end it, not just the local copy (M-02).
       await client.post('/api/auth/sign-out').catch(() => {});
-      removeToken();
+      stageAuthToken(null);
       removeUser();
       throw error;
     }

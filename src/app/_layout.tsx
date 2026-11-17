@@ -59,7 +59,6 @@ export const unstable_settings = {
   initialRouteName: '(app)',
 };
 
-hydrateAuth();
 loadSelectedTheme();
 // Keep the (blank white) native splash up until the Arrival overlay's first
 // layout, which hides it with the mark mounted at progress 0 (S14-04 §2). The
@@ -124,6 +123,11 @@ function useForegroundNotificationRefresh() {
 
 export default function RootLayout() {
   const status = useAuth.use.status();
+  // Reads SecureStore, so not at module top level; status stays 'idle' (the
+  // splash) until it runs.
+  React.useEffect(() => {
+    hydrateAuth();
+  }, []);
 
   // Load fonts under the exact family names referenced in global.css @theme.
   // font-sans → PlusJakartaSans, font-display → PPEiko, font-mono → IBMPlexMono

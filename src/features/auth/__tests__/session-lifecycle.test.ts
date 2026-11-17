@@ -1,6 +1,7 @@
 import type { AxiosAdapter, InternalAxiosRequestConfig } from 'axios';
 
 import * as Notifications from 'expo-notifications';
+import * as SecureStore from 'expo-secure-store';
 
 import { hydrateAuth, signOut, useAuthStore } from '@/features/auth/use-auth-store';
 import { client } from '@/lib/api/client';
@@ -78,6 +79,56 @@ describe('hydrate', () => {
     await flush();
     expect(calls).toEqual([]);
     expect(Notifications.getExpoPushTokenAsync).not.toHaveBeenCalled();
+  });
+});
+
+describe('hydrate with a stored token (M-01)', () => {
+  it('signs in from SecureStore and sends that token from memory', async () => {
+    SecureStore.setItem('auth-token', 'token-a');
+    (getItem as jest.Mock).mockImplementation(key => (key === 'auth-user' ? { id: 'member-a', email: 'a@example.com' } : null));
+
+    hydrateAuth();
+    await client.get('/api/me/membership');
+
+    expect(useAuthStore.getState().status).toBe('signIn');
+    expect(calls.at(-1)?.authorization).toBe('Bearer token-a');
+    await SecureStore.deleteItemAsync('auth-token');
+  });
+
+  it('keeps a pre-S17-03 member (MMKV token + user) signed in, moving the token to SecureStore', async () => {
+    const user = { id: 'member-a', email: 'a@example.com' };
+    (getItem as jest.Mock).mockImplementation(key => (key === 'auth-token' ? 'legacy-a' : key === 'auth-user' ? user : null));
+
+    hydrateAuth();
+    await client.get('/api/me/membership');
+
+    expect(useAuthStore.getState()).toMatchObject({ status: 'signIn', token: 'legacy-a', user });
+    expect(SecureStore.getItem('auth-token')).toBe('legacy-a');
+    expect(calls.at(-1)?.authorization).toBe('Bearer legacy-a');
+    await SecureStore.deleteItemAsync('auth-token');
+  });
+
+  it('ends at signOut with no network when SecureStore cannot be read', async () => {
+    (SecureStore.getItem as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('keystore invalidated');
+    });
+
+    hydrateAuth();
+    await flush();
+
+    expect(useAuthStore.getState().status).toBe('signOut');
+    expect(calls).toEqual([]);
+  });
+
+  it('treats a Keychain token without a user (iOS reinstall) as signed out', async () => {
+    SecureStore.setItem('auth-token', 'leftover');
+
+    hydrateAuth();
+    await flush();
+
+    expect(useAuthStore.getState().status).toBe('signOut');
+    expect(SecureStore.getItem('auth-token')).toBeNull();
+    expect(calls).toEqual([]);
   });
 });
 
@@ -164,6 +215,30 @@ describe('signOut', () => {
     signInAs('token-a');
     await signOut();
     expect(unregisterCalls()[0].timeout).toBe(5000);
+  });
+
+  it('still ends at signOut when removing the token throws', async () => {
+    signInAs('token-a');
+    (SecureStore.deleteItemAsync as jest.Mock).mockImplementationOnce(() => {
+      throw new Error('keystore unavailable');
+    });
+
+    await signOut();
+
+    expect(useAuthStore.getState()).toMatchObject({ status: 'signOut', token: null, user: null });
+  });
+
+  it('signs out (unmounting screens) before clearing caches, so nothing refetches with the old token', async () => {
+    signInAs('token-a');
+    let stateAtClear: unknown;
+    const clear = jest.spyOn(queryClient, 'clear').mockImplementationOnce(() => {
+      stateAtClear = { status: useAuthStore.getState().status, token: useAuthStore.getState().token };
+    });
+
+    await signOut();
+    clear.mockRestore();
+
+    expect(stateAtClear).toEqual({ status: 'signOut', token: null });
   });
 
   it('leaves no query cache or scheduled reminders behind', async () => {
