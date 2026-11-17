@@ -21,8 +21,6 @@ export type SetPostLikeResult = {
   likeCount: number | null;
 };
 
-export type LikeSnapshot = PostCacheSnapshot;
-
 export async function sendPostLike(
   scope: MemberContentScope,
   { postId, liked }: PostLikeVariables,
@@ -57,7 +55,7 @@ export function applyOptimisticLike(
   queryClient: QueryClient,
   postId: string,
   liked: boolean,
-): LikeSnapshot[] {
+): PostCacheSnapshot[] {
   return patchPostInCaches(queryClient, postId, post =>
     post.isLiked === liked ? post : flipCounts(post, liked));
 }
@@ -82,7 +80,7 @@ export function reconcileLikeCount(
 
 export function rollbackOptimisticLike(
   queryClient: QueryClient,
-  snapshots: LikeSnapshot[],
+  snapshots: PostCacheSnapshot[],
 ): void {
   for (const [queryKey, data] of snapshots) {
     queryClient.setQueryData(queryKey, data);
