@@ -9,6 +9,8 @@ describe('mobile organization bootstrap', () => {
 
   const post = jest.fn();
   const verifyClubMembership = jest.fn();
+  const getUser = jest.fn();
+  const setUser = jest.fn();
 
   beforeEach(() => {
     jest.resetModules();
@@ -16,6 +18,10 @@ describe('mobile organization bootstrap', () => {
 
     post.mockReset();
     verifyClubMembership.mockReset();
+    getUser.mockReset().mockReturnValue(null);
+    setUser.mockReset();
+
+    jest.doMock('@/lib/auth/utils', () => ({ getUser, setUser }));
 
     jest.doMock('@/lib/api/client', () => ({
       client: { post },
@@ -69,5 +75,25 @@ describe('mobile organization bootstrap', () => {
     ).rejects.toBe(networkError);
 
     expect(post).not.toHaveBeenCalled();
+  });
+
+  it('skips set-active and update-user when the club is already the member\'s org', async () => {
+    getUser.mockReturnValue({ id: 'u1', email: 'a@b.c', lastActiveOrganizationId: 'club_123' });
+
+    const { bootstrapMobileOrganization } = loadModule();
+
+    await expect(bootstrapMobileOrganization()).resolves.toBe('club_123');
+    expect(post).not.toHaveBeenCalled();
+  });
+
+  it('remembers the club on the stored user so the next cold start skips', async () => {
+    getUser.mockReturnValue({ id: 'u1', email: 'a@b.c', lastActiveOrganizationId: null });
+    post.mockResolvedValue({ data: {} });
+
+    const { bootstrapMobileOrganization } = loadModule();
+
+    await bootstrapMobileOrganization();
+    expect(post).toHaveBeenCalledTimes(2);
+    expect(setUser).toHaveBeenCalledWith({ id: 'u1', email: 'a@b.c', lastActiveOrganizationId: 'club_123' });
   });
 });

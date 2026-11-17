@@ -1,6 +1,7 @@
 import Env from 'env';
 
 import { client } from '@/lib/api/client';
+import { getUser, setUser } from '@/lib/auth/utils';
 
 import { getClubMismatchMessage, verifyClubMembership } from './club-verification';
 
@@ -27,6 +28,13 @@ export async function bootstrapMobileOrganization(options?: {
     }
   }
 
+  // M-16: already the member's org, and the backend's session-create hook makes
+  // it every new session's active org, so there is nothing to write.
+  const user = getUser();
+  if (user?.lastActiveOrganizationId === clubId) {
+    return clubId;
+  }
+
   await client.post('/api/auth/organization/set-active', {
     organizationId: clubId,
   });
@@ -35,6 +43,8 @@ export async function bootstrapMobileOrganization(options?: {
     await client.post('/api/auth/update-user', {
       lastActiveOrganizationId: clubId,
     });
+    if (user)
+      setUser({ ...user, lastActiveOrganizationId: clubId });
   }
   catch (e) {
     console.warn('Failed to persist lastActiveOrganizationId during mobile bootstrap:', e);
