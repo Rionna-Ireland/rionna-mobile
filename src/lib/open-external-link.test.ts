@@ -8,7 +8,7 @@ jest.mock('expo-web-browser', () => ({ openBrowserAsync: (url: string) => mockOp
 describe('openExternalLink', () => {
   beforeEach(() => {
     mockOpenBrowserAsync.mockClear();
-    jest.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    jest.spyOn(Linking, 'openURL').mockClear().mockResolvedValue(true);
   });
 
   it('opens web links in the in-app browser', () => {
@@ -21,5 +21,17 @@ describe('openExternalLink', () => {
     openExternalLink('mailto:hello@rionna.com');
     expect(mockOpenBrowserAsync).not.toHaveBeenCalled();
     expect(Linking.openURL).toHaveBeenCalledWith('mailto:hello@rionna.com');
+  });
+
+  it('hands tel: links to the OS', () => {
+    openExternalLink('tel:+353000000');
+    expect(Linking.openURL).toHaveBeenCalledWith('tel:+353000000');
+  });
+
+  it('ignores other schemes', () => {
+    openExternalLink('rionna://stables/x');
+    openExternalLink('javascript:alert(1)');
+    expect(mockOpenBrowserAsync).not.toHaveBeenCalled();
+    expect(Linking.openURL).not.toHaveBeenCalled();
   });
 });
