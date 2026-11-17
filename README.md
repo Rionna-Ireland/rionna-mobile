@@ -14,10 +14,11 @@
 
 ## Rionna: environment and OTA updates
 
-- Local dev reads an untracked `.env`: `cp .env.example .env`.
+- Local dev reads an untracked `.env`: `cp .env.example .env`. After pulling the commit that untracked `.env`, git deletes your copy, so run that again.
 - EAS builds and OTA updates take their `EXPO_PUBLIC_*` values from the build profile `env` in `eas.json`. EAS has no server-side variables.
 - **Production OTA updates go out only through `pnpm update:production --message "..."`** (staging: `pnpm update:staging`). It runs `eas update` with the profile's channel and env. Never run `eas update` directly: it ignores `eas.json` build env, so the bundle would get your `.env` or `env.ts` fallbacks (localhost).
-- `env.ts` throws when `EXPO_PUBLIC_APP_ENV=production` and the API URL is not `https://`, so a bad production bundle fails at publish time.
+- `env.ts` throws only when `EXPO_PUBLIC_APP_ENV=production` and the API URL is not `https://`. Plain `eas update` (with or without `--environment production`) bundles `APP_ENV=development` with the localhost URL and passes that check, so `pnpm update:production` is the only safe path.
+- The local `*:production` scripts (`start:production`, `prebuild:production`, `ios:production`, `android:production`) now need an `https://` `EXPO_PUBLIC_API_URL`.
 
 ## 🚀 Motivation
 
