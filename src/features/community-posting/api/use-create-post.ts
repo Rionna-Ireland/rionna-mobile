@@ -25,13 +25,15 @@ export function useCreatePost(scope: MemberContentScope) {
       setIsPending(true);
       setFailure(null);
       try {
+        // The server runs spaces, moderation, images and Circle createPost in sequence;
+        // the 15s default could expire while the post is still created (duplicate on resend).
         const { data } = await client.post<CreatePostResult>('/api/community/posts', {
           organizationId: scope.organizationId,
           spaceId: input.spaceId,
           title: input.title,
           body: input.body,
           media: input.media?.length ? input.media : undefined,
-        });
+        }, { timeout: 60_000 });
 
         if (data.ok !== true) {
           setFailure(data.reason);

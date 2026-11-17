@@ -36,8 +36,8 @@ import {
   clearNotificationBadgeCount,
   syncNotificationBadgeCount,
 } from '@/features/notifications/badge';
-import { handleNotificationResponse } from '@/features/notifications/deep-link';
 import { registerForPushNotifications } from '@/features/notifications/setup';
+import { useNotificationTapRouting } from '@/features/notifications/use-notification-tap-routing';
 import { APIProvider } from '@/lib/api';
 import { queryClient } from '@/lib/api/query-client';
 import { loadSelectedTheme } from '@/lib/hooks/use-selected-theme';
@@ -72,7 +72,8 @@ function useNotificationRegistration(status: ReturnType<typeof useAuth.use.statu
     if (status === 'signIn') {
       registerForPushNotifications()
         .then(() => syncNotificationBadgeCount())
-        .catch(() => {});
+        // M-03: a failed registration means no pushes on this device; never fail silently.
+        .catch(err => console.warn('Push registration failed', err));
     }
     if (status === 'signOut') {
       clearNotificationBadgeCount().catch(() => {});
@@ -121,24 +122,6 @@ function useForegroundNotificationRefresh() {
   }, []);
 }
 
-function useNotificationResponseListener() {
-  React.useEffect(() => {
-    let NotificationsMod: typeof NotificationsType | null = null;
-    try {
-      NotificationsMod = require('expo-notifications');
-    }
-    catch {
-      return;
-    }
-    if (!NotificationsMod)
-      return;
-    const subscription = NotificationsMod.addNotificationResponseReceivedListener(
-      handleNotificationResponse,
-    );
-    return () => subscription.remove();
-  }, []);
-}
-
 export default function RootLayout() {
   const status = useAuth.use.status();
 
@@ -163,7 +146,6 @@ export default function RootLayout() {
   useNotificationRegistration(status);
   useSignOutRedirect(status);
   useNotificationBadgeSync(status);
-  useNotificationResponseListener();
   useForegroundNotificationRefresh();
 
   // The Arrival overlay draws while fonts load; the app mounts beneath it.
@@ -178,6 +160,8 @@ export default function RootLayout() {
 }
 
 function AppStack() {
+  // Here, not in RootLayout: the Stack only exists once fonts load (M-12).
+  useNotificationTapRouting(useAuth.use.status());
   return (
     <Providers>
       <Stack>
