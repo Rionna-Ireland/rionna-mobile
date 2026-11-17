@@ -161,7 +161,7 @@ export default function RootLayout() {
 
 function AppStack() {
   // Here, not in RootLayout: the Stack only exists once fonts load (M-12).
-  useNotificationTapRouting(useAuth.use.status() === 'signIn');
+  useNotificationTapRouting(useAuth.use.status());
   return (
     <Providers>
       <Stack>

@@ -5,6 +5,8 @@ import { router } from 'expo-router';
 
 import { useNotificationTapRouting } from '@/features/notifications/use-notification-tap-routing';
 
+type AuthStatus = 'idle' | 'signIn' | 'signOut';
+
 const mockNotifications = {
   last: null as Notifications.NotificationResponse | null,
   listener: null as ((r: Notifications.NotificationResponse) => void) | null,
@@ -40,27 +42,38 @@ describe('useNotificationTapRouting', () => {
     mockNotifications.listener = null;
   });
 
-  it('waits for sign-in, then routes a cold-start tap once', () => {
+  it('waits for auth hydration, then routes a cold-start tap once', () => {
     mockNotifications.last = makeResponse('n-1', { screen: 'horse', horseId: 'h-1' });
 
-    const { rerender } = renderHook(({ signedIn }: { signedIn: boolean }) => useNotificationTapRouting(signedIn), {
-      initialProps: { signedIn: false },
+    const { rerender } = renderHook(({ status }: { status: AuthStatus }) => useNotificationTapRouting(status), {
+      initialProps: { status: 'idle' as AuthStatus },
     });
     expect(router.push).not.toHaveBeenCalled();
 
-    rerender({ signedIn: true });
+    rerender({ status: 'signIn' });
     expect(router.push).toHaveBeenCalledTimes(1);
     expect(router.push).toHaveBeenCalledWith({ pathname: '/stables/[horse-id]', params: { 'horse-id': 'h-1' } });
 
     // The listener re-delivering the same response (and a re-run) must not route again.
     mockNotifications.listener?.(makeResponse('n-1', { screen: 'horse', horseId: 'h-1' }));
-    rerender({ signedIn: false });
-    rerender({ signedIn: true });
+    rerender({ status: 'idle' });
+    rerender({ status: 'signIn' });
     expect(router.push).toHaveBeenCalledTimes(1);
   });
 
+  it('drops a tap held while signed out, so the next login is not hijacked', () => {
+    mockNotifications.last = makeResponse('n-3', { screen: 'horse', horseId: 'h-3' });
+
+    const { rerender } = renderHook(({ status }: { status: AuthStatus }) => useNotificationTapRouting(status), {
+      initialProps: { status: 'signOut' as AuthStatus },
+    });
+    rerender({ status: 'signIn' });
+
+    expect(router.push).not.toHaveBeenCalled();
+  });
+
   it('routes a warm tap once', () => {
-    renderHook(() => useNotificationTapRouting(true));
+    renderHook(() => useNotificationTapRouting('signIn'));
 
     const response = makeResponse('n-2', { screen: 'notifications' });
     mockNotifications.listener?.(response);
