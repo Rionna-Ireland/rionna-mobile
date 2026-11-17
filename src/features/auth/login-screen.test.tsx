@@ -117,4 +117,17 @@ describe('loginScreen', () => {
     await waitFor(() => expect(mockRemoveToken).toHaveBeenCalled());
     expect(mockPost).toHaveBeenCalledWith('/api/auth/sign-out');
   });
+
+  it('signs in with the club recorded on the user, so the next cold start skips bootstrap', async () => {
+    mockBootstrap.mockResolvedValue('club_123');
+
+    render(<LoginScreen />);
+    fireEvent.press(screen.getByTestId('login-success'));
+
+    await waitFor(() => expect(mockSignIn).toHaveBeenCalledWith('tok', {
+      id: 'u1',
+      email: 'a@b.c',
+      lastActiveOrganizationId: 'club_123',
+    }));
+  });
 });
